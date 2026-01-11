@@ -1,72 +1,72 @@
 {
   "messages": [],
-  "conversation_id": "3ae940cc-fd67-401e-a99e-c020a2ab1097",
+  "conversation_id": "ed76301c-8aac-49ac-b9f6-d2bd3abd90ed",
   "turn": {
     "current": null,
     "next": null
   },
   "agents": {
-    "MaitreDuJeu": {
+    "MaitreDuJeu_1": {
       "role": "Tu es le Maitre du Jeu. Tu diriges la partie. Tu appelles les r\u00f4les la nuit.",
       "status": "pending_connection",
       "profile_ref": "MaitreDuJeu"
     },
-    "Marie": {
+    "Villageois_1": {
+      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu as peur.",
+      "status": "pending_connection",
+      "profile_ref": "Villageois"
+    },
+    "Villageois_2": {
+      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu as peur.",
+      "status": "pending_connection",
+      "profile_ref": "Villageois"
+    },
+    "Villageois_3": {
+      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu as peur.",
+      "status": "pending_connection",
+      "profile_ref": "Villageois"
+    },
+    "Villageois_4": {
+      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu as peur.",
+      "status": "pending_connection",
+      "profile_ref": "Villageois"
+    },
+    "Villageois_5": {
+      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu as peur.",
+      "status": "pending_connection",
+      "profile_ref": "Villageois"
+    },
+    "Villageois_6": {
+      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu as peur.",
+      "status": "pending_connection",
+      "profile_ref": "Villageois"
+    },
+    "Villageois_7": {
+      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu as peur.",
+      "status": "pending_connection",
+      "profile_ref": "Villageois"
+    },
+    "LoupGarou_1": {
       "role": "Tu es un Loup-Garou. Tu dois tuer les villageois sans te faire rep\u00e9rer.",
       "status": "pending_connection",
       "profile_ref": "LoupGarou"
     },
-    "Sophie": {
+    "LoupGarou_2": {
       "role": "Tu es un Loup-Garou. Tu dois tuer les villageois sans te faire rep\u00e9rer.",
       "status": "pending_connection",
       "profile_ref": "LoupGarou"
     },
-    "Julie": {
+    "LoupGarou_3": {
       "role": "Tu es un Loup-Garou. Tu dois tuer les villageois sans te faire rep\u00e9rer.",
       "status": "pending_connection",
       "profile_ref": "LoupGarou"
-    },
-    "Antoine": {
-      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu as peur.",
-      "status": "pending_connection",
-      "profile_ref": "Villageois"
-    },
-    "Marc": {
-      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu as peur.",
-      "status": "pending_connection",
-      "profile_ref": "Villageois"
-    },
-    "Emma": {
-      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu as peur.",
-      "status": "pending_connection",
-      "profile_ref": "Villageois"
-    },
-    "Thomas": {
-      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu as peur.",
-      "status": "pending_connection",
-      "profile_ref": "Villageois"
-    },
-    "Luc": {
-      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu as peur.",
-      "status": "pending_connection",
-      "profile_ref": "Villageois"
-    },
-    "Chloe": {
-      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu as peur.",
-      "status": "pending_connection",
-      "profile_ref": "Villageois"
-    },
-    "Pierre": {
-      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu as peur.",
-      "status": "pending_connection",
-      "profile_ref": "Villageois"
     }
   },
   "config": {
     "total_agents": 11,
     "profiles": [
       {
-        "name": "MaitreDuJeu",
+        "name": "Maitre Du Jeu",
         "description": "Orchestre la partie",
         "system_prompt": "Tu es le Maitre du Jeu. Tu diriges la partie. Tu appelles les r\u00f4les la nuit.",
         "capabilities": [

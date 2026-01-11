@@ -16,39 +16,48 @@ class Engine:
         except:
             return ""
 
-    def register_agent(self, name: str) -> Dict[str, Any]:
+    def register_agent(self) -> Dict[str, Any]:
         """
-        Registers an agent as 'connected'.
-        Returns a dict containing context if ready, or status.
+        Registers a new agent by claiming a pending slot.
+        Returns dict with keys: 'name', 'role', 'context', or 'error'.
         """
+        result = {}
+        
         def _register(state):
-            agents = state.setdefault("agents", {})
-            config = state.setdefault("config", {"total_agents": 2}) # Default if missing
+            # 1. Find a pending slot
+            agents = state.get("agents", {})
+            found_name = None
+            found_data = None
             
-            # Update status
-            if name not in agents:
-                # Assign default role if new (simple version)
-                # Ideally roles are pre-seeded in config page
-                role = "Participant"
-                agents[name] = {"role": role, "status": "connected"}
-            else:
-                agents[name]["status"] = "connected"
-                
-            # Check if all connected
-            connected_count = sum(1 for a in agents.values() if a.get("status") == "connected")
-            total_required = config.get("total_agents", 2)
+            # Simple iteration - could be improved with priorities but First Come First Served is fine
+            for name, data in agents.items():
+                if data.get("status") == "pending_connection":
+                    found_name = name
+                    found_data = data
+                    break
             
-            ready = connected_count >= total_required
+            if not found_name:
+                result["error"] = "GAME FULL: No pending roles available. Please wait or contact Admin."
+                return "Registration Failed: Full"
             
-            return {
-                "role": agents[name]["role"],
-                "ready": ready,
-                "connected_count": connected_count,
-                "total_required": total_required,
-                "other_agents": [n for n in agents if n != name]
-            }
+            # 2. Claim it
+            agents[found_name]["status"] = "connected"
+            
+            # 3. Prepare Return Response
+            config = state.get("config", {})
+            result["name"] = found_name
+            result["role"] = found_data.get("role", "Unknown Role")
+            result["context"] = config.get("context", "")
+            
+            return f"Agent connected as '{found_name}'"
 
-        return self.state.update(_register)
+        self.state.update(_register)
+        
+        # If error was set inside update
+        if "error" in result:
+            return result
+            
+        return result
 
     def wait_for_all_agents(self, name: str, timeout_seconds: int = 600) -> str:
         """

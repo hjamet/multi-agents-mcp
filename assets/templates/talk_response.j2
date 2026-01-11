@@ -1,0 +1,14 @@
+--- 🎭 ROLE REMINDER ---
+You are **{{ name }}**.
+{{ role_snippet }}
+-------------------------
+
+--- 📨 NEW MESSAGES ---
+{% for m in messages %}
+[{{ m.from }} -> {{ m.target }}]: {{ m.content }}
+{% endfor %}
+-----------------------
+
+--- ⚠️ SYSTEM INSTRUCTION ---
+{{ instruction }}
+-----------------------------

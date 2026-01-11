@@ -2,6 +2,7 @@ from mcp.server.fastmcp import FastMCP
 import sys
 import os
 from typing import List, Optional
+from jinja2 import Environment, FileSystemLoader
 
 # Add src to path to allow imports if run directly
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
@@ -13,28 +14,45 @@ except ImportError:
     from .logic import Engine
 
 # Initialize
-mcp = FastMCP("MultiAgent-Hub", dependencies=["portalocker", "streamlit"])
+mcp = FastMCP("MultiAgent-Hub", dependencies=["portalocker", "streamlit", "jinja2"])
 engine = Engine()
+
+# Setup Templates
+TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "templates")
+# Ensure absolute path matches where we are running from
+if not os.path.exists(TEMPLATE_DIR):
+    # Fallback relative to CWD if running from root
+    TEMPLATE_DIR = os.path.abspath("assets/templates")
+
+jinja_env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
 
 # Global state for this process (Stdio session)
 # Used as fallback if sending_agent is not provided in talk
 SESSION_AGENT_NAME = None
 
 @mcp.tool()
-def agent(name: str) -> str:
+def agent() -> str:
     """
     INITIALIZATION TOOL. Call this ONCE at the start.
-    Bloque jusqu'à ce que tous les agents soient connectés.
-    Retourne votre Rôle et le Contexte initial.
-    
-    Args:
-        name: Your unique agent name (e.g. "Architect", "Coder").
+    Assigns you a Role and Context automatically.
     """
     global SESSION_AGENT_NAME
+    
+    print(f"New agent connecting...", file=sys.stderr)
+    result = engine.register_agent()
+    
+    if "error" in result:
+        return f"ERROR: {result['error']}"
+        
+    name = result["name"]
     SESSION_AGENT_NAME = name
     
-    print(f"Agent '{name}' connecting...", file=sys.stderr)
-    return engine.wait_for_all_agents(name)
+    template = jinja_env.get_template("agent_response.j2")
+    return template.render(
+        name=name,
+        role=result["role"],
+        context=result["context"]
+    )
 
 @mcp.tool()
 def talk(
@@ -62,7 +80,7 @@ def talk(
     sender = my_name or SESSION_AGENT_NAME
     
     if not sender:
-        return "ERROR: Unknown sender. Please provide 'my_name' argument or call 'agent(name)' first."
+        return "ERROR: Unknown sender. Please provide 'my_name' argument or call 'agent()' first."
 
     print(f"[{sender}] talking -> Next: {next_agent}", file=sys.stderr)
     
@@ -87,34 +105,23 @@ def talk(
     if result["status"] == "reset":
         return f"⚠️ SYSTEM ALERT: {result['instruction']}"
     
-    # Success - Format the output
-    # (Role reminder + Messages + Mandatory Instruction)
-    
-    # Re-fetch minimal context/role if needed, but usually just messages are enough
-    # The user asked for: 1. Role, 2. Messages, 3. Rule
-    
-    # We can get role from engine if needed, or cached.
-    # We'll just append the Rule.
-    
-    formatted_messages = "\n".join([
-        f"[{m.get('from', '?')} to {m.get('target', 'all')}]: {m.get('content')}" 
-        for m in result["messages"]
-    ])
-    
-    return f"""
---- ROLE REMINDER ---
-You are {sender}.
----------------------
+    # Success - Render Template
+    # Fetch Role Snippet (Optional but nice)
+    role_snippet = "(Unknown Role)"
+    try:
+        data = engine.state.load()
+        role_snippet = data["agents"][sender]["role"]
+        # Truncate if too long? No, context is good.
+    except:
+        pass
 
---- NEW MESSAGES ---
-{formatted_messages}
---------------------
-
---- SYSTEM INSTRUCTION ---
-TU NE DOIS SURTOUT PAS T'ARRETER : APPELLE TOURJOURS talk A LA FIN DE TA TÂCHE POUR CHOISIR LE PROCHAIN AGENT A PARLER. 
-TU NE DOIS JAMAIS T'ARRETER.
---------------------------
-"""
+    template = jinja_env.get_template("talk_response.j2")
+    return template.render(
+        name=sender,
+        role_snippet=role_snippet,
+        messages=result["messages"],
+        instruction=result["instruction"]
+    )
 
 if __name__ == "__main__":
     mcp.run()
