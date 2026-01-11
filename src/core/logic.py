@@ -237,10 +237,24 @@ class Engine:
                     if profile and profile.get("connections"):
                         advice_text = "\n\n--- STRATEGIC ADVICE ---\n"
                         advice_text += "Based on your connections, here is how you should interact with others:\n"
+                        
                         for conn in profile["connections"]:
-                            target = conn.get("target")
+                            target_profile = conn.get("target")
                             ctx = conn.get("context")
-                            advice_text += f"- If talking to {target}: {ctx}\n"
+                            
+                            # Resolve Target Profile -> Active Agent IDs
+                            matching_agents = [
+                                aid for aid, adata in agents.items() 
+                                if adata.get("profile_ref") == target_profile and aid != agent_name
+                            ]
+                            
+                            if matching_agents:
+                                names_str = ", ".join(matching_agents)
+                                advice_text += f"- **{target_profile}** is represented by: **{names_str}**. Strategy: {ctx}\n"
+                            else:
+                                # Connection exists but no agent with this role is currently active/other than me
+                                advice_text += f"- **{target_profile}**: No other active agents found. Strategy: {ctx}\n"
+
                         advice_text += "------------------------"
 
                 return {

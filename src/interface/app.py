@@ -154,14 +154,21 @@ if st.session_state.page == "Editor":
     if current_profile:
         with st.container(border=True):
             # Header
-            c1, c2 = st.columns([1, 2])
+            st.markdown(f"### ✏️ Editing: {current_profile.get('name', 'New')}")
+            
+            c1, c2 = st.columns(2)
             # Dynamic keys force refresh
-            new_name = c1.text_input("Name", current_profile.get("name", ""), key=f"p_name_{k_suffix}")
-            new_desc = c2.text_input("Short Description", current_profile.get("description", ""), key=f"p_desc_{k_suffix}")
+            new_name = c1.text_input("Internal Profile Name", current_profile.get("name", ""), key=f"p_name_{k_suffix}", help="Used for Admin Logic and Connections (e.g. 'LoupGarou').")
+            # Display Name
+            display_name = c2.text_input("Public Display Name", current_profile.get("display_name", current_profile.get("name", "")), key=f"p_disp_{k_suffix}", help="Base name shown in chat (e.g. 'Habitant').")
+
+            c3, c4 = st.columns(2)
+            new_desc = c3.text_input("Admin Description (Internal)", current_profile.get("description", ""), key=f"p_desc_{k_suffix}", help="Note for you (e.g. 'The Bad Guy').")
+            public_desc = c4.text_input("Public Description (All)", current_profile.get("public_description", ""), key=f"p_pubdesc_{k_suffix}", help="Visible to other agents (e.g. 'Simple Villager').")
             
             # System Prompt
-            st.markdown("##### System Identity")
-            new_prompt = st.text_area("Core Instructions", current_profile.get("system_prompt", ""), height=150, key=f"p_prompt_{k_suffix}")
+            st.markdown("##### 🎭 System Prompt (Private Role)")
+            new_prompt = st.text_area("Instructions", current_profile.get("system_prompt", ""), height=150, key=f"p_prompt_{k_suffix}")
             
             # Capabilities
             st.markdown("##### 🛡️ Capabilities")
@@ -217,9 +224,13 @@ if st.session_state.page == "Editor":
                 # Update object
                 current_profile["name"] = new_name
                 current_profile["description"] = new_desc
+                current_profile["display_name"] = display_name
+                current_profile["public_description"] = public_desc
                 current_profile["system_prompt"] = new_prompt
                 current_profile["connections"] = connections
                 current_profile["capabilities"] = new_caps
+                # Remove legacy
+                current_profile.pop("instance_names", None)
                 
                 # SMART RENAMING LOGIC
                 if not new_mode and old_name and new_name != old_name:
@@ -307,6 +318,7 @@ elif st.session_state.page == "Cockpit":
         with col.container(border=True):
             st.markdown(f"#### {p['name']}")
             st.caption(p.get("description", "No description"))
+            st.info(f"Public: **{p.get('display_name', p['name'])}**")
             
             c_minus, c_val, c_plus = st.columns([1, 1, 1])
             count = int(p.get("count", 0))
@@ -340,21 +352,44 @@ elif st.session_state.page == "Cockpit":
             s["turn"] = {"current": None, "next": None}
             s["config"]["context"] = global_context # Ensure context is saved
             
-            new_agents = {}
+            # 1. Collect all slots
+            pending_slots = []
+            import random
+            
             for p in profiles:
-                p_name = p.get("name")
                 p_count = int(p.get("count", 0))
-                # Store prompt base here, but logic.py will do the rest
-                for k in range(1, p_count + 1):
-                    # Use ' #N' format instead of '_N' for cleaner UI
-                    suffix = f" #{k}" if p_count > 1 else ""
-                    agent_id = f"{p_name}{suffix}" 
+                for _ in range(p_count):
+                    pending_slots.append({
+                        "profile_ref": p["name"],
+                        "role": p.get("system_prompt", ""),
+                        "display_base": p.get("display_name", p["name"])
+                    })
+            
+            # 2. Shuffle
+            random.shuffle(pending_slots)
+            
+            # 3. Assign IDs
+            new_agents = {}
+            counters = {}
+            
+            for slot in pending_slots:
+                base = slot["display_base"]
+                counters.setdefault(base, 0)
+                counters[base] += 1
+                
+                # Check duplication
+                total_base = sum(1 for sl in pending_slots if sl["display_base"] == base)
+                
+                if total_base > 1:
+                    agent_id = f"{base} #{counters[base]}"
+                else:
+                    agent_id = base
                     
-                    new_agents[agent_id] = {
-                        "role": p.get("system_prompt", ""), 
-                        "status": "pending_connection",
-                        "profile_ref": p_name
-                    }
+                new_agents[agent_id] = {
+                    "role": slot["role"], 
+                    "status": "pending_connection",
+                    "profile_ref": slot["profile_ref"]
+                }
                     
             s["agents"] = new_agents
             s["config"]["total_agents"] = get_total_agents(profiles)
