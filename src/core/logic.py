@@ -79,8 +79,71 @@ class Engine:
     def post_message(self, from_agent: str, content: str, public: bool, next_agent: str, audience: List[str]) -> str:
         """
         Posts a message and updates the turn.
+        Validates capabilities and connections before posting.
         """
         def _post(state):
+            # 0. VALIDATION
+            agents = state.get("agents", {})
+            config = state.get("config", {})
+            profiles = config.get("profiles", [])
+            
+            sender_info = agents.get(from_agent, {})
+            sender_profile_name = sender_info.get("profile_ref")
+            
+            # Find Sender Profile
+            sender_profile = next((p for p in profiles if p["name"] == sender_profile_name), None)
+            
+            if not sender_profile:
+                # Fallback: If no profile found (e.g. manual/legacy), we block unless strictness is off?
+                # User asked for strict enforcement.
+                # However, let's allow if the system is bootstrapping (e.g. Role assignment phase? No, talk is later).
+                # Let's BLOCK unknown agents to force proper config.
+                return f"🚫 ACTION DENIED: Agent '{from_agent}' has no valid profile configuration. Please ask Admin to configure you in the Cockpit."
+
+            caps = sender_profile.get("capabilities", [])
+            connections = sender_profile.get("connections", [])
+            allowed_targets = {c["target"]: c["context"] for c in connections} # Profile Names
+            
+            # A. Capability Checks
+            if public and "public" not in caps:
+                return f"🚫 ACTION DENIED: You do not have the 'public' capability. You must send a Private message to a specific target."
+            
+            if not public and "private" not in caps:
+                 return f"🚫 ACTION DENIED: You do not have the 'private' capability. You must speak Publicly."
+            
+            if audience and "audience" not in caps:
+                 return f"🚫 ACTION DENIED: You do not have the 'audience' capability. You cannot cc additional agents."
+            
+            # B. Connection Checks (Skip if OPEN)
+            if "open" not in caps:
+                # Helper to check one target
+                def check_target(t_name):
+                    # target instance name (e.g. Wolf_1) -> profile (Wolf)
+                    t_info = agents.get(t_name)
+                    if not t_info:
+                        return f"Unknown agent '{t_name}'"
+                    t_prof = t_info.get("profile_ref")
+                    if t_prof not in allowed_targets:
+                         return f"Not connected to '{t_prof}'"
+                    return None
+                    
+                # 1. Check Primary Target (Next Agent)
+                # Note: next_agent is mandatory in talk tool.
+                if next_agent:
+                    err = check_target(next_agent)
+                    if err:
+                        # Construct helpful table
+                        help_msg = "\nAllowed Connections:\n"
+                        for t, ctx in allowed_targets.items():
+                            help_msg += f"- {t}: {ctx}\n"
+                        return f"🚫 ACTION DENIED: You are not authorized to speak to '{next_agent}' ({err}).\n{help_msg}"
+                
+                # 2. Check Audience
+                for aud in audience:
+                    err = check_target(aud)
+                    if err:
+                        return f"🚫 ACTION DENIED: You are not authorized to include '{aud}' in audience ({err})."
+
             # 1. Add message
             msg = {
                 "from": from_agent,

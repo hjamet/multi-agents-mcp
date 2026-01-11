@@ -1,27 +1,52 @@
 {
   "messages": [],
-  "conversation_id": "08f744f1-e621-4465-8256-617ad723a268",
+  "conversation_id": "c97917e3-f4d2-4290-8456-afe4a56fa9b3",
   "turn": {
     "current": null,
     "next": null
   },
-  "agents": {},
+  "agents": {
+    "Thomas_1": {
+      "role": "Tu es quelqu'un d'adorable, toujours l\u00e0 pour aider.",
+      "status": "pending_connection",
+      "profile_ref": "Thomas"
+    },
+    "Marc_1": {
+      "role": "Tu es une IA detestable, toujours insupportable pour les autres. Tu passses ta vie \u00e0 te pleindre.",
+      "status": "pending_connection",
+      "profile_ref": "Marc"
+    },
+    "Helena_1": {
+      "role": "Tu une manipulatrice finie. Tu veux manipuler Thomas afin de le rendre detestable et Marc afin de le rendre adorable",
+      "status": "pending_connection",
+      "profile_ref": "Helena"
+    }
+  },
   "config": {
-    "total_agents": 5,
+    "total_agents": 3,
     "profiles": [
       {
-        "name": "Agent",
-        "count": 2.0,
-        "role_description": "Helpful assistant.",
-        "communication_rules": "Speak when spoken to."
+        "name": "Thomas",
+        "description": "Une IA sympa",
+        "system_prompt": "Tu es quelqu'un d'adorable, toujours l\u00e0 pour aider.",
+        "connections": [],
+        "count": 1
       },
       {
-        "name": "Test",
-        "count": 3.0,
-        "role_description": "Sympa, mais tu veux que tout le monde parle en fran\u00e7ais !",
-        "communication_rules": null
+        "name": "Marc",
+        "description": "Une IA d\u00e9testable",
+        "system_prompt": "Tu es une IA detestable, toujours insupportable pour les autres. Tu passses ta vie \u00e0 te pleindre.",
+        "connections": [],
+        "count": 1
+      },
+      {
+        "name": "Helena",
+        "description": "Une IA comme une autre",
+        "system_prompt": "Tu une manipulatrice finie. Tu veux manipuler Thomas afin de le rendre detestable et Marc afin de le rendre adorable",
+        "connections": [],
+        "count": 1
       }
     ],
-    "context": "You are AI agents working together."
+    "context": "Vous \u00eates des IA discuttant dans une pi\u00e8ce. Interdition d'utiliser d'autres outils que talk. N'excluez personne de la conversation !"
   }
 }

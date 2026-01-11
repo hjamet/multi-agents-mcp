@@ -1,5 +1,6 @@
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
+import graphviz
 import json
 import uuid
 import sys
@@ -15,14 +16,31 @@ st.set_page_config(page_title="Agent Orchestra", page_icon="🤖", layout="wide"
 # Initialize State
 state_store = StateStore()
 
+# --- CSS STYLING ---
+st.markdown("""
+<style>
+    div[data-testid="stSidebar"] {
+        background-color: #f0f2f6;
+    }
+    .stButton button {
+        width: 100%;
+        border-radius: 8px;
+        height: 3em;
+    }
+    .big-font {
+        font-size: 20px !important;
+        font-weight: bold;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # --- HELPER FUNCTIONS ---
 def load_config():
     state = state_store.load()
     config = state.get("config", {})
-    # Ensure structure
     if "profiles" not in config:
         config["profiles"] = [
-            {"name": "Agent", "description": "Generic Agent", "system_prompt": "You are a helpful assistant.", "connections": [], "count": 1}
+            {"name": "Agent", "description": "Generic Agent", "system_prompt": "You are a helpful assistant.", "connections": [], "count": 1, "capabilities": ["public", "private", "audience"]}
         ]
     return state, config
 
@@ -41,210 +59,264 @@ def get_total_agents(profiles):
             pass
     return total
 
-# --- NAVIGATION ---
-st.sidebar.title("🤖 Orchestra")
-page = st.sidebar.radio("Navigation", ["Editors", "Simulation Cockpit", "Live Chat"])
+def render_graph(profiles, current_editing=None):
+    graph = graphviz.Digraph()
+    graph.attr(rankdir='LR', size='10,10', bgcolor='transparent')
+    
+    # Nodes
+    for p in profiles:
+        name = p["name"]
+        color = 'lightblue'
+        if current_editing and name == current_editing:
+            color = 'gold'
+        
+        # Show count in label
+        count = p.get("count", 0)
+        label = f"{name}\n(x{count})"
+        
+        graph.node(name, label=label, style='filled', fillcolor=color, shape='box', fontsize='10')
+
+    # Edges
+    for p in profiles:
+        source = p["name"]
+        for conn in p.get("connections", []):
+            target = conn.get("target")
+            # Only draw if target exists
+            if any(prof["name"] == target for prof in profiles):
+                graph.edge(source, target, fontsize='8', color='gray')
+
+    return graph
+
+# --- NAVIGATION & SIDEBAR ---
+if "page" not in st.session_state:
+    st.session_state.page = "Cockpit"
+
+with st.sidebar:
+    st.title("🤖 Orchestra")
+    
+    # Navigation Buttons
+    c1, c2, c3 = st.columns(3)
+    if st.button("🎛️", help="Cockpit"):
+        st.session_state.page = "Cockpit"
+        st.rerun()
+    if st.button("🛠️", help="Editor"):
+        st.session_state.page = "Editor"
+        st.rerun()
+    if st.button("💬", help="Chat"):
+        st.session_state.page = "Chat"
+        st.rerun()
+    
+    st.markdown(f"**Current**: {st.session_state.page}")
+    
+    st.divider()
+    
+    # Graph Viz
+    st.caption("Network Topology")
+    state, config = load_config()
+    profiles = config.get("profiles", [])
+    
+    # Determine if we are editing someone to highlight
+    editing_name = st.session_state.get("editing_agent_name")
+    
+    viz = render_graph(profiles, editing_name if st.session_state.page == "Editor" else None)
+    st.graphviz_chart(viz, use_container_width=True)
+
 
 # --- PAGE 1: AGENT EDITOR ---
-if page == "Editors":
-    st.header("🛠️ Agent Editor")
+if st.session_state.page == "Editor":
+    st.header("🛠️ Agent Architect")
     
     state, config = load_config()
     profiles = config.get("profiles", [])
     
     # 1. Select Profile to Edit
     profile_names = [p["name"] for p in profiles]
-    profile_names.append("➕ Create New Agent")
+    profile_names.append("➕ Create New")
     
-    selected_name = st.selectbox("Select Agent Profile", profile_names)
+    col_sel, col_del = st.columns([3, 1])
+    selected_name = col_sel.selectbox("Select Agent Profile", profile_names, label_visibility="collapsed")
     
-    if selected_name == "➕ Create New Agent":
-        current_profile = {"name": "New Agent", "description": "", "system_prompt": "", "connections": [], "count": 1}
+    if selected_name == "➕ Create New":
+        current_profile = {"name": "New Agent", "description": "", "system_prompt": "", "connections": [], "count": 1, "capabilities": ["public", "private", "audience"]}
         new_mode = True
+        st.session_state.editing_agent_name = "New Agent"
     else:
-        # Find profile (by index or name)
         current_profile = next((p for p in profiles if p["name"] == selected_name), None)
         new_mode = False
+        st.session_state.editing_agent_name = selected_name
         
-    st.divider()
+        if col_del.button("🗑️ Delete"):
+            config["profiles"] = [p for p in profiles if p["name"] != selected_name]
+            save_config(config)
+            st.warning("Deleted.")
+            st.rerun()
+
     
     if current_profile:
         with st.container(border=True):
-            # Basic Info
+            # Header
             c1, c2 = st.columns([1, 2])
             new_name = c1.text_input("Name", current_profile.get("name", ""), key="p_name")
             new_desc = c2.text_input("Short Description", current_profile.get("description", ""), key="p_desc")
             
-            new_prompt = st.text_area("System Prompt", current_profile.get("system_prompt", ""), height=150, key="p_prompt")
+            # System Prompt
+            st.markdown("##### System Identity")
+            new_prompt = st.text_area("Core Instructions", current_profile.get("system_prompt", ""), height=150, key="p_prompt")
+            
+            # Capabilities
+            st.markdown("##### 🛡️ Capabilities")
+            caps = current_profile.get("capabilities", [])
+            
+            start_caps = caps.copy()
+            
+            cc1, cc2, cc3, cc4 = st.columns(4)
+            has_public = cc1.checkbox("Public Speech", "public" in caps)
+            has_private = cc2.checkbox("Private (Direct)", "private" in caps)
+            has_audience = cc3.checkbox("Private (Audience)", "audience" in caps)
+            has_open = cc4.checkbox("🔓 OPEN MODE", "open" in caps, help="If checked, can talk to ANYONE regardless of connections.")
+            
+            new_caps = []
+            if has_public: new_caps.append("public")
+            if has_private: new_caps.append("private")
+            if has_audience: new_caps.append("audience")
+            if has_open: new_caps.append("open")
             
             # Connections Editor
-            st.subheader("🔗 Connections & Strategy")
-            st.info("Define how this agent should interact with others.")
-            
+            st.markdown("##### 🔗 Connections")
             connections = current_profile.get("connections", [])
             
-            # Simple UI to add connection
-            with st.expander("Add New Connection"):
-                target_options = [p["name"] for p in profiles if p["name"] != current_profile["name"]]
-                if not target_options:
-                    st.warning("Create other agents first to link them.")
-                else:
-                    target = st.selectbox("Target Agent", target_options)
-                    context_rule = st.text_input("Context / Rule (e.g. 'Attack at night')")
-                    if st.button("Add Link"):
+            # Add New
+            with st.expander("➕ Add Connection Rule", expanded=not connections):
+                c_targ, c_ctx, c_add = st.columns([1, 2, 0.5])
+                target_options = [p["name"] for p in profiles if p["name"] != current_profile.get("name")]
+                
+                target = c_targ.selectbox("Target", target_options, key="new_conn_target") if target_options else None
+                context_rule = c_ctx.text_input("Context / Strategy", placeholder="e.g. 'Lie to them'")
+                
+                if c_add.button("Add"):
+                    if target and context_rule:
                         connections.append({"target": target, "context": context_rule})
-                        st.success(f"Linked to {target}")
-                        st.rerun() # Refresh to show in list below
-
-            # List existing connections
-            if connections:
-                st.write("###### Active Connections:")
-                for i, conn in enumerate(connections):
-                    c_del, c_info = st.columns([1, 5])
-                    if c_del.button("❌", key=f"del_{i}"):
-                        connections.pop(i)
                         st.rerun()
-                    c_info.markdown(f"**To {conn.get('target')}**: {conn.get('context')}")
-            else:
-                st.caption("No specific connections definitions.")
 
+            # List
+            for i, conn in enumerate(connections):
+                c_del, c_info = st.columns([0.2, 4])
+                if c_del.button("x", key=f"del_c_{i}"):
+                    connections.pop(i)
+                    st.rerun()
+                c_info.success(f"**-> {conn.get('target')}**: {conn.get('context')}")
+
+            # Safe Check: At least one capability
+            if not new_caps:
+                st.error("⚠️ You must select at least one Capability.")
+            
             # Save Actions
             st.divider()
             
-            if st.button("💾 Save Profile", type="primary"):
+            if st.button("💾 Save Profile", type="primary", disabled=not new_caps):
                 # Update object
                 current_profile["name"] = new_name
                 current_profile["description"] = new_desc
                 current_profile["system_prompt"] = new_prompt
                 current_profile["connections"] = connections
-                # Count preserves old value or default
+                current_profile["capabilities"] = new_caps
                 
                 if new_mode:
                     profiles.append(current_profile)
-                else:
-                    # Update info in list (already ref, but good to be explicit if replacing)
-                    pass 
                 
                 save_config(config)
-                st.success("Profile Saved!")
+                st.toast("Profile Saved!", icon="✅")
                 time.sleep(0.5)
                 st.rerun()
 
-            if not new_mode:
-                if st.button("🗑️ Delete Profile"):
-                    config["profiles"] = [p for p in profiles if p["name"] != selected_name]
-                    save_config(config)
-                    st.warning("Profile Deleted.")
-                    time.sleep(0.5)
-                    st.rerun()
-
 
 # --- PAGE 2: COCKPIT ---
-elif page == "Simulation Cockpit":
-    st.header("🎛️ Simulation Cockpit")
+elif st.session_state.page == "Cockpit":
+    st.header("🎛️ Mission Control")
     
     state, config = load_config()
     profiles = config.get("profiles", [])
     
-    # 1. Global Context
-    st.subheader("🌍 Global Context")
-    global_context = st.text_area("Shared Scenario Context", config.get("context", ""), height=100)
-    
-    if global_context != config.get("context", ""):
-        if st.button("Save Global Context"):
+    # Context
+    with st.expander("🌍 Global Simulation Context", expanded=True):
+        global_context = st.text_area("Shared Scenario", config.get("context", ""), height=80, label_visibility="collapsed")
+        if st.button("Update Context"):
             config["context"] = global_context
             save_config(config)
             st.success("Context Updated")
     
     st.divider()
     
-    # 2. Agent Cards Grid
-    st.subheader("👥 Cast & Crew")
-    
-    # metrics
+    # Grid
     total_agents = get_total_agents(profiles)
-    st.metric("Total Agents in Simulation", total_agents)
-    
-    if not profiles:
-        st.warning("No profiles found. Go to Editor to create agents.")
+    st.markdown(f"### 👥 Active Crew ({total_agents})")
     
     cols = st.columns(3)
     for i, p in enumerate(profiles):
         col = cols[i % 3]
         with col.container(border=True):
-            st.markdown(f"### {p['name']}")
+            st.markdown(f"#### {p['name']}")
             st.caption(p.get("description", "No description"))
             
-            # Counter
             c_minus, c_val, c_plus = st.columns([1, 1, 1])
-            current_count = int(p.get("count", 0))
+            count = int(p.get("count", 0))
             
-            if c_minus.button("➖", key=f"dec_{i}"):
-                p["count"] = max(0, current_count - 1)
+            if c_minus.button("➖", key=f"d_{i}"):
+                p["count"] = max(0, count - 1)
                 save_config(config)
                 st.rerun()
-                
-            c_val.markdown(f"<h3 style='text-align: center;'>{current_count}</h3>", unsafe_allow_html=True)
             
-            if c_plus.button("➕", key=f"inc_{i}"):
-                p["count"] = current_count + 1
+            c_val.markdown(f"<h2 style='text-align: center; margin:0;'>{count}</h2>", unsafe_allow_html=True)
+            
+            if c_plus.button("➕", key=f"i_{i}"):
+                p["count"] = count + 1
                 save_config(config)
                 st.rerun()
-                
-            # Mini preview of connections
-            n_conns = len(p.get("connections", []))
-            st.caption(f"{n_conns} Connection Rules")
+            
+            # Status line
+            caps = p.get("capabilities", [])
+            cap_icons = ""
+            if "public" in caps: cap_icons += "📢 "
+            if "private" in caps: cap_icons += "🔒 "
+            if "open" in caps: cap_icons += "🔓 "
+            st.text(cap_icons)
 
-    st.divider()
-    
-    # 3. GLOBAL RESET
-    st.markdown("### 🚦 Controls")
-    if st.button("🔴 RESET & APPLY CONFIGURATION", type="primary", use_container_width=True):
+    # RESET
+    st.markdown("___")
+    if st.button("🚀 INITIALIZE / RESET SIMULATION", type="primary", use_container_width=True):
         def reset_logic(s):
-            # 1. ID & Clean
             s["conversation_id"] = str(uuid.uuid4())
             s["messages"] = []
             s["turn"] = {"current": None, "next": None}
+            s["config"]["context"] = global_context # Ensure context is saved
             
-            # 2. Re-Bootstrap Agents
             new_agents = {}
             for p in profiles:
                 p_name = p.get("name")
                 p_count = int(p.get("count", 0))
-                # For basic registration, we'll store the profile info
-                # But wait! We need to handle the 'Role' construction here OR in the logic.
-                # Strategy: Store the "Profile Name" in the agent entry. 
-                # The logic.py will resolve the full prompt dynamically.
-                # BUT logic.py only sees 'agents' dict. 
-                # So we must pre-compile the PROMPT here, or ensure logic.py can read 'config.profiles'.
-                
-                # Let's Compile here for safety and simplicity in logic.py
-                # Just base prompt. The "Connections" advice is dynamic in wait_for_turn.
-                
+                # Store prompt base here, but logic.py will do the rest
                 for k in range(1, p_count + 1):
                     agent_id = f"{p_name}_{k}"
                     new_agents[agent_id] = {
-                        "role": p.get("system_prompt", ""),
+                        "role": p.get("system_prompt", ""), 
                         "status": "pending_connection",
-                        "profile_ref": p_name # Store ref to lookup connections later
+                        "profile_ref": p_name
                     }
                     
             s["agents"] = new_agents
             s["config"]["total_agents"] = get_total_agents(profiles)
-            
-            return f"Simulation Reset! New ID: {s['conversation_id']}"
+            return f"Simulation Launched! ID: {s['conversation_id']}"
             
         msg = state_store.update(reset_logic)
-        st.toast(msg, icon="🚀")
+        st.success(msg)
         time.sleep(1)
+        st.session_state.page = "Chat" # Jump to chat
         st.rerun()
 
 
 # --- PAGE 3: LIVE CHAT ---
-elif page == "Live Chat":
+elif st.session_state.page == "Chat":
     st.header("💬 Live Frequency")
-    
-    # Auto-refresh
     st_autorefresh(interval=2000, key="chatrefresh")
     
     data = state_store.load()
@@ -252,32 +324,22 @@ elif page == "Live Chat":
     turn = data.get("turn", {})
     agents = data.get("agents", {})
     
-    # Status Header
+    # Metrics
     c1, c2, c3 = st.columns(3)
-    c1.metric("Status", "🟢 Running" if turn.get("current") else "🟡 Waiting")
-    c1.caption(f"ID: {data.get('conversation_id')}")
-    c2.metric("Current Speaker", turn.get("current", "None"))
-    c2.caption(f"Next: {turn.get('next', '?')}")
-    
+    c1.metric("Speaker", turn.get("current", "None"))
+    c2.metric("Next", turn.get("next", "TBD"))
     connected = sum(1 for a in agents.values() if a.get("status") == "connected")
-    total = data.get("config", {}).get("total_agents", 0)
-    c3.metric("Network", f"{connected} / {total}")
+    c3.metric("Online", f"{connected}/{data.get('config', {}).get('total_agents', 0)}")
     
     st.divider()
     
-    # Messages
     for m in messages:
-        sender = m.get("from", "Unknown")
-        target = m.get("target", "all")
+        sender = m.get("from", "?")
         content = m.get("content", "")
-        
+        # Styling based on sender
         with st.chat_message(sender):
             st.write(content)
-            # Metadata footer
-            meta = f"Target: {target}"
-            if not m.get("public"):
-                meta += " 🔒 (Private)"
+            meta = f"to {m.get('target', 'all')}"
+            if not m.get("public"): meta += " 🔒"
+            if m.get("audience"): meta += f" (+{len(m['audience'])})"
             st.caption(meta)
-    
-    if not messages:
-        st.info("No messages properly recorded yet. Start the agents!")

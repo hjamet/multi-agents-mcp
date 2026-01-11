@@ -67,7 +67,14 @@ def talk(
     print(f"[{sender}] talking -> Next: {next_agent}", file=sys.stderr)
     
     # 1. Post Message
-    engine.post_message(sender, message, public, next_agent, audience)
+    post_result = engine.post_message(sender, message, public, next_agent, audience)
+    
+    # Check for DENIED action
+    if post_result.startswith("🚫"):
+        # Return the error directly so the agent can retry
+        return post_result
+        
+    print(f"Post Success: {post_result}", file=sys.stderr)
     
     # 2. Smart Block (Wait for Turn)
     # The turn has passed to next_agent. We now wait until it comes back to 'sender'.
