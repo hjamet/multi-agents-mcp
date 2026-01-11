@@ -1,0 +1,10 @@
+[project]
+name = "multi-agents-mcp"
+version = "0.1.0"
+description = "MCP Multi-Agent Orchestrator"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.0.0",
+    "streamlit>=1.40.0"
+]
