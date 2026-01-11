@@ -59,6 +59,32 @@ class Engine:
             
         return result
 
+    def get_network_status(self, agent_name: str) -> Dict[str, Any]:
+        """
+        Helper to check connection status of the mesh.
+        """
+        state = self.state.load()
+        agents = state.get("agents", {})
+        config = state.get("config", {})
+        
+        total = config.get("total_agents", 0)
+        connected = sum(1 for a in agents.values() if a.get("status") == "connected")
+        
+        other_agents = [n for n, d in agents.items() if d.get("status") == "connected" and n != agent_name]
+        
+        # Check if agent is valid
+        if agent_name not in agents:
+             return {"ready": False, "error": "Agent not found"}
+
+        return {
+            "ready": connected >= total,
+            "total_required": total,
+            "connected_count": connected,
+            "other_agents": other_agents,
+            "role": agents.get(agent_name, {}).get("role", "Unknown"),
+            "context": config.get("context", "")
+        }
+
     def wait_for_all_agents(self, name: str, timeout_seconds: int = 600) -> str:
         """
         Blocks until all agents are connected.
@@ -67,17 +93,20 @@ class Engine:
         start_time = time.time()
         while time.time() - start_time < timeout_seconds:
             # Poll status
-            info = self.register_agent(name) # Keepalive / check
+            info = self.get_network_status(name)
             
+            if info.get("error"):
+                return f"ERROR: {info['error']}"
+
             if info["ready"]:
                 # Build context
-                context = config.get("context", "")
-                other_agents = ", ".join(info["other_agents"])
+                context = info["context"]
+                other_agents_str = ", ".join(info["other_agents"])
                 return (
                     f"CONTEXT: {context}\n\n"
                     f"You are {name}. Role: {info['role']}.\n"
-                    f"Network is READY. Connected agents: {len(info['other_agents']) + 1}/{info['total_required']}.\n"
-                    f"Peers: {other_agents}.\n"
+                    f"Network is READY. Connected agents: {info['connected_count']}/{info['total_required']}.\n"
+                    f"Peers: {other_agents_str}.\n"
                     "You may now speak if it is your turn."
                 )
             

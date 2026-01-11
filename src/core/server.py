@@ -60,6 +60,11 @@ def agent() -> str:
     except Exception as e:
         print(f"Error fetching details: {e}", file=sys.stderr)
 
+    # BLOCKING: Wait for everyone before returning the initial prompt
+    wait_msg = engine.wait_for_all_agents(name)
+    if wait_msg.startswith("TIMEOUT"):
+         return wait_msg
+
     template = jinja_env.get_template("agent_response.j2")
     return template.render(
         name=name,

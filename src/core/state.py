@@ -5,7 +5,10 @@ import uuid
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
 
-STATE_FILE = "state.json"
+# Resolve absolute path to state.json to ensure all processes (Streamlit, MCP Server)
+# view the same file regardless of their Current Working Directory.
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+STATE_FILE = os.path.join(PROJECT_ROOT, "state.json")
 
 @dataclass
 class StateStore:
