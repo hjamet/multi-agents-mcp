@@ -51,23 +51,38 @@ Nous implémentons une stratégie de **Smart Blocking** :
 
 ### 🏁 Phase 1 : Validation Technique (Timeout)
 > **Objectif** : Prouver qu'on peut faire attendre un agent indéfiniment via la boucle de rappel.
-- [ ] Création du serveur minimal avec outil `wait(seconds)`.
-- [ ] Tests de limites avec Antigravity (10s, 60s, 300s...).
-- [ ] Validation de la config `mcp_config.json`.
+- [x] Création du serveur minimal avec outil `wait(seconds)`.
+- [x] Tests de limites avec Antigravity (10s, 60s, 300s...).
+- [x] Validation de la config `mcp_config.json`.
 
 ### 🧩 Phase 2 : Core Implementation
-- [ ] Implémentation de la State Machine (Qui parle ?).
-- [ ] Outils `talk` (post message) et `handshake` (get role).
-- [ ] Persistance JSON robuste (File Locking).
+- [x] Implémentation de la State Machine (Qui parle ?).
+- [x] Outils `talk` (post message) et `handshake` (get role).
+- [x] Persistance JSON robuste (File Locking).
 
 ### 🖥️ Phase 3 : Streamlit Interface
-- [ ] Visualisation du Chat.
-- [ ] Éditeur de Prompts & Rôles.
-- [ ] Injection de messages utilisateur (Mode "User").
+- [x] Visualisation du Chat.
+- [x] Éditeur de Prompts & Rôles (Agent Cards).
+- [x] Bouton Reset & Gestion de Simulation.
 
 ### 📦 Phase 4 : Packaging & DX
 - [ ] Script d'installation universel.
 - [ ] Règles `.agent/rules/` pour auto-configuration des agents.
+
+---
+
+## 🚀 Lancer l'Interface
+
+Pour configurer vos agents et suivre la conversation :
+
+```bash
+streamlit run src/interface/app.py
+```
+
+1.  **Tab Configuration** : Définissez le Contexte Global et ajoutez des Agents (Cartes).
+2.  Cliquez sur **Save Config**.
+3.  Connectez vos agents (ils s'enregistreront automatiquement s'ils correspondent aux noms définis, ex: `Werewolf_1`).
+4.  Utilisez le bouton **RESET CONVERSATION** pour redémarrer une simulation propre.
 
 ---
 

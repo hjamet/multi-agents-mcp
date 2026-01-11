@@ -1,0 +1,12 @@
+{
+  "messages": [],
+  "conversation_id": "dd9b8e48-3bbc-48e4-8df9-5e19927b0208",
+  "turn": {
+    "current": null,
+    "next": null
+  },
+  "agents": {},
+  "config": {
+    "total_agents": 2
+  }
+}

@@ -1,6 +1,7 @@
 import json
 import os
 import portalocker
+import uuid
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
 
@@ -17,6 +18,7 @@ class StateStore:
         if not os.path.exists(self.file_path):
             initial_state = {
                 "messages": [],
+                "conversation_id": str(uuid.uuid4()), # Track conversation life-cycle for resets
                 "turn": {"current": None, "next": None},
                 "agents": {}, # agent_name -> {role: str, status: str}
                 "config": {"total_agents": 2} # Default, can be overridden

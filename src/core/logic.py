@@ -62,8 +62,10 @@ class Engine:
             
             if info["ready"]:
                 # Build context
+                context = config.get("context", "")
                 other_agents = ", ".join(info["other_agents"])
                 return (
+                    f"CONTEXT: {context}\n\n"
                     f"You are {name}. Role: {info['role']}.\n"
                     f"Network is READY. Connected agents: {len(info['other_agents']) + 1}/{info['total_required']}.\n"
                     f"Peers: {other_agents}.\n"
@@ -101,16 +103,32 @@ class Engine:
     def wait_for_turn(self, agent_name: str, timeout_seconds: int = 60) -> Dict[str, Any]:
         """
         Blocks until it is this agent's turn.
-        Returns dict with keys: 'status' (success/timeout), 'messages' (list), 'instructions' (str).
+        Returns dict with keys: 'status' (success/timeout/reset), 'messages' (list), 'instruction' (str).
         """
         start_time = time.time()
         
+        # 0. Capture current conversation ID to detect resets
+        try:
+            initial_state = self.state.load()
+            current_conversation_id = initial_state.get("conversation_id")
+        except Exception:
+            current_conversation_id = None
+
         while time.time() - start_time < timeout_seconds:
             try:
                 data = self.state.load()
             except Exception:
                 time.sleep(1)
                 continue
+            
+            # 1. Check for RESET
+            new_conversation_id = data.get("conversation_id")
+            if current_conversation_id and new_conversation_id != current_conversation_id:
+                return {
+                    "status": "reset",
+                    "messages": [],
+                    "instruction": "SYSTEM RESET: THe conversation has been reset by the user. Forget everything. Re-read your Role and Context."
+                }
                 
             current_turn = data.get("turn", {}).get("current")
             
@@ -135,13 +153,6 @@ class Engine:
                 return {
                     "status": "success",
                     "messages": visible_messages[-10:], # Return last 10 relevant messages
-                    "instruction": "It is your turn. Speak."
-                }
-                
-                # Return raw messages for now, filter in server or here if schema updated.
-                return {
-                    "status": "success",
-                    "messages": messages[-10:], # Return last 10 for context
                     "instruction": "It is your turn. Speak."
                 }
             

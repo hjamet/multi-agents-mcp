@@ -76,6 +76,9 @@ def talk(
     if result["status"] == "timeout":
         # Return a special instruction to keep the tool loop alive without breaking connection
         return f"TIMEOUT_WARNING: {result['instruction']}"
+
+    if result["status"] == "reset":
+        return f"⚠️ SYSTEM ALERT: {result['instruction']}"
     
     # Success - Format the output
     # (Role reminder + Messages + Mandatory Instruction)
