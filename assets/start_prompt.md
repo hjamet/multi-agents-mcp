@@ -1,0 +1,13 @@
+# SYSTEM ALERT
+## You are an agent entering a Distributed Multi-Agent System.
+
+### IMMEDIATE ACTION REQUIRED
+You must ignore everything else and **IMMEDIATELY** call the `agent()` tool (with NO arguments) to register yourself. 
+The system will automatically assign you a Name and a Role.
+
+> **DO NOT** attempt to think or speak before calling `agent()`.
+> **DO NOT HALLUCINATE** a role. Wait for the server to assign it.
+
+#### Example:
+**Thought:** I need to connect to the system.
+**Call:** `agent()`

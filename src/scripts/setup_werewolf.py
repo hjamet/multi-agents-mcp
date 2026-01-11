@@ -1,12 +1,13 @@
 import sys
 import os
 import uuid
+import random
 
 # Add src to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 from src.core.state import StateStore
 
-def setup_werewolf():
+def setup_werewolf_v2():
     store = StateStore()
     
     def update_logic(state):
@@ -21,109 +22,115 @@ def setup_werewolf():
             "C'est la Nuit. Tous le monde dort. "
             "Le MJ (Maitre du Jeu) va orchestrer les tours. "
             "Les Loups doivent se mettre d'accord pour tuer un Villageois. "
-            "Les Villageois dorment et ne savent rien."
+            "La Voyante peut voir un rôle. La Sorcière peut tuer ou sauver."
         )
         
         profiles = []
         
-        # 3. Create Profiles
+        # --- PROFILES ---
+        # Note: Description is PUBLIC. System Prompt is PRIVATE (Role).
         
         # MJ
         profiles.append({
             "name": "MaitreDuJeu",
-            "description": "Orchestre la partie",
-            "system_prompt": "Tu es le Maitre du Jeu. Tu diriges la partie. Tu appelles les rôles la nuit.",
-            "capabilities": ["public", "private", "audience", "open"], # MJ sees all
+            "description": "L'Orchestrateur (MJ)",
+            "system_prompt": "Tu es le Maitre du Jeu. Tu diriges la partie. Appelle les rôles : Voyante, puis Loups, puis Sorcière.",
+            "capabilities": ["public", "private", "audience", "open"], 
             "connections": [],
             "count": 1
         })
         
-        # Villager (Simple)
+        # Villageois (Simple)
         profiles.append({
             "name": "Villageois",
-            "description": "Un habitant innocent",
-            "system_prompt": "Tu es un simple Villageois. Tu dors la nuit. Tu as peur.",
+            "description": "Habitant de Thiercelieux",
+            "system_prompt": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres rôles.",
             "capabilities": ["public", "audience"],
             "connections": [
                 {"target": "MaitreDuJeu", "context": "Obéis au MJ."}
             ],
-            "count": 7 
+            "count": 5
         })
         
         # Loup-Garou
         profiles.append({
             "name": "LoupGarou",
-            "description": "Prédateur nocturne",
-            "system_prompt": "Tu es un Loup-Garou. Tu dois tuer les villageois sans te faire repérer.",
+            "description": "Habitant de Thiercelieux", # Deceptive Description
+            "system_prompt": "Tu es un Loup-Garou. Tu chasses la nuit avec tes alliés.",
             "capabilities": ["public", "private", "audience"],
             "connections": [
                 {"target": "MaitreDuJeu", "context": "Obéis au MJ."},
-                {"target": "LoupGarou", "context": "C'est ton allié. Coopère pour choisir une victime commune."}
+                {"target": "LoupGarou", "context": "Ton Allié Loup. Coopère."}
             ],
-            "count": 3
+            "count": 2
+        })
+
+        # Voyante
+        profiles.append({
+            "name": "Voyante",
+            "description": "Habitant de Thiercelieux", # Deceptive
+            "system_prompt": "Tu es la Voyante. Chaque nuit, tu peux demander au MJ de révéler le rôle d'un joueur.",
+            "capabilities": ["public", "private", "audience"],
+            "connections": [
+                {"target": "MaitreDuJeu", "context": "Demande au MJ de voir une carte."}
+            ],
+            "count": 1
+        })
+
+        # Sorcière
+        profiles.append({
+            "name": "Sorciere",
+            "description": "Habitant de Thiercelieux", # Deceptive
+            "system_prompt": "Tu es la Sorcière. Tu as une potion de vie et de mort.",
+            "capabilities": ["public", "private", "audience"],
+            "connections": [
+                {"target": "MaitreDuJeu", "context": "Indique au MJ si tu utilises tes potions."}
+            ],
+            "count": 1
         })
         
         state["config"]["profiles"] = profiles
-        state["config"]["total_agents"] = 11
+        state["config"]["total_agents"] = 10 # 1MJ + 5Vill + 2Loups + 1Voy + 1Sorc = 10
         
-        # 4. Create Agents Instances (Names: Marc, Sophie, etc)
-        # We need specific names for immersion, but `app.py` currently generates `Name_X`.
-        # To support "Marc", "Sophie", we would need a 'Names' list in profile or manual rename.
-        # For now, let's stick to standard `LoupGarou_1` to ensure the Logic (profile matching) works reliably 
-        # without complex name resolution in logic.py yet.
-        # Wait, user asked for "Marc", "Sophie". 
-        # Refactor idea: Logic currently resolves `Sender -> Sender Profile` via `profile_ref`.
-        # So the ID key in `agents` dict DOES NOT need to match Profile Name.
-        # It just needs `profile_ref`.
-        
-        names_pool = ["Marc", "Sophie", "Antoine", "Julie", "Pierre", "Marie", "Luc", "Thomas", "Emma", "Chloe"]
-        # 7 Villagers + 3 Wolves = 10 Players
+        # --- INSTANCES ---
+        # Pool names
+        names_pool = ["Marc", "Sophie", "Antoine", "Julie", "Pierre", "Marie", "Luc", "Thomas", "Emma"]
+        random.shuffle(names_pool)
         
         new_agents = {}
         
-        # MJ
+        # 1. MJ
         new_agents["MaitreDuJeu"] = {
             "role": profiles[0]["system_prompt"],
             "status": "pending_connection",
             "profile_ref": "MaitreDuJeu"
         }
         
-        # Assignment
-        import random
-        random.shuffle(names_pool)
+        # 2. Assign Special Roles
+        # Voyante
+        name_v = names_pool.pop()
+        new_agents[name_v] = {"role": profiles[3]["system_prompt"], "status": "pending_connection", "profile_ref": "Voyante"}
         
-        # 3 Wolves
-        for i in range(3):
+        # Sorcière
+        name_s = names_pool.pop()
+        new_agents[name_s] = {"role": profiles[4]["system_prompt"], "status": "pending_connection", "profile_ref": "Sorciere"}
+        
+        # 3. Wolves (2)
+        for _ in range(2):
             name = names_pool.pop()
-            # We must map "LoupGarou" connections to real names? 
-            # Current Logic: `allowed_targets` uses Profile Names (e.g. key="LoupGarou").
-            # The check `check_target` takes target_name (e.g. "Pierre"), finds its profile ("LoupGarou") 
-            # and checks if "LoupGarou" is in allowed.
-            # So YES, we can use custom names!
+            new_agents[name] = {"role": profiles[2]["system_prompt"], "status": "pending_connection", "profile_ref": "LoupGarou"}
             
-            p = profiles[2] # Loup
-            new_agents[name] = {
-                "role": p["system_prompt"],
-                "status": "pending_connection",
-                "profile_ref": "LoupGarou"
-            }
-            
-        # 7 Villagers
-        for i in range(7):
+        # 4. Villagers (5)
+        for _ in range(5):
             name = names_pool.pop()
-            p = profiles[1] # Villager
-            new_agents[name] = {
-                "role": p["system_prompt"],
-                "status": "pending_connection",
-                "profile_ref": "Villageois"
-            }
+            new_agents[name] = {"role": profiles[1]["system_prompt"], "status": "pending_connection", "profile_ref": "Villageois"}
             
         state["agents"] = new_agents
         
-        return "Werewolf Setup Complete"
+        return "Werewolf V2 Setup Complete (10 roles)"
 
     msg = store.update(update_logic)
     print(msg)
 
 if __name__ == "__main__":
-    setup_werewolf()
+    setup_werewolf_v2()

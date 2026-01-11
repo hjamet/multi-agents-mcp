@@ -212,12 +212,26 @@ if st.session_state.page == "Editor":
             st.divider()
             
             if st.button("💾 Save Profile", type="primary", disabled=not new_caps, key=f"save_btn_{k_suffix}"):
+                old_name = current_profile.get("name")
+                
                 # Update object
                 current_profile["name"] = new_name
                 current_profile["description"] = new_desc
                 current_profile["system_prompt"] = new_prompt
                 current_profile["connections"] = connections
                 current_profile["capabilities"] = new_caps
+                
+                # SMART RENAMING LOGIC
+                if not new_mode and old_name and new_name != old_name:
+                    # Rename references in other profiles
+                    count_migrations = 0
+                    for p in profiles:
+                        for conn in p.get("connections", []):
+                            if conn.get("target") == old_name:
+                                conn["target"] = new_name
+                                count_migrations += 1
+                    if count_migrations > 0:
+                        st.toast(f"Smart Rename: Updated {count_migrations} connections pointing to '{old_name}' -> '{new_name}'", icon="🔄")
                 
                 if new_mode:
                     profiles.append(current_profile)
@@ -332,7 +346,10 @@ elif st.session_state.page == "Cockpit":
                 p_count = int(p.get("count", 0))
                 # Store prompt base here, but logic.py will do the rest
                 for k in range(1, p_count + 1):
-                    agent_id = f"{p_name}_{k}"
+                    # Use ' #N' format instead of '_N' for cleaner UI
+                    suffix = f" #{k}" if p_count > 1 else ""
+                    agent_id = f"{p_name}{suffix}" 
+                    
                     new_agents[agent_id] = {
                         "role": p.get("system_prompt", ""), 
                         "status": "pending_connection",

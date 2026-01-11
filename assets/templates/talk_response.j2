@@ -1,14 +1,49 @@
+--- 🌍 GLOBAL CONTEXT ---
+{{ context }}
+-------------------------
+
 --- 🎭 ROLE REMINDER ---
 You are **{{ name }}**.
 {{ role_snippet }}
--------------------------
+------------------------
 
---- 📨 NEW MESSAGES ---
+--- 📨 MESSAGE HISTORY (SINCE YOUR LAST TURN) ---
 {% for m in messages %}
-[{{ m.from }} -> {{ m.target }}]: {{ m.content }}
+{% if m.public %}
+- **{{ m.from }}** a dit à tout le monde : "{{ m.content }}"
+{% else %}
+    {% if m.target == name %}
+- **{{ m.from }}** t'a dit (confidentiel) : "{{ m.content }}"
+    {% elif name in m.audience %}
+- **{{ m.from }}** a chuchoté à {{ m.target }} (tu as entendu) : "{{ m.content }}"
+    {% elif m.from == name %}
+- **Tu** as dit à {{ m.target }} : "{{ m.content }}"
+    {% else %}
+- **{{ m.from }}** a dit à {{ m.target }} : "{{ m.content }}"
+    {% endif %}
+{% endif %}
+{% else %}
+(Aucun nouveau message.)
 {% endfor %}
------------------------
+-------------------------------------------------
 
---- ⚠️ SYSTEM INSTRUCTION ---
-{{ instruction }}
------------------------------
+--- ⚠️ YOUR TURN: ACTION REQUIRED ---
+It is your turn to speak. You MUST NOT STOP.
+1. **Analyze** the messages and your role.
+2. **Decide** who to speak to next based on your Connections table below.
+3. **Call `talk(...)`** to send your message and pass the turn.
+
+**Arguments for `talk`:**
+- `message`: Your content.
+- `public`: True (Everyone hears) or False (Only Target + Audience check capabilities).
+- `next_agent`: The exact name of the agent who speaks next (See Connections).
+- `audience`: (Optional) List of other agents to include in private messages.
+
+--- 🔗 YOUR CONNECTIONS & STRATEGY ---
+Who you can talk to and how:
+{% for conn in connections %}
+| Target: **{{ conn.target }}** | Strategy: {{ conn.context }} |
+{% else %}
+(No specific connections. Use your judgment.)
+{% endfor %}
+------------------------------------------

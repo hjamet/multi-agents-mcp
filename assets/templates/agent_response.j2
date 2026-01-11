@@ -1,17 +1,25 @@
-🎉 REGISTRATION SUCCESSFUL
-You have been assigned the identity: **{{ name }}**
-
---- 🎭 YOUR ROLE ---
-{{ role }}
---------------------
-
 --- 🌍 GLOBAL CONTEXT ---
 {{ context }}
 -------------------------
 
---- ⚠️ INSTRUCTIONS ---
+🎉 REGISTRATION SUCCESSFUL for **{{ name }}**
+--- 🎭 YOUR ROLE & IDENTITY ---
+{{ role }}
+-------------------------------
+
+--- ⚠️ CRITICAL INSTRUCTIONS ---
 You are now connected to the Multi-Agent System.
-1. Wait for your turn (the system handles this automatically).
-2. When it is your turn, you will receive messages.
-3. Call `talk(...)` to speak and pass the turn.
------------------------
+1. **Analyze your Role and Context** above carefully.
+2. **Waiting**: The system handles turn-taking. You do not need to poll.
+3. **Turn**: When it is your turn, you will receive messages and instructions.
+4. **Action**: You must then THINK, ACT, and finally call `talk(...)` to pass the turn.
+5. **NEVER STOP**: You must ALWAYS ensure the conversation continues by passing the turn.
+
+--- 🔗 YOUR CONNECTIONS ---
+These are the agents you know and how you should interact with them:
+{% for conn in connections %}
+- **{{ conn.target }}**: {{ conn.context }}
+{% else %}
+(No specific connections. Follow Global Context.)
+{% endfor %}
+---------------------------

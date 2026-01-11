@@ -47,11 +47,25 @@ def agent() -> str:
     name = result["name"]
     SESSION_AGENT_NAME = name
     
+    # Fetch additional details for the template (Connections)
+    connections = []
+    try:
+        data = engine.state.load()
+        agent_info = data["agents"].get(name, {})
+        profile_ref = agent_info.get("profile_ref")
+        profiles = data.get("config", {}).get("profiles", [])
+        profile = next((p for p in profiles if p["name"] == profile_ref), None)
+        if profile:
+            connections = profile.get("connections", [])
+    except Exception as e:
+        print(f"Error fetching details: {e}", file=sys.stderr)
+
     template = jinja_env.get_template("agent_response.j2")
     return template.render(
         name=name,
         role=result["role"],
-        context=result["context"]
+        context=result["context"],
+        connections=connections
     )
 
 @mcp.tool()
@@ -72,7 +86,7 @@ def talk(
     Args:
         message: The content to speak.
         public: true for everyone to see, false for private.
-        next_agent: The name of the agent who should speak next.
+        next_agent: The name of the agent who should speak next. (From your connections)
         audience: (Optional) List of other agents who can see a private message.
         my_name: (Optional) Your own name. Defaults to name set in agent() if using same connection.
     """
@@ -106,12 +120,25 @@ def talk(
         return f"⚠️ SYSTEM ALERT: {result['instruction']}"
     
     # Success - Render Template
-    # Fetch Role Snippet (Optional but nice)
+    # Fetch Data
     role_snippet = "(Unknown Role)"
+    global_context = ""
+    connections = []
+    
     try:
         data = engine.state.load()
+        # Role
         role_snippet = data["agents"][sender]["role"]
-        # Truncate if too long? No, context is good.
+        # Context
+        global_context = data.get("config", {}).get("context", "")
+        # Connections
+        agent_info = data["agents"][sender]
+        profile_ref = agent_info.get("profile_ref")
+        profiles = data.get("config", {}).get("profiles", [])
+        profile = next((p for p in profiles if p["name"] == profile_ref), None)
+        if profile:
+            connections = profile.get("connections", [])
+            
     except:
         pass
 
@@ -119,6 +146,8 @@ def talk(
     return template.render(
         name=sender,
         role_snippet=role_snippet,
+        context=global_context,
+        connections=connections,
         messages=result["messages"],
         instruction=result["instruction"]
     )
