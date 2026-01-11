@@ -94,32 +94,21 @@ if "page" not in st.session_state:
 with st.sidebar:
     st.title("🤖 Orchestra")
     
-    # Navigation Buttons
-    c1, c2, c3 = st.columns(3)
-    if st.button("🎛️", help="Cockpit"):
+    st.markdown("### Navigation")
+    
+    # Navigation Buttons (Full Width)
+    if st.button("🎛️ Simulation Cockpit", use_container_width=True):
         st.session_state.page = "Cockpit"
         st.rerun()
-    if st.button("🛠️", help="Editor"):
+    if st.button("🛠️ Agent Editor", use_container_width=True):
         st.session_state.page = "Editor"
         st.rerun()
-    if st.button("💬", help="Chat"):
+    if st.button("💬 Live Chat", use_container_width=True):
         st.session_state.page = "Chat"
         st.rerun()
     
-    st.markdown(f"**Current**: {st.session_state.page}")
-    
     st.divider()
-    
-    # Graph Viz
-    st.caption("Network Topology")
-    state, config = load_config()
-    profiles = config.get("profiles", [])
-    
-    # Determine if we are editing someone to highlight
-    editing_name = st.session_state.get("editing_agent_name")
-    
-    viz = render_graph(profiles, editing_name if st.session_state.page == "Editor" else None)
-    st.graphviz_chart(viz, use_container_width=True)
+    st.caption(f"Current Mode: **{st.session_state.page}**")
 
 
 # --- PAGE 1: AGENT EDITOR ---
@@ -128,6 +117,13 @@ if st.session_state.page == "Editor":
     
     state, config = load_config()
     profiles = config.get("profiles", [])
+    
+    # Top Visualizer
+    with st.expander("🕸️ Network Topology (Graph)", expanded=False):
+        viz = render_graph(profiles, st.session_state.get("editing_agent_name"))
+        st.graphviz_chart(viz, use_container_width=True)
+    
+    st.divider()
     
     # 1. Select Profile to Edit
     profile_names = [p["name"] for p in profiles]
@@ -224,6 +220,9 @@ if st.session_state.page == "Editor":
                 if new_mode:
                     profiles.append(current_profile)
                 
+                # Check for Rename duplications in 'profiles' list logic (basic ref replacement)
+                # Ideally we replace the old object ref in list, which we did.
+                
                 save_config(config)
                 st.toast("Profile Saved!", icon="✅")
                 time.sleep(0.5)
@@ -237,9 +236,47 @@ elif st.session_state.page == "Cockpit":
     state, config = load_config()
     profiles = config.get("profiles", [])
     
+    # Check Preset Dir
+    preset_dir = os.path.join("assets", "presets")
+    if not os.path.exists(preset_dir):
+        os.makedirs(preset_dir, exist_ok=True)
+        
+    # Top Visualizer
+    with st.expander("🕸️ Network Topology (Graph)", expanded=False):
+        viz = render_graph(profiles)
+        st.graphviz_chart(viz, use_container_width=True)
+    
+    # 0. Scenario Manager
+    with st.expander("💾 Scenario / Preset Manager", expanded=False):
+        # Save
+        c_save, c_load = st.columns(2)
+        save_name = c_save.text_input("Save As (name)")
+        if c_save.button("Save Current Config"):
+            if save_name:
+                path = os.path.join(preset_dir, f"{save_name}.json")
+                with open(path, "w") as f:
+                    json.dump(config, f, indent=2)
+                st.success(f"Saved to {path}")
+        
+        # Load
+        presets = [f for f in os.listdir(preset_dir) if f.endswith(".json")]
+        selected_preset = c_load.selectbox("Load Preset", presets) if presets else None
+        if c_load.button("Load Preset") and selected_preset:
+            path = os.path.join(preset_dir, selected_preset)
+            with open(path, "r") as f:
+                new_conf = json.load(f)
+            config = new_conf # Update local var
+            save_config(new_conf) # Push to state
+            st.success(f"Loaded {selected_preset}")
+            time.sleep(0.5)
+            st.rerun()
+    
+    st.divider()
+
     # Context
-    with st.expander("🌍 Global Simulation Context", expanded=True):
-        global_context = st.text_area("Shared Scenario", config.get("context", ""), height=80, label_visibility="collapsed")
+    st.markdown("##### 🌍 Global Simulation Context")
+    global_context = st.text_area("Shared Scenario", config.get("context", ""), height=80, label_visibility="collapsed")
+    if global_context != config.get("context", ""):
         if st.button("Update Context"):
             config["context"] = global_context
             save_config(config)

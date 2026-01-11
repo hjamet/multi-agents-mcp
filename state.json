@@ -1,52 +1,121 @@
 {
   "messages": [],
-  "conversation_id": "c97917e3-f4d2-4290-8456-afe4a56fa9b3",
+  "conversation_id": "3ae940cc-fd67-401e-a99e-c020a2ab1097",
   "turn": {
     "current": null,
     "next": null
   },
   "agents": {
-    "Thomas_1": {
-      "role": "Tu es quelqu'un d'adorable, toujours l\u00e0 pour aider.",
+    "MaitreDuJeu": {
+      "role": "Tu es le Maitre du Jeu. Tu diriges la partie. Tu appelles les r\u00f4les la nuit.",
       "status": "pending_connection",
-      "profile_ref": "Thomas"
+      "profile_ref": "MaitreDuJeu"
     },
-    "Marc_1": {
-      "role": "Tu es une IA detestable, toujours insupportable pour les autres. Tu passses ta vie \u00e0 te pleindre.",
+    "Marie": {
+      "role": "Tu es un Loup-Garou. Tu dois tuer les villageois sans te faire rep\u00e9rer.",
       "status": "pending_connection",
-      "profile_ref": "Marc"
+      "profile_ref": "LoupGarou"
     },
-    "Helena_1": {
-      "role": "Tu une manipulatrice finie. Tu veux manipuler Thomas afin de le rendre detestable et Marc afin de le rendre adorable",
+    "Sophie": {
+      "role": "Tu es un Loup-Garou. Tu dois tuer les villageois sans te faire rep\u00e9rer.",
       "status": "pending_connection",
-      "profile_ref": "Helena"
+      "profile_ref": "LoupGarou"
+    },
+    "Julie": {
+      "role": "Tu es un Loup-Garou. Tu dois tuer les villageois sans te faire rep\u00e9rer.",
+      "status": "pending_connection",
+      "profile_ref": "LoupGarou"
+    },
+    "Antoine": {
+      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu as peur.",
+      "status": "pending_connection",
+      "profile_ref": "Villageois"
+    },
+    "Marc": {
+      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu as peur.",
+      "status": "pending_connection",
+      "profile_ref": "Villageois"
+    },
+    "Emma": {
+      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu as peur.",
+      "status": "pending_connection",
+      "profile_ref": "Villageois"
+    },
+    "Thomas": {
+      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu as peur.",
+      "status": "pending_connection",
+      "profile_ref": "Villageois"
+    },
+    "Luc": {
+      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu as peur.",
+      "status": "pending_connection",
+      "profile_ref": "Villageois"
+    },
+    "Chloe": {
+      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu as peur.",
+      "status": "pending_connection",
+      "profile_ref": "Villageois"
+    },
+    "Pierre": {
+      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu as peur.",
+      "status": "pending_connection",
+      "profile_ref": "Villageois"
     }
   },
   "config": {
-    "total_agents": 3,
+    "total_agents": 11,
     "profiles": [
       {
-        "name": "Thomas",
-        "description": "Une IA sympa",
-        "system_prompt": "Tu es quelqu'un d'adorable, toujours l\u00e0 pour aider.",
+        "name": "MaitreDuJeu",
+        "description": "Orchestre la partie",
+        "system_prompt": "Tu es le Maitre du Jeu. Tu diriges la partie. Tu appelles les r\u00f4les la nuit.",
+        "capabilities": [
+          "public",
+          "private",
+          "audience",
+          "open"
+        ],
         "connections": [],
         "count": 1
       },
       {
-        "name": "Marc",
-        "description": "Une IA d\u00e9testable",
-        "system_prompt": "Tu es une IA detestable, toujours insupportable pour les autres. Tu passses ta vie \u00e0 te pleindre.",
-        "connections": [],
-        "count": 1
+        "name": "Villageois",
+        "description": "Un habitant innocent",
+        "system_prompt": "Tu es un simple Villageois. Tu dors la nuit. Tu as peur.",
+        "capabilities": [
+          "public",
+          "audience"
+        ],
+        "connections": [
+          {
+            "target": "MaitreDuJeu",
+            "context": "Ob\u00e9is au MJ."
+          }
+        ],
+        "count": 7
       },
       {
-        "name": "Helena",
-        "description": "Une IA comme une autre",
-        "system_prompt": "Tu une manipulatrice finie. Tu veux manipuler Thomas afin de le rendre detestable et Marc afin de le rendre adorable",
-        "connections": [],
-        "count": 1
+        "name": "LoupGarou",
+        "description": "Pr\u00e9dateur nocturne",
+        "system_prompt": "Tu es un Loup-Garou. Tu dois tuer les villageois sans te faire rep\u00e9rer.",
+        "capabilities": [
+          "public",
+          "private",
+          "audience"
+        ],
+        "connections": [
+          {
+            "target": "MaitreDuJeu",
+            "context": "Ob\u00e9is au MJ."
+          },
+          {
+            "target": "LoupGarou",
+            "context": "C'est ton alli\u00e9. Coop\u00e8re pour choisir une victime commune."
+          }
+        ],
+        "count": 3
       }
     ],
-    "context": "Vous \u00eates des IA discuttant dans une pi\u00e8ce. Interdition d'utiliser d'autres outils que talk. N'excluez personne de la conversation !"
+    "context": "Nous jouons au Loup-Garou de Thiercelieux. C'est la Nuit. Tous le monde dort. Le MJ (Maitre du Jeu) va orchestrer les tours. Les Loups doivent se mettre d'accord pour tuer un Villageois. Les Villageois dorment et ne savent rien."
   }
 }
