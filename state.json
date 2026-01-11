@@ -1,6 +1,6 @@
 {
   "messages": [],
-  "conversation_id": "367e34fb-6890-4467-9392-96b0d5487127",
+  "conversation_id": "3bc19e5c-c1f4-462d-92fe-1a1c89ca0751",
   "turn": {
     "current": null,
     "next": null
@@ -11,15 +11,10 @@
       "status": "pending_connection",
       "profile_ref": "Villageois"
     },
-    "MaitreDuJeu": {
-      "role": "Tu es le Maitre du Jeu. Tu diriges la partie. Appelle les r\u00f4les : Voyante, puis Loups, puis Sorci\u00e8re. Fais attention \u00e0 ne jamais divulger des infos aux mauvaises personnes !",
-      "status": "pending_connection",
-      "profile_ref": "MaitreDuJeu"
-    },
     "Habitant de Thiercelieux #2": {
-      "role": "Tu es un Loup-Garou. Tu chasses la nuit avec tes alli\u00e9s.",
+      "role": "Tu es la Sorci\u00e8re. Tu as une potion de vie et de mort.",
       "status": "pending_connection",
-      "profile_ref": "LoupGarou"
+      "profile_ref": "Sorciere"
     },
     "Habitant de Thiercelieux #3": {
       "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.",
@@ -27,14 +22,14 @@
       "profile_ref": "Villageois"
     },
     "Habitant de Thiercelieux #4": {
-      "role": "Tu es la Sorci\u00e8re. Tu as une potion de vie et de mort.",
+      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.",
       "status": "pending_connection",
-      "profile_ref": "Sorciere"
+      "profile_ref": "Villageois"
     },
     "Habitant de Thiercelieux #5": {
-      "role": "Tu es la Voyante. Chaque nuit, tu peux demander au MJ de r\u00e9v\u00e9ler le r\u00f4le d'un joueur.",
+      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.",
       "status": "pending_connection",
-      "profile_ref": "Voyante"
+      "profile_ref": "Villageois"
     },
     "Habitant de Thiercelieux #6": {
       "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.",
@@ -42,19 +37,24 @@
       "profile_ref": "Villageois"
     },
     "Habitant de Thiercelieux #7": {
-      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.",
+      "role": "Tu es la Voyante. Chaque nuit, tu peux demander au MJ de r\u00e9v\u00e9ler le r\u00f4le d'un joueur.",
       "status": "pending_connection",
-      "profile_ref": "Villageois"
+      "profile_ref": "Voyante"
     },
     "Habitant de Thiercelieux #8": {
       "role": "Tu es un Loup-Garou. Tu chasses la nuit avec tes alli\u00e9s.",
       "status": "pending_connection",
       "profile_ref": "LoupGarou"
     },
-    "Habitant de Thiercelieux #9": {
-      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.",
+    "MaitreDuJeu": {
+      "role": "Tu es le Maitre du Jeu. Tu diriges la partie. Appelle les r\u00f4les : Voyante, puis Loups, puis Sorci\u00e8re. Fais attention \u00e0 ne jamais divulger des infos aux mauvaises personnes !",
       "status": "pending_connection",
-      "profile_ref": "Villageois"
+      "profile_ref": "MaitreDuJeu"
+    },
+    "Habitant de Thiercelieux #9": {
+      "role": "Tu es un Loup-Garou. Tu chasses la nuit avec tes alli\u00e9s.",
+      "status": "pending_connection",
+      "profile_ref": "LoupGarou"
     }
   },
   "config": {

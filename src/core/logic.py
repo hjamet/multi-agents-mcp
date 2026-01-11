@@ -43,6 +43,18 @@ class Engine:
             # 2. Claim it
             agents[found_name]["status"] = "connected"
             
+            # 2b. Announce it (System Message)
+            # This fixes the "User sees nothing" bug
+            sys_msg = {
+                "from": "System",
+                "content": f"🔵 **{found_name}** has joined the simulation.",
+                "public": True,
+                "target": "all",
+                "audience": [],
+                "timestamp": time.time()
+            }
+            state.setdefault("messages", []).append(sys_msg)
+            
             # 3. Prepare Return Response
             config = state.get("config", {})
             result["name"] = found_name

@@ -60,12 +60,22 @@ class StateStore:
         self._initialize_if_missing()
         
         # Open with EXCLUSIVE lock
+        # Open with EXCLUSIVE lock
         with portalocker.Lock(self.file_path, 'r+', timeout=60) as f:
+            f.seek(0) # Ensure we are at the start
             content = f.read()
+            
             if not content:
-                state = {}
-            else:
+                # If file is empty but exists, this is a corruption risk.
+                # We should try to recover or fail safely.
+                # If it's a new file, _initialize_if_missing should have handled it.
+                # Let's assume initialized.
+                raise Exception("State file is empty during update. Locking/Initialization error.")
+            
+            try:
                 state = json.loads(content)
+            except json.JSONDecodeError:
+                 raise Exception("State file contains invalid JSON. Aborting update.")
             
             # Apply transformation
             result = callback(state)

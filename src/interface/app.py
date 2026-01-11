@@ -404,38 +404,142 @@ elif st.session_state.page == "Cockpit":
 
 # --- PAGE 3: LIVE CHAT ---
 elif st.session_state.page == "Chat":
-    st.header("💬 Live Frequency")
-    st_autorefresh(interval=2000, key="chatrefresh")
+    # 1. Header & Controls
+    col_head, col_act = st.columns([4, 1])
+    with col_head:
+        st.header("💬 Neural Link")
+    with col_act:
+        if st.button("🔄 Force Refresh"):
+            st.rerun()
+            
+    # Auto-refresh (keep interval reasonable)
+    st_autorefresh(interval=3000, key="chatrefresh")
     
     state, config = load_config()
     profiles = config.get("profiles", [])
     
-    # Top Visualizer (Added as requested)
-    with st.expander("🕸️ Network Topology (Graph)", expanded=False):
+    # 2. visualizers
+    with st.expander("🕸️ Network Topology", expanded=False):
         viz = render_graph(profiles)
         st.graphviz_chart(viz, use_container_width=True)
 
+    # 3. Load Live Data
+    # Important: Re-instantiate or explicitly load to bypass any object caching, though 'load' reads file.
     data = state_store.load()
     messages = data.get("messages", [])
     turn = data.get("turn", {})
     agents = data.get("agents", {})
     
-    # Metrics
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Speaker", turn.get("current", "None"))
-    c2.metric("Next", turn.get("next", "TBD"))
-    connected = sum(1 for a in agents.values() if a.get("status") == "connected")
-    c3.metric("Online", f"{connected}/{data.get('config', {}).get('total_agents', 0)}")
+    # 4. Mission Dashboard
+    connection_status = "🔴 OFFLINE"
+    connected_count = sum(1 for a in agents.values() if a.get("status") == "connected")
+    total_required = data.get('config', {}).get('total_agents', 0)
+    
+    if connected_count >= total_required and total_required > 0:
+        connection_status = "🟢 ONLINE"
+    elif connected_count > 0:
+        connection_status = "🟡 CONNECTING..."
+        
+    st.markdown("### 🛰️ Uplink Status")
+    
+    # Status Metrics
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Status", connection_status)
+    m2.metric("Connected", f"{connected_count}/{total_required}")
+    m3.metric("Current Speaker", turn.get("current", "None"))
+    m4.metric("Next Up", turn.get("next", "Wait..."))
+    
+    st.markdown("---")
+
+    # 5. Agent Cards
+    if not agents:
+        st.info("No agents configured. Go to Cockpit to start.")
+    else:
+        # Sort agents
+        agent_names = sorted(agents.keys())
+        
+        # We use a container to ensure this redraws cleanly
+        with st.container():
+            cols = st.columns(4)
+            for i, name in enumerate(agent_names):
+                col = cols[i % 4]
+                
+                info = agents[name]
+                status = info.get("status", "pending_connection")
+                role_text = info.get("role", "No Role Assigned")
+                # Truncate role for UI
+                role_excerpt = (role_text[:75] + '..') if len(role_text) > 75 else role_text
+                
+                # Visual Logic
+                is_turn = (turn.get("current") == name)
+                
+                # CSS Variables
+                # Default: Grey (Pending)
+                bg_color = "#f8f9fa"
+                border_color = "#dee2e6"
+                status_icon = "💤" 
+                status_label = "WAITING"
+                text_color = "#adb5bd"
+                box_shadow = "none"
+                opacity = "0.7"
+                
+                if status == "connected":
+                    opacity = "1.0"
+                    if is_turn:
+                        # Yellow/Gold (Thinking)
+                        bg_color = "#fff3cd"
+                        border_color = "#ffecb5"
+                        status_icon = "🗣️"
+                        status_label = "ACTIVE"
+                        text_color = "#856404"
+                        box_shadow = "0 4px 6px rgba(0,0,0,0.1)"
+                    else:
+                        # Green (Ready)
+                        bg_color = "#d1e7dd"
+                        border_color = "#badbcc"
+                        status_icon = "✅"
+                        status_label = "READY"
+                        text_color = "#0f5132"
+                
+                with col:
+                    st.markdown(f"""
+                    <div style="
+                        background-color: {bg_color};
+                        border: 1px solid {border_color};
+                        border-radius: 6px;
+                        padding: 12px;
+                        margin-bottom: 12px;
+                        height: 120px;
+                        box-shadow: {box_shadow};
+                        opacity: {opacity};
+                        display: flex; flex-direction: column; justify-content: space-between;
+                    ">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-weight:bold; color:#000;">{name}</span>
+                            <span style="font-size:1.2em;">{status_icon}</span>
+                        </div>
+                        <div style="font-size:0.75em; color:{text_color}; font-weight:800; letter-spacing:1px;">{status_label}</div>
+                        <div style="font-size:0.7em; color:#666; font-style:italic; line-height:1.2; overflow:hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                            {role_excerpt}
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
     
     st.divider()
+
+    # 6. Chat Stream
+    # Add a "System" filter?
     
     for m in messages:
         sender = m.get("from", "?")
         content = m.get("content", "")
-        # Styling based on sender
-        with st.chat_message(sender):
-            st.write(content)
-            meta = f"to {m.get('target', 'all')}"
-            if not m.get("public"): meta += " 🔒"
-            if m.get("audience"): meta += f" (+{len(m['audience'])})"
-            st.caption(meta)
+        
+        if sender == "System":
+             st.info(f"💾 **SYSTEM**: {content}")
+        else:
+            with st.chat_message(sender):
+                st.write(content)
+                meta = f"to {m.get('target', 'all')}"
+                if not m.get("public"): meta += " 🔒"
+                if m.get("audience"): meta += f" (+{len(m['audience'])})"
+                st.caption(meta)
