@@ -473,6 +473,12 @@ elif st.session_state.page == "Chat":
                 # Visual Logic
                 is_turn = (turn.get("current") == name)
                 
+                # Secret Identity Logic
+                profile_ref = info.get("profile_ref", "")
+                display_html = name
+                if profile_ref and profile_ref not in name:
+                     display_html += f"<br><span style='font-size:0.8em; font-weight:normal; color:#666'>({profile_ref})</span>"
+                
                 # CSS Variables
                 # Default: Grey (Pending)
                 bg_color = "#f8f9fa"
@@ -514,11 +520,11 @@ elif st.session_state.page == "Chat":
                         opacity: {opacity};
                         display: flex; flex-direction: column; justify-content: space-between;
                     ">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-weight:bold; color:#000;">{name}</span>
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <span style="font-weight:bold; color:#000; line-height:1.1;">{display_html}</span>
                             <span style="font-size:1.2em;">{status_icon}</span>
                         </div>
-                        <div style="font-size:0.75em; color:{text_color}; font-weight:800; letter-spacing:1px;">{status_label}</div>
+                        <div style="font-size:0.75em; color:{text_color}; font-weight:800; letter-spacing:1px; margin-top:4px;">{status_label}</div>
                         <div style="font-size:0.7em; color:#666; font-style:italic; line-height:1.2; overflow:hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
                             {role_excerpt}
                         </div>
@@ -539,7 +545,15 @@ elif st.session_state.page == "Chat":
         else:
             with st.chat_message(sender):
                 st.write(content)
-                meta = f"to {m.get('target', 'all')}"
+                
+                # Metadata
+                sender_info = agents.get(sender, {})
+                real_id = sender_info.get("profile_ref", "")
+                id_tag = ""
+                if real_id and real_id not in sender:
+                    id_tag = f"**({real_id})** • "
+                
+                meta = f"{id_tag}to {m.get('target', 'all')}"
                 if not m.get("public"): meta += " 🔒"
                 if m.get("audience"): meta += f" (+{len(m['audience'])})"
                 st.caption(meta)

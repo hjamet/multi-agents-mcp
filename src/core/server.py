@@ -31,7 +31,7 @@ jinja_env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
 SESSION_AGENT_NAME = None
 
 @mcp.tool()
-def agent() -> str:
+async def agent() -> str:
     """
     INITIALIZATION TOOL. Call this ONCE at the start.
     Assigns you a Role and Context automatically.
@@ -61,7 +61,7 @@ def agent() -> str:
         print(f"Error fetching details: {e}", file=sys.stderr)
 
     # BLOCKING: Wait for everyone before returning the initial prompt
-    wait_msg = engine.wait_for_all_agents(name)
+    wait_msg = await engine.wait_for_all_agents_async(name)
     if wait_msg.startswith("TIMEOUT"):
          return wait_msg
 
@@ -74,7 +74,7 @@ def agent() -> str:
     )
 
 @mcp.tool()
-def talk(
+async def talk(
     message: str,
     public: bool,
     next_agent: str,
@@ -115,7 +115,7 @@ def talk(
     
     # 2. Smart Block (Wait for Turn)
     # The turn has passed to next_agent. We now wait until it comes back to 'sender'.
-    result = engine.wait_for_turn(sender)
+    result = await engine.wait_for_turn_async(sender)
     
     if result["status"] == "timeout":
         # Return a special instruction to keep the tool loop alive without breaking connection

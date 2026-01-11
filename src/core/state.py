@@ -2,6 +2,9 @@ import json
 import os
 import portalocker
 import uuid
+import time
+import random
+import sys
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
 
@@ -17,74 +20,100 @@ class StateStore:
     """
     file_path: str = STATE_FILE
     
+    def __post_init__(self):
+        # Allow override via env var for testing
+        if os.environ.get("MULTI_AGENT_STATE_PATH"):
+            self.file_path = os.environ["MULTI_AGENT_STATE_PATH"]
+
     def _initialize_if_missing(self):
         if not os.path.exists(self.file_path):
             initial_state = {
                 "messages": [],
-                "conversation_id": str(uuid.uuid4()), # Track conversation life-cycle for resets
+                "conversation_id": str(uuid.uuid4()),
                 "turn": {"current": None, "next": None},
-                "agents": {}, # agent_name -> {role: str, status: str}
-                "config": {"total_agents": 2} # Default, can be overridden
+                "agents": {},
+                "config": {"total_agents": 2}
             }
+            # Use atomic write pattern with temp file if robust, but simple write is fine for init
             with open(self.file_path, "w") as f:
                 json.dump(initial_state, f, indent=2)
 
     def load(self) -> Dict[str, Any]:
         """
-        Reads the state from the file with a shared lock (implicit in some systems, 
-        but here we usually just read given we will likely write right after).
-        For simplicity and safety in this turn-based system, we'll use an exclusive lock 
-        even for reading if we plan to modify, but here we separate concerns.
-        
-        To avoid complex lock upgrades, we will rely on usage patterns:
-        - simple read (no lock needed if acceptable race condition, but better use lock)
-        - atomic update (lock, read, write, unlock)
+        Reads with Shared Lock (Non-blocking preference).
         """
         self._initialize_if_missing()
-        # For atomic operations, logic.py will usually handle the locking flow.
-        # But providing a raw read method:
+        
+        # Try-Loop for robustness
+        for i in range(5): # Increased retries
+            try:
+                # Use LOCK_SH | LOCK_NB to ensure we fail fast and retry if locked
+                flags = portalocker.LOCK_SH | portalocker.LOCK_NB
+                with portalocker.Lock(self.file_path, 'r', flags=flags) as f:
+                    content = f.read()
+                    if not content: return {}
+                    return json.loads(content)
+            except (portalocker.LockException, BlockingIOError, OSError):
+                # Using explicit backoff
+                time.sleep(random.uniform(0.05, 0.2))
+                continue
+            except json.JSONDecodeError:
+                return {}
+        
+        # Fallback: Just try reading without lock (dirty read)
+        # This prevents UI hang if someone died holding lock
         try:
-            with portalocker.Lock(self.file_path, 'r', timeout=10) as f:
+            with open(self.file_path, 'r') as f:
                 return json.load(f)
-        except Exception as e:
-            # Fallback or error handling
-            print(f"Error reading state: {e}")
-            return {}
+        except:
+             return {}
 
     def update(self, callback) -> Any:
         """
-        Atomically updates the state.
-        'callback' is a function that takes the current state (dict) and returns a value.
-        The state object passed to callback is mutable; modifications are saved.
+        Atomically updates the state with Exclusive Lock.
         """
         self._initialize_if_missing()
         
-        # Open with EXCLUSIVE lock
-        # Open with EXCLUSIVE lock
-        with portalocker.Lock(self.file_path, 'r+', timeout=60) as f:
-            f.seek(0) # Ensure we are at the start
-            content = f.read()
-            
-            if not content:
-                # If file is empty but exists, this is a corruption risk.
-                # We should try to recover or fail safely.
-                # If it's a new file, _initialize_if_missing should have handled it.
-                # Let's assume initialized.
-                raise Exception("State file is empty during update. Locking/Initialization error.")
-            
+        # Retry loop for acquiring write lock
+        # Increased to 50 to handle high contention during startup bursts
+        max_retries = 50 
+        for i in range(max_retries):
             try:
-                state = json.loads(content)
-            except json.JSONDecodeError:
-                 raise Exception("State file contains invalid JSON. Aborting update.")
-            
-            # Apply transformation
-            result = callback(state)
-            
-            # Write back
-            f.seek(0)
-            f.truncate()
-            json.dump(state, f, indent=2)
-            f.flush()
-            os.fsync(f.fileno()) # Ensure write to disk
-            
-            return result
+                # LOCK_EX | LOCK_NB
+                flags = portalocker.LOCK_EX | portalocker.LOCK_NB
+                
+                # 'r+' is needed to read then write.
+                with portalocker.Lock(self.file_path, 'r+', flags=flags) as f:
+                    f.seek(0)
+                    content = f.read()
+                    
+                    if not content:
+                         state = {}
+                    else:
+                        try:
+                            state = json.loads(content)
+                        except json.JSONDecodeError:
+                            # Critical failure or empty file
+                            state = {}
+                    
+                    # Apply transformation
+                    result = callback(state)
+                    
+                    # Write back
+                    f.seek(0)
+                    f.truncate()
+                    json.dump(state, f, indent=2)
+                    f.flush()
+                    os.fsync(f.fileno())
+                    
+                    return result
+            except (portalocker.LockException, BlockingIOError):
+                # Backoff
+                sleep_time = random.uniform(0.1, 0.5)
+                time.sleep(sleep_time)
+                continue
+            except Exception as e:
+                print(f"[StateStore] Update Error: {e}", file=sys.stderr)
+                raise e
+        
+        raise Exception("Failed to acquire state lock after multiple retries.")

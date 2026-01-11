@@ -1,4 +1,5 @@
 import time
+import asyncio
 from typing import Optional, List, Dict, Any
 from .state import StateStore
 
@@ -65,6 +66,10 @@ class Engine:
 
         self.state.update(_register)
         
+        # LOGGING
+        import sys
+        print(f"[Logic] Register result for '{result.get('name', '??')}': {result}", file=sys.stderr)
+        
         # If error was set inside update
         if "error" in result:
             return result
@@ -123,6 +128,32 @@ class Engine:
                 )
             
             time.sleep(2) # Polling interval
+        
+    async def wait_for_all_agents_async(self, name: str, timeout_seconds: int = 600) -> str:
+        """
+        Async version of wait_for_all_agents.
+        """
+        start_time = time.time()
+        while time.time() - start_time < timeout_seconds:
+            # Poll status (Sync load is fine as it uses LOCK_NB now)
+            info = self.get_network_status(name)
+            
+            if info.get("error"):
+                return f"ERROR: {info['error']}"
+
+            if info["ready"]:
+                # Build context
+                context = info["context"]
+                other_agents_str = ", ".join(info["other_agents"])
+                return (
+                    f"CONTEXT: {context}\n\n"
+                    f"You are {name}. Role: {info['role']}.\n"
+                    f"Network is READY. Connected agents: {info['connected_count']}/{info['total_required']}.\n"
+                    f"Peers: {other_agents_str}.\n"
+                    "You may now speak if it is your turn."
+                )
+            
+            await asyncio.sleep(2) # Non-blocking Sleep
         
         return "TIMEOUT: Waiting for other agents took too long. Please retry agent() tool."
 
@@ -305,6 +336,87 @@ class Engine:
                 }
             
             time.sleep(1)
+            
+        return {
+            "status": "timeout",
+            "messages": [],
+            "instruction": "Still waiting for turn. connection_timeout_imminent. CALL THIS TOOL AGAIN IMMEDIATELY."
+        }
+
+    async def wait_for_turn_async(self, agent_name: str, timeout_seconds: int = 60) -> Dict[str, Any]:
+        """
+        Async version of wait_for_turn.
+        """
+        start_time = time.time()
+        
+        try:
+            initial_state = self.state.load()
+            current_conversation_id = initial_state.get("conversation_id")
+        except Exception:
+            current_conversation_id = None
+
+        while time.time() - start_time < timeout_seconds:
+            try:
+                data = self.state.load()
+            except Exception:
+                await asyncio.sleep(1)
+                continue
+            
+            # 1. Check for RESET
+            new_conversation_id = data.get("conversation_id")
+            if current_conversation_id and new_conversation_id != current_conversation_id:
+                return {
+                    "status": "reset",
+                    "messages": [],
+                    "instruction": "SYSTEM RESET: THe conversation has been reset by the user. Forget everything. Re-read your Role and Context."
+                }
+                
+            current_turn = data.get("turn", {}).get("current")
+            
+            if current_turn == agent_name:
+                # Reuse logic from sync version (code duplication is acceptable for safety here vs refactoring everything)
+                messages = data.get("messages", [])
+                visible_messages = []
+                for m in messages:
+                    is_public = m.get("public", True)
+                    sender = m.get("from")
+                    target = m.get("target")
+                    audience = m.get("audience", [])
+                    
+                    if is_public:
+                        visible_messages.append(m)
+                    elif sender == agent_name or target == agent_name or agent_name in audience:
+                        visible_messages.append(m)
+                
+                agents = data.get("agents", {})
+                config = data.get("config", {})
+                my_info = agents.get(agent_name, {})
+                profile_ref = my_info.get("profile_ref")
+                
+                advice_text = ""
+                if profile_ref:
+                    profiles = config.get("profiles", [])
+                    profile = next((p for p in profiles if p["name"] == profile_ref), None)
+                    if profile and profile.get("connections"):
+                        advice_text = "\n\n--- STRATEGIC ADVICE ---\nBased on your connections, here is how you should interact with others:\n"
+                        for conn in profile["connections"]:
+                            target_profile = conn.get("target")
+                            ctx = conn.get("context")
+                            matching_agents = [aid for aid, adata in agents.items() if adata.get("profile_ref") == target_profile and aid != agent_name]
+                            if matching_agents:
+                                names_str = ", ".join(matching_agents)
+                                advice_text += f"- **{target_profile}** is represented by: **{names_str}**. Strategy: {ctx}\n"
+                            else:
+                                advice_text += f"- **{target_profile}**: No other active agents found. Strategy: {ctx}\n"
+                        advice_text += "------------------------"
+
+                return {
+                    "status": "success",
+                    "messages": visible_messages[-10:],
+                    "instruction": f"It is your turn. Speak.{advice_text}"
+                }
+            
+            await asyncio.sleep(1) # Non-blocking Sleep
             
         return {
             "status": "timeout",
