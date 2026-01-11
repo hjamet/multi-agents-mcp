@@ -61,7 +61,8 @@ def get_total_agents(profiles):
 
 def render_graph(profiles, current_editing=None):
     graph = graphviz.Digraph()
-    graph.attr(rankdir='LR', size='10,10', bgcolor='transparent')
+    # Banner style: Landscape, fixed height constraint
+    graph.attr(rankdir='LR', size='12,2', ratio='fill', bgcolor='transparent', margin='0')
     
     # Nodes
     for p in profiles:
@@ -74,7 +75,7 @@ def render_graph(profiles, current_editing=None):
         count = p.get("count", 0)
         label = f"{name}\n(x{count})"
         
-        graph.node(name, label=label, style='filled', fillcolor=color, shape='box', fontsize='10')
+        graph.node(name, label=label, style='filled', fillcolor=color, shape='box', fontsize='10', height='0.5')
 
     # Edges
     for p in profiles:
@@ -83,7 +84,7 @@ def render_graph(profiles, current_editing=None):
             target = conn.get("target")
             # Only draw if target exists
             if any(prof["name"] == target for prof in profiles):
-                graph.edge(source, target, fontsize='8', color='gray')
+                graph.edge(source, target, fontsize='8', color='gray', arrowsize='0.5')
 
     return graph
 
@@ -136,10 +137,12 @@ if st.session_state.page == "Editor":
         current_profile = {"name": "New Agent", "description": "", "system_prompt": "", "connections": [], "count": 1, "capabilities": ["public", "private", "audience"]}
         new_mode = True
         st.session_state.editing_agent_name = "New Agent"
+        k_suffix = "new"
     else:
         current_profile = next((p for p in profiles if p["name"] == selected_name), None)
         new_mode = False
         st.session_state.editing_agent_name = selected_name
+        k_suffix = selected_name
         
         if col_del.button("🗑️ Delete"):
             config["profiles"] = [p for p in profiles if p["name"] != selected_name]
@@ -152,24 +155,23 @@ if st.session_state.page == "Editor":
         with st.container(border=True):
             # Header
             c1, c2 = st.columns([1, 2])
-            new_name = c1.text_input("Name", current_profile.get("name", ""), key="p_name")
-            new_desc = c2.text_input("Short Description", current_profile.get("description", ""), key="p_desc")
+            # Dynamic keys force refresh
+            new_name = c1.text_input("Name", current_profile.get("name", ""), key=f"p_name_{k_suffix}")
+            new_desc = c2.text_input("Short Description", current_profile.get("description", ""), key=f"p_desc_{k_suffix}")
             
             # System Prompt
             st.markdown("##### System Identity")
-            new_prompt = st.text_area("Core Instructions", current_profile.get("system_prompt", ""), height=150, key="p_prompt")
+            new_prompt = st.text_area("Core Instructions", current_profile.get("system_prompt", ""), height=150, key=f"p_prompt_{k_suffix}")
             
             # Capabilities
             st.markdown("##### 🛡️ Capabilities")
             caps = current_profile.get("capabilities", [])
             
-            start_caps = caps.copy()
-            
             cc1, cc2, cc3, cc4 = st.columns(4)
-            has_public = cc1.checkbox("Public Speech", "public" in caps)
-            has_private = cc2.checkbox("Private (Direct)", "private" in caps)
-            has_audience = cc3.checkbox("Private (Audience)", "audience" in caps)
-            has_open = cc4.checkbox("🔓 OPEN MODE", "open" in caps, help="If checked, can talk to ANYONE regardless of connections.")
+            has_public = cc1.checkbox("Public Speech", "public" in caps, key=f"cap_pub_{k_suffix}")
+            has_private = cc2.checkbox("Private (Direct)", "private" in caps, key=f"cap_priv_{k_suffix}")
+            has_audience = cc3.checkbox("Private (Audience)", "audience" in caps, key=f"cap_aud_{k_suffix}")
+            has_open = cc4.checkbox("🔓 OPEN MODE", "open" in caps, help="If checked, can talk to ANYONE regardless of connections.", key=f"cap_open_{k_suffix}")
             
             new_caps = []
             if has_public: new_caps.append("public")
@@ -186,10 +188,10 @@ if st.session_state.page == "Editor":
                 c_targ, c_ctx, c_add = st.columns([1, 2, 0.5])
                 target_options = [p["name"] for p in profiles if p["name"] != current_profile.get("name")]
                 
-                target = c_targ.selectbox("Target", target_options, key="new_conn_target") if target_options else None
-                context_rule = c_ctx.text_input("Context / Strategy", placeholder="e.g. 'Lie to them'")
+                target = c_targ.selectbox("Target", target_options, key=f"new_conn_target_{k_suffix}") if target_options else None
+                context_rule = c_ctx.text_input("Context / Strategy", placeholder="e.g. 'Lie to them'", key=f"new_conn_ctx_{k_suffix}")
                 
-                if c_add.button("Add"):
+                if c_add.button("Add", key=f"add_conn_btn_{k_suffix}"):
                     if target and context_rule:
                         connections.append({"target": target, "context": context_rule})
                         st.rerun()
@@ -197,7 +199,7 @@ if st.session_state.page == "Editor":
             # List
             for i, conn in enumerate(connections):
                 c_del, c_info = st.columns([0.2, 4])
-                if c_del.button("x", key=f"del_c_{i}"):
+                if c_del.button("x", key=f"del_c_{i}_{k_suffix}"):
                     connections.pop(i)
                     st.rerun()
                 c_info.success(f"**-> {conn.get('target')}**: {conn.get('context')}")
@@ -209,7 +211,7 @@ if st.session_state.page == "Editor":
             # Save Actions
             st.divider()
             
-            if st.button("💾 Save Profile", type="primary", disabled=not new_caps):
+            if st.button("💾 Save Profile", type="primary", disabled=not new_caps, key=f"save_btn_{k_suffix}"):
                 # Update object
                 current_profile["name"] = new_name
                 current_profile["description"] = new_desc
@@ -219,9 +221,6 @@ if st.session_state.page == "Editor":
                 
                 if new_mode:
                     profiles.append(current_profile)
-                
-                # Check for Rename duplications in 'profiles' list logic (basic ref replacement)
-                # Ideally we replace the old object ref in list, which we did.
                 
                 save_config(config)
                 st.toast("Profile Saved!", icon="✅")
@@ -356,6 +355,14 @@ elif st.session_state.page == "Chat":
     st.header("💬 Live Frequency")
     st_autorefresh(interval=2000, key="chatrefresh")
     
+    state, config = load_config()
+    profiles = config.get("profiles", [])
+    
+    # Top Visualizer (Added as requested)
+    with st.expander("🕸️ Network Topology (Graph)", expanded=False):
+        viz = render_graph(profiles)
+        st.graphviz_chart(viz, use_container_width=True)
+
     data = state_store.load()
     messages = data.get("messages", [])
     turn = data.get("turn", {})
