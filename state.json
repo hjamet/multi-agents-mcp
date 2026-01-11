@@ -1,12 +1,27 @@
 {
   "messages": [],
-  "conversation_id": "dd9b8e48-3bbc-48e4-8df9-5e19927b0208",
+  "conversation_id": "08f744f1-e621-4465-8256-617ad723a268",
   "turn": {
     "current": null,
     "next": null
   },
   "agents": {},
   "config": {
-    "total_agents": 2
+    "total_agents": 5,
+    "profiles": [
+      {
+        "name": "Agent",
+        "count": 2.0,
+        "role_description": "Helpful assistant.",
+        "communication_rules": "Speak when spoken to."
+      },
+      {
+        "name": "Test",
+        "count": 3.0,
+        "role_description": "Sympa, mais tu veux que tout le monde parle en fran\u00e7ais !",
+        "communication_rules": null
+      }
+    ],
+    "context": "You are AI agents working together."
   }
 }
