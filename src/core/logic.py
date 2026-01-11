@@ -150,10 +150,31 @@ class Engine:
                     elif sender == agent_name or target == agent_name or agent_name in audience:
                         visible_messages.append(m)
                 
+                # Build Strategic Advice from Connections
+                agents = data.get("agents", {})
+                config = data.get("config", {})
+                
+                my_info = agents.get(agent_name, {})
+                profile_ref = my_info.get("profile_ref")
+                
+                advice_text = ""
+                if profile_ref:
+                    profiles = config.get("profiles", [])
+                    profile = next((p for p in profiles if p["name"] == profile_ref), None)
+                    
+                    if profile and profile.get("connections"):
+                        advice_text = "\n\n--- STRATEGIC ADVICE ---\n"
+                        advice_text += "Based on your connections, here is how you should interact with others:\n"
+                        for conn in profile["connections"]:
+                            target = conn.get("target")
+                            ctx = conn.get("context")
+                            advice_text += f"- If talking to {target}: {ctx}\n"
+                        advice_text += "------------------------"
+
                 return {
                     "status": "success",
                     "messages": visible_messages[-10:], # Return last 10 relevant messages
-                    "instruction": "It is your turn. Speak."
+                    "instruction": f"It is your turn. Speak.{advice_text}"
                 }
             
             time.sleep(1)
