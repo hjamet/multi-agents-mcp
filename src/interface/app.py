@@ -421,62 +421,63 @@ if st.session_state.page == "Communication":
 # PAGE: COCKPIT (Admin)
 # ==========================================
 elif st.session_state.page == "Cockpit":
-    st.header("🎛️ Cockpit de Supervision")
+    st.header("🎛️ Mission Control")
     
     preset_dir = os.path.join("assets", "presets")
     if not os.path.exists(preset_dir):
         os.makedirs(preset_dir, exist_ok=True)
-    
-    # Standard Layout
-    c1, c2 = st.columns([1, 1])
-    
-    with c1:
-        st.subheader("💾 Scénarios")
-        save_name = st.text_input("Nom de Sauvegarde", placeholder="scenaro_1")
-        if st.button("Sauvegarder", use_container_width=True):
+        
+    with st.expander("💾 Scenario / Preset Manager", expanded=False):
+        c_save, c_load = st.columns(2)
+        save_name = c_save.text_input("Save As")
+        if c_save.button("Save Config"):
             if save_name:
                 path = os.path.join(preset_dir, f"{save_name}.json")
                 with open(path, "w") as f:
                     json.dump(config, f, indent=2)
-                st.success(f"Sauvegardé: {path}")
+                st.success(f"Saved: {path}")
         
         presets = [f for f in os.listdir(preset_dir) if f.endswith(".json")]
-        selected_preset = st.selectbox("Charger Preset", presets) if presets else None
-        if st.button("Charger", use_container_width=True):
-            if selected_preset:
-                path = os.path.join(preset_dir, selected_preset)
-                with open(path, "r") as f:
-                    new_conf = json.load(f)
-                save_config(new_conf)
-                st.rerun()
+        selected_preset = c_load.selectbox("Load Preset", presets) if presets else None
+        if c_load.button("Load"):
+            path = os.path.join(preset_dir, selected_preset)
+            with open(path, "r") as f:
+                new_conf = json.load(f)
+            save_config(new_conf)
+            st.rerun()
 
-    with c2:
-        st.subheader("👥 Crew Management")
-        for i, p in enumerate(profiles):
-            cl, cc = st.columns([3, 2])
-            cl.write(f"**{p['name']}**")
-            count = int(p.get("count", 0))
-            if cc.button("➖", key=f"d_{i}"):
-                p["count"] = max(0, count - 1)
-                save_config(config)
-                st.rerun()
-            cc.write(f"Count: {count}")
-            if cc.button("➕", key=f"i_{i}"):
-                p["count"] = count + 1
-                save_config(config)
-                st.rerun()
-
-    st.markdown("---")
-    st.subheader("🌍 Contexte Global")
-    global_context = st.text_area("Narratif / Contexte", config.get("context", ""), height=200)
+    st.markdown("##### 🌍 Global Context")
+    global_context = st.text_area("Shared Scenario", config.get("context", ""), height=80)
     if global_context != config.get("context", ""):
-        if st.button("Mettre à jour Contexte"):
+        if st.button("Update Context"):
             config["context"] = global_context
             save_config(config)
             st.success("Updated")
 
-    st.markdown("---")
-    if st.button("🚀 RÉSÉT SIMULATION", type="primary"):
+    st.divider()
+    st.markdown("### 👥 Crew Config")
+    cols = st.columns(3)
+    for i, p in enumerate(profiles):
+        col = cols[i % 3]
+        with col.container(border=True):
+            st.markdown(f"#### {p['name']}")
+            st.caption(p.get("description", ""))
+            
+            c_minus, c_val, c_plus = st.columns([1, 1, 1])
+            count = int(p.get("count", 0))
+            
+            if c_minus.button("➖", key=f"d_{i}"):
+                p["count"] = max(0, count - 1)
+                save_config(config)
+                st.rerun()
+            c_val.markdown(f"<h3 style='text-align: center;'>{count}</h3>", unsafe_allow_html=True)
+            if c_plus.button("➕", key=f"i_{i}"):
+                p["count"] = count + 1
+                save_config(config)
+                st.rerun()
+
+    st.markdown("___")
+    if st.button("🚀 INITIALIZE / RESET SIMULATION", type="primary"):
         def reset_logic(s):
             s["conversation_id"] = str(uuid.uuid4())
             s["messages"] = []
@@ -520,22 +521,24 @@ elif st.session_state.page == "Cockpit":
         st.session_state.page = "Communication"
         st.rerun()
 
-
 # ==========================================
-# PAGE: EDITOR (Admin)
+# PAGE: EDITOR (No Auto-Refresh)
 # ==========================================
 elif st.session_state.page == "Editor":
-    st.header("🛠️ Éditeur d'Agents")
+    st.header("🛠️ Agent Architect")
     
     profile_names = [p["name"] for p in profiles]
     profile_names.append("➕ Create New")
     
-    sel_idx = 0
-    cur_edit = st.session_state.get("editing_agent_name")
-    if cur_edit in profile_names:
-        sel_idx = profile_names.index(cur_edit)
+    intent = st.session_state.get("editing_agent_name")
+    if intent == "New Agent" and "New Agent" not in profile_names:
+         intent = "➕ Create New"
+    
+    idx = 0
+    if intent in profile_names:
+        idx = profile_names.index(intent)
         
-    selected_name = st.selectbox("Selection Profil", profile_names, index=sel_idx, key="edit_sel_page")
+    selected_name = st.selectbox("Select Profile", profile_names, index=idx, key="edit_sel")
     
     if selected_name == "➕ Create New":
         current_profile = {"name": "New Agent", "description": "", "connections": [], "count": 1, "capabilities": ["public"]}
@@ -546,52 +549,51 @@ elif st.session_state.page == "Editor":
         new_mode = False
         st.session_state.editing_agent_name = selected_name
         
-        if st.button("🗑️ Supprimer Profil", type="primary"):
+        if st.button("🗑️ Delete Profile"):
              config["profiles"] = [p for p in profiles if p["name"] != selected_name]
              save_config(config)
              st.rerun()
 
     if current_profile:
-        st.markdown("---")
-        # Layout Spacieux (Columns)
-        cA, cB = st.columns(2)
-        new_name = cA.text_input("Nom", current_profile.get("name", ""))
-        disp = cB.text_input("Affichage", current_profile.get("display_name", ""))
-        
-        new_desc = st.text_input("Description", current_profile.get("description", ""))
-        new_prompt = st.text_area("System Prompt", current_profile.get("system_prompt", ""), height=300)
-        
-        st.subheader("Capacités")
-        caps = current_profile.get("capabilities", [])
-        cc1, cc2, cc3, cc4 = st.columns(4)
-        has_pub = cc1.checkbox("Public", "public" in caps)
-        has_priv = cc2.checkbox("Private", "private" in caps)
-        has_aud = cc3.checkbox("Audience", "audience" in caps)
-        has_open = cc4.checkbox("Open Mode", "open" in caps)
-        
-        new_caps = []
-        if has_pub: new_caps.append("public")
-        if has_priv: new_caps.append("private")
-        if has_aud: new_caps.append("audience")
-        if has_open: new_caps.append("open")
-        
-        if st.button("💾 Enregistrer Modifications", type="primary"):
-            current_profile["name"] = new_name
-            current_profile["display_name"] = disp
-            current_profile["description"] = new_desc
-            current_profile["system_prompt"] = new_prompt
-            current_profile["capabilities"] = new_caps
+        with st.container(border=True):
+            st.markdown(f"### ✏️ {current_profile.get('name', 'New')}")
+            c1, c2 = st.columns(2)
+            new_name = c1.text_input("Name", current_profile.get("name", ""))
+            disp = c2.text_input("Display Name", current_profile.get("display_name", ""))
             
-            if new_mode:
-                profiles.append(current_profile)
+            new_desc = st.text_input("Description", current_profile.get("description", ""))
+            new_prompt = st.text_area("System Prompt", current_profile.get("system_prompt", ""))
             
-            # Smart renaming
-            if not new_mode and selected_name and new_name != selected_name:
-                for p in profiles:
-                    for conn in p.get("connections", []):
-                        if conn.get("target") == selected_name:
-                            conn["target"] = new_name
+            caps = current_profile.get("capabilities", [])
+            cc1, cc2, cc3, cc4 = st.columns(4)
+            has_pub = cc1.checkbox("Public", "public" in caps)
+            has_priv = cc2.checkbox("Private", "private" in caps)
+            has_aud = cc3.checkbox("Audience", "audience" in caps)
+            has_open = cc4.checkbox("Open Mode", "open" in caps)
             
-            save_config(config)
-            st.toast("Saved!")
-            st.rerun()
+            new_caps = []
+            if has_pub: new_caps.append("public")
+            if has_priv: new_caps.append("private")
+            if has_aud: new_caps.append("audience")
+            if has_open: new_caps.append("open")
+            
+            if st.button("💾 Save Changes", type="primary"):
+                current_profile["name"] = new_name
+                current_profile["display_name"] = disp
+                current_profile["description"] = new_desc
+                current_profile["system_prompt"] = new_prompt
+                current_profile["capabilities"] = new_caps
+                
+                if new_mode:
+                    profiles.append(current_profile)
+                
+                # Smart renaming
+                if not new_mode and selected_name and new_name != selected_name:
+                    for p in profiles:
+                        for conn in p.get("connections", []):
+                            if conn.get("target") == selected_name:
+                                conn["target"] = new_name
+                
+                save_config(config)
+                st.success("Saved!")
+                st.rerun()
