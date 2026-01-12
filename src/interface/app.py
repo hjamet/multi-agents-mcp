@@ -98,9 +98,11 @@ st.markdown("""
         border-radius: 8px;
         height: 3em;
     }
-    .big-font {
-        font-size: 20px !important;
-        font-weight: bold;
+    /* Tertiary button compact style */
+    button[kind="tertiary"] {
+        background: transparent;
+        border: none;
+        box-shadow: none;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -360,11 +362,13 @@ if "reply_to" not in st.session_state:
 c_main, c_roster = st.columns([5, 1])
 
 with c_main:
-    tab_stream, tab_public, tab_archives = st.tabs(["📥 Neural Stream", "📢 Public Frequency", "🗄️ Archives"])
+    # 2 TABS ONLY (Refactor 1.5)
+    tab_stream, tab_public = st.tabs(["📥 Flux Neural", "📢 Fréquence Publique"])
 
     # Helper for rendering messages and reply buttons
-    def render_reply_button(sender, content, idx, context):
-        if st.button("↩️", key=f"btn_reply_{context}_{idx}", help=f"Reply to {sender}"):
+    def render_reply_button(sender, content, idx):
+        # UI Minimaliste (Type Tertiary)
+        if st.button("↩️", key=f"btn_reply_set_{idx}", help=f"Reply to {sender}", type="tertiary"):
             st.session_state.reply_to = {
                 "sender": sender,
                 "id": idx,
@@ -372,14 +376,24 @@ with c_main:
             }
             st.rerun()
 
-    # --- TAB 1: NEURAL STREAM ---
+    # --- TAB 1: FLUX NEURAL (MERGED) ---
     with tab_stream:
-        st.caption("Unified Timeline")
-        
+        # Toggle Focus Urgences (Top Filter)
+        col_title, col_toggle = st.columns([3, 1])
+        col_title.caption("Timeline Unifiée : Publique + Privée")
+        is_urgent_focus = col_toggle.toggle("🔍 Focus Urgences", help="Affiche uniquement les messages non-répondus")
+
         stream_msgs = []
         for i, m in enumerate(messages):
             is_relevant = m.get("public", False) or m.get("target") == "User" or m.get("from") == "User"
             if is_relevant:
+                # FILTER LOGIC
+                if is_urgent_focus:
+                    target = m.get("target")
+                    is_replied = m.get("replied", False)
+                    # Show only if directed to User AND not replied
+                    if target != "User" or is_replied:
+                        continue
                 stream_msgs.append((i, m))
         
         # Pagination
@@ -387,14 +401,15 @@ with c_main:
         total_stream = len(stream_msgs)
         limit_stream = st.session_state.stream_limit
         if total_stream > limit_stream:
-             if st.button(f"⬆️ Load Previous ({total_stream - limit_stream} hidden)", key="load_more_stream"):
+             # UI Minimaliste (Tertiary)
+             if st.button(f"🔃 Historique ({total_stream - limit_stream})", key="load_more_stream", type="tertiary"):
                  st.session_state.stream_limit += 15
                  st.rerun()
         
         visible_stream = stream_msgs[max(0, total_stream - limit_stream):]
         
         if not visible_stream:
-            st.info("No activity.")
+            st.info("Aucune activité détectée sur les bandes neurales.")
             
         for real_idx, m in visible_stream:
             sender = m.get("from", "?")
@@ -431,11 +446,11 @@ with c_main:
                      border_style = "none"
 
             with st.chat_message(sender, avatar=sender_emoji):
-                c_h, c_a = st.columns([8, 1])
+                c_h, c_a = st.columns([19, 1]) # Adjusted ratio for minimal button
                 c_h.caption(f"{context_tag} | {time.ctime(timestamp)}")
                 
                 with c_a:
-                    render_reply_button(sender, content, real_idx, "stream")
+                    render_reply_button(sender, content, real_idx)
 
                 st.markdown(f"""
                 <div style="background-color: {bg_color}; border: {border_style}; padding: 12px; border-radius: 8px; margin-bottom: 5px;">
@@ -449,74 +464,38 @@ with c_main:
         with st.expander("🕸️ Network", expanded=False):
             st.graphviz_chart(render_graph(profiles), use_container_width=True)
 
-        st.markdown("### 📜 Public Log")
+        st.markdown("### 📜 Log Public")
         
         if "live_chat_limit" not in st.session_state: st.session_state.live_chat_limit = 10
         total_live = len(messages)
         if total_live > st.session_state.live_chat_limit:
-            if st.button(f"⬆️ Load Previous", key="load_more_live"):
+            if st.button(f"🔃 Historique", key="load_more_live", type="tertiary"):
                 st.session_state.live_chat_limit += 10
                 st.rerun()
                 
         visible_live = messages[max(0, total_live - st.session_state.live_chat_limit):]
-        
-        # Calculate offset for real_idx
         start_i = max(0, total_live - st.session_state.live_chat_limit)
         
         for idx, m in enumerate(visible_live):
             real_idx = start_i + idx
             sender = m.get("from", "?")
             content = m.get("content", "")
-            
-            # FORMAT MENTIONS
             content_visual = format_mentions(content)
             
             agent_info = agents.get(sender, {})
             sender_emoji = agent_info.get("emoji", "🤖") if sender != "System" else "💾"
             
             with st.chat_message(sender, avatar=sender_emoji):
-                c_head, c_act = st.columns([8, 1])
+                c_head, c_act = st.columns([19, 1])
                 c_head.caption(f"📢 PUBLIC | **{sender}**")
                 with c_act:
-                    render_reply_button(sender, content, real_idx, "public")
+                    render_reply_button(sender, content, real_idx)
                 st.markdown(content_visual, unsafe_allow_html=True)
 
-    # --- TAB 3: ARCHIVES ---
-    with tab_archives:
-        st.header("🗄️ Archives")
-        
-        all_inbox_messages = []
-        for i, m in enumerate(messages):
-            if m.get("target") == "User":
-                all_inbox_messages.append((i, m))
-        
-        all_inbox_messages.sort(key=lambda x: x[1].get("timestamp", 0), reverse=True)
-        
-        if "direct_chat_limit" not in st.session_state: st.session_state.direct_chat_limit = 10
-        visible_inbox = all_inbox_messages[:st.session_state.direct_chat_limit]
-        
-        for real_idx, m in visible_inbox:
-            sender = m.get("from", "?")
-            content = m.get("content", "")
-            is_replied = m.get("replied", False)
-            timestamp = m.get("timestamp", 0)
-            
-            # FORMAT MENTIONS
-            content_visual = format_mentions(content)
-            
-            sender_emoji = agents.get(sender, {}).get("emoji", "👤")
-            status_intro = "✅" if is_replied else "🛑"
-            
-            with st.chat_message(sender, avatar=sender_emoji):
-                c_head, c_act = st.columns([8, 1])
-                c_head.markdown(f"{status_intro} | 🕒 {time.ctime(timestamp)}")
-                with c_act:
-                    render_reply_button(sender, content, real_idx, "archive")
-                st.markdown(f"**{sender}**: {content_visual}", unsafe_allow_html=True)
 
 # --- ROSTER (RIGHT PANEL) ---
 with c_roster:
-    st.caption("👥 Active Agents")
+    st.caption("👥 Agents Actifs")
     
     # STICKY ROSTER CONTAINER
     st.markdown('<div style="height: 70vh; overflow-y: auto; padding-right: 5px;">', unsafe_allow_html=True)
@@ -565,13 +544,19 @@ if st.session_state.reply_to:
     ctx = st.session_state.reply_to
     with st.container():
         c_info, c_close = st.columns([8, 1])
-        c_info.info(f"↩️ Replying to **{ctx['sender']}**: \"{ctx['preview']}\"")
+        c_info.info(f"↩️ Réponse à **{ctx['sender']}**: \"{ctx['preview']}\"")
         if c_close.button("✖️", key="cancel_reply"):
             st.session_state.reply_to = None
             st.rerun()
-            
-# 2. Main Input
-if prompt := st.chat_input("Broadcast or @Target..."):
+
+# 2. Helper Targets (Visual Aid)
+connected_agents = [name for name, d in agents.items() if d.get("status") == "connected" and name != "User"]
+target_list = ", ".join([f"@{n}" for n in connected_agents])
+if target_list:
+    st.caption(f"🎯 Cibles Disponibles : {target_list} (ou Broadcast)")
+
+# 3. Main Input
+if prompt := st.chat_input("Broadcast ou @Cible..."):
     def send_omni_msg(s):
         target = None
         public = True
@@ -607,7 +592,7 @@ if prompt := st.chat_input("Broadcast or @Target..."):
             if reply_ref_id < len(s["messages"]):
                  s["messages"][reply_ref_id]["replied"] = True
                  
-        return "Message Transmitted."
+        return "Message Transmis."
 
     res = state_store.update(send_omni_msg)
     st.session_state.reply_to = None

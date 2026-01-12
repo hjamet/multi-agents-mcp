@@ -67,10 +67,38 @@
 - **Status**: ✅ Released (v1.5.0)
 - **Priority**: High
 
-### 9. Feature: Mention Autocomplete & Visuals
 - **Details**: Implemented `format_mentions` visualizer.
 - **Status**: ✅ Released (v1.5.0)
 - **Priority**: Medium
+
+## 🚨 Sprint 5: Expérience Discord Ultime (Critical Refactor)
+
+### 10. UX: Suppression des Onglets (Single Stream)
+- **User**: "On n'a plus besoin que du chat !"
+- **Goal**: Remove `st.tabs`. Show ONLY the "Neural Stream" (merged logic).
+- **Impact**: Simplify `app.py` drastically.
+
+### 11. UX: Jump-To-Unread & High-Vis Mentions
+- **User**: "Messages adressés mal visibles", "Bouton saute au dernier message".
+- **Goal**:
+    - Add Floating Action Button (FAB) or Top Banner: "⬇️ 3 New Mentions".
+    - Styling: Make private messages POP (Animation? Bright Border?).
+
+### 12. Feature: Autocomplete Selecteur (@)
+- **User**: "Tapper @ ne fait apparaître aucun sélecteur".
+- **Goal**: Find a workaround. (e.g., `st.selectbox` appearing dynamically when input starts with `@`? Or Regex detection in `on_change`?).
+
+### 13. UI: Infinite Scroll / Cleaner Buttons
+- **User**: "Boutons Load/Reply hideux".
+- **Goal**:
+    - "Reply" -> Icon only, hover effect.
+    - "Load Previous" -> Auto-load logic (if possible) or Minimalist Text Link.
+
+### 14. Process: Langue Française & Commits
+- **Policy**: ALL Communications in French.
+- **Policy**: Commit after every significant step.
+- **Status**: 🆕 New
+- **Priority**: CRITICAL
 
 ## 🧊 Icebox
 (Empty)
