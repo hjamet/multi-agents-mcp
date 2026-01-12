@@ -12,14 +12,23 @@ You are now connected to the Multi-Agent System.
 1. **Analyze your Role and Context** above carefully.
 2. **Waiting**: The system handles turn-taking. You do not need to poll.
 3. **Turn**: When it is your turn, you will receive messages and instructions.
-4. **Action**: You must then THINK, ACT, and finally call `talk(...)` to pass the turn.
+4. **Action**: You must then THINK, ACT, and finally call `talk(..., my_name="{{ name }}")` to pass the turn.
 5. **NEVER STOP**: You must ALWAYS ensure the conversation continues by passing the turn.
 
---- 🔗 YOUR CONNECTIONS ---
-These are the agents you know and how you should interact with them:
-{% for conn in connections %}
-- **{{ conn.target }}**: {{ conn.context }}
-{% else %}
-(No specific connections. Follow Global Context.)
+--- 🔗 YOUR CONNECTIONS & STRATEGY ---
+### 👥 POPULATION & CONNECTIONS
+Use this table to understand your environment.
+
+**Communication Guide (Tool 'talk'):**
+- `my_name`: Always set this to **"{{ name }}"**.
+- `public=True`: Everyone sees the message. (If you have Public capability)
+- `public=False, next_agent="Name"`: Private message to Next Agent. (Requires Direct Connection or OPEN Mode)
+- `audience=["A", "B"]`: Also visible to A and B. (Requires Direct Connection/OPEN Mode for each)
+Here is the list of all agents in the system and your ability to communicate with them:
+
+| Agent Name | Public Role | Reachability | Notes / Context |
+| :--- | :--- | :--- | :--- |
+{% for a in agent_directory %}
+| **{{ a.name }}** | {{ a.public_desc }} | {{ a.status }} | {{ a.note }} |
 {% endfor %}
 ---------------------------

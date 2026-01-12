@@ -198,14 +198,36 @@ class Engine:
             connections = sender_profile.get("connections", [])
             allowed_targets = {c["target"]: c["context"] for c in connections} # Profile Names
             
+            # DEBUG
+            import sys
+            print(f"[Logic DEBUG] From: {from_agent}", file=sys.stderr)
+            print(f"[Logic DEBUG] Profile: {sender_profile.get('name')} | Ref: {sender_profile_name}", file=sys.stderr)
+            print(f"[Logic DEBUG] Caps: {caps}", file=sys.stderr) 
+            
+            # MERGE INSTANCE CONNECTIONS (Priority)
+            # This is critical for agents like MJ who get dynamic connections injected at setup
+            instance_connections = sender_info.get("connections", [])
+            for c in instance_connections:
+                # Instance connections target Agent IDs (e.g. "Habitant #1"), not Profile Names
+                # We add them to allowed_targets so check_target passes
+                allowed_targets[c["target"]] = c["context"]
+            
             # A. Capability Checks
-            if public and "public" not in caps:
+            is_open = "open" in caps
+
+            if next_agent == from_agent:
+                 return "🚫 ACTION DENIED: You cannot pass the turn to yourself. Please choose another agent."
+            
+            if from_agent in audience:
+                 return "🚫 ACTION DENIED: You cannot include yourself in the audience."
+
+            if public and "public" not in caps and not is_open:
                 return f"🚫 ACTION DENIED: You do not have the 'public' capability. You must send a Private message to a specific target."
             
-            if not public and "private" not in caps:
+            if not public and "private" not in caps and not is_open:
                  return f"🚫 ACTION DENIED: You do not have the 'private' capability. You must speak Publicly."
             
-            if audience and "audience" not in caps:
+            if audience and "audience" not in caps and not is_open:
                  return f"🚫 ACTION DENIED: You do not have the 'audience' capability. You cannot cc additional agents."
             
             # B. Connection Checks (Skip if OPEN)
@@ -217,8 +239,14 @@ class Engine:
                     if not t_info:
                         return f"Unknown agent '{t_name}'"
                     t_prof = t_info.get("profile_ref")
+                    
+                    # Check 1: Is the specific Agent ID allowed? (Instance Connection)
+                    if t_name in allowed_targets:
+                        return None
+                        
+                    # Check 2: Is the Profile allowed? (Profile Connection)
                     if t_prof not in allowed_targets:
-                         return f"Not connected to '{t_prof}'"
+                         return f"Not connected to '{t_prof}' or specific agent '{t_name}'"
                     return None
                     
                 # 1. Check Primary Target (Next Agent)

@@ -30,6 +30,114 @@ jinja_env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
 # Used as fallback if sending_agent is not provided in talk
 SESSION_AGENT_NAME = None
 
+def _get_agent_connections(state, agent_name):
+    """
+    Resolve connections for an agent.
+    Priority: Instance 'connections' > Profile 'connections'
+    """
+    connections = []
+    try:
+        agent_info = state["agents"].get(agent_name, {})
+        
+        # 1. Check Instance Level
+        if "connections" in agent_info:
+            return agent_info["connections"]
+            
+        # 2. Check Profile Level
+        profile_ref = agent_info.get("profile_ref")
+        profiles = state.get("config", {}).get("profiles", [])
+        profile = next((p for p in profiles if p["name"] == profile_ref), None)
+        
+        if profile:
+            return profile.get("connections", [])
+            
+    except Exception as e:
+        print(f"Error resolving connections for {agent_name}: {e}", file=sys.stderr)
+        
+    return connections
+
+def _build_agent_directory(state, my_name):
+    """
+    Build a comprehensive list of all agents for the prompt.
+    Includes public info and specific connection notes.
+    """
+    directory = []
+    
+    # My Info
+    my_info = state["agents"].get(my_name, {})
+    my_profile_ref = my_info.get("profile_ref")
+    profiles = state.get("config", {}).get("profiles", [])
+    my_profile = next((p for p in profiles if p["name"] == my_profile_ref), {})
+    my_caps = my_profile.get("capabilities", [])
+    is_open_mode = "open" in my_caps
+    
+    # My Connections (List of dicts {target, context})
+    my_connections = _get_agent_connections(state, my_name)
+    # Map target -> context
+    conn_map = {c["target"]: c["context"] for c in my_connections}
+    
+    all_agents = state.get("agents", {})
+    
+    for agent_id, info in all_agents.items():
+        if agent_id == my_name:
+            continue
+            
+        # Resolve Profile
+        p_ref = info.get("profile_ref")
+        p_data = next((p for p in profiles if p["name"] == p_ref), {})
+        
+        # Public Data
+        display_name = agent_id # ID is the display identifier usually
+        public_desc = p_data.get("public_description", "Unknown")
+        
+        # Connection Logic
+        has_connection = agent_id in conn_map
+        note = conn_map.get(agent_id, "")
+        
+        # Reachability Status calculating
+        reachable = False
+        methods = []
+        
+        if is_open_mode:
+            reachable = True
+            methods.append("Open Mode")
+        
+        if has_connection:
+            reachable = True
+            methods.append("Direct")
+            
+        if "public" in my_caps:
+            methods.append("Public")
+            # Public doesn't make it "Privately Reachable" but allows comms
+            
+        # Formatting the 'Status' string for the Prompt
+        status_str = ""
+        if is_open_mode:
+            status_str = "🔓 OPEN: Communication autorisée"
+        elif has_connection:
+            status_str = "✅ CONNECTED: Message privé autorisé"
+        else:
+            status_str = "📢 Public Only"
+            
+        # Final Context combining Note + Public Desc
+        final_context = f"({public_desc})"
+        if note:
+             final_context += f" NOTES: {note}"
+        elif is_open_mode:
+             # In open mode, if no note, just say available
+             final_context += " [Accessible via Open Mode]"
+             
+        directory.append({
+            "name": agent_id,
+            "public_desc": public_desc,
+            "note": final_context, # Enhanced context (Desc + Note + Mode)
+            "has_connection": has_connection,
+            "status": status_str,
+            "can_private": (is_open_mode or has_connection)
+        })
+        
+    return directory
+
 @mcp.tool()
 async def agent() -> str:
     """
@@ -47,18 +155,11 @@ async def agent() -> str:
     name = result["name"]
     SESSION_AGENT_NAME = name
     
-    # Fetch additional details for the template (Connections)
-    connections = []
-    try:
-        data = engine.state.load()
-        agent_info = data["agents"].get(name, {})
-        profile_ref = agent_info.get("profile_ref")
-        profiles = data.get("config", {}).get("profiles", [])
-        profile = next((p for p in profiles if p["name"] == profile_ref), None)
-        if profile:
-            connections = profile.get("connections", [])
-    except Exception as e:
-        print(f"Error fetching details: {e}", file=sys.stderr)
+    # Load state once
+    state = engine.state.load()
+    
+    # helper to get directory
+    agent_dir = _build_agent_directory(state, name)
 
     # BLOCKING: Wait for everyone before returning the initial prompt
     wait_msg = await engine.wait_for_all_agents_async(name)
@@ -92,11 +193,9 @@ async def agent() -> str:
         name=name,
         role=result["role"],
         context=result["context"],
-        connections=connections,
-        # We might want to pass initial messages if template supports it, 
-        # but for now we stick to standard Context. The instruction_text helps.
-        # Actually, let's append instruction to context for visibility? 
-        # Or just rely on the standard "You may now speak" which the template likely has.
+        agent_directory=agent_dir,
+        # Legacy support if template uses 'connections'
+        connections=[d for d in agent_dir if d['has_connection']]
     )
 
 @mcp.tool()
@@ -104,8 +203,8 @@ async def talk(
     message: str,
     public: bool,
     next_agent: str,
-    audience: List[str] = [],
-    my_name: Optional[str] = None
+    my_name: str,
+    audience: List[str] = []
 ) -> str:
     """
     MAIN COMMUNICATION TOOL.
@@ -118,14 +217,13 @@ async def talk(
         message: The content to speak.
         public: true for everyone to see, false for private.
         next_agent: The name of the agent who should speak next. (From your connections)
+        my_name: YOUR exact name (e.g. "MaitreDuJeu"). REQUIRED for identity verification.
         audience: (Optional) List of other agents who can see a private message.
-        my_name: (Optional) Your own name. Defaults to name set in agent() if using same connection.
     """
-    global SESSION_AGENT_NAME
-    sender = my_name or SESSION_AGENT_NAME
+    sender = my_name
     
     if not sender:
-        return "ERROR: Unknown sender. Please provide 'my_name' argument or call 'agent()' first."
+        return "ERROR: Unknown sender. You MUST provide 'my_name' argument."
 
     print(f"[{sender}] talking -> Next: {next_agent}", file=sys.stderr)
     
@@ -173,15 +271,11 @@ async def talk(
         role_snippet = data["agents"][sender]["role"]
         # Context
         global_context = data.get("config", {}).get("context", "")
-        # Connections
-        agent_info = data["agents"][sender]
-        profile_ref = agent_info.get("profile_ref")
-        profiles = data.get("config", {}).get("profiles", [])
-        profile = next((p for p in profiles if p["name"] == profile_ref), None)
-        if profile:
-            connections = profile.get("connections", [])
+        # Directory
+        agent_directory = _build_agent_directory(data, sender)
             
-    except:
+    except Exception as e:
+        print(f"Error loading state in talk: {e}", file=sys.stderr)
         pass
 
     template = jinja_env.get_template("talk_response.j2")
@@ -189,7 +283,9 @@ async def talk(
         name=sender,
         role_snippet=role_snippet,
         context=global_context,
-        connections=connections,
+        agent_directory=agent_directory,
+        # Legacy
+        connections=[d for d in agent_directory if d['has_connection']],
         messages=result["messages"],
         instruction=result["instruction"]
     )

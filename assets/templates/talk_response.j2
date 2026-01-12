@@ -37,13 +37,21 @@ It is your turn to speak. You MUST NOT STOP.
 - `message`: Your content.
 - `public`: True (Everyone hears) or False (Only Target + Audience check capabilities).
 - `next_agent`: The exact name of the agent who speaks next (See Connections).
+- `my_name`: **"{{ name }}"** (You MUST pass your own name to verify identity).
 - `audience`: (Optional) List of other agents to include in private messages.
 
 --- 🔗 YOUR CONNECTIONS & STRATEGY ---
-Who you can talk to and how:
-{% for conn in connections %}
-| Target: **{{ conn.target }}** | Strategy: {{ conn.context }} |
-{% else %}
-(No specific connections. Use your judgment.)
+### 👥 POPULATION & CONNECTIONS
+Use this table to decide who to speak to.
+
+**Communication Guide:**
+- `public=True`: Everyone sees the message. (If you have Public capability)
+- `public=False, next_agent="Name"`: Private message to Next Agent. (Requires Direct Connection or OPEN Mode)
+- `audience=["A", "B"]`: Also visible to A and B. (Requires Direct Connection/OPEN Mode for each)
+
+| Agent Name | Public Role | Reachability | Notes / Context |
+| :--- | :--- | :--- | :--- |
+{% for a in agent_directory %}
+| **{{ a.name }}** | {{ a.public_desc }} | {{ a.status }} | {{ a.note }} |
 {% endfor %}
 ------------------------------------------

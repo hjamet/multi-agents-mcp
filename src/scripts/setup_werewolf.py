@@ -159,7 +159,44 @@ def setup_werewolf_anonymized():
                 "status": "pending_connection",
                 "profile_ref": slot["profile_ref"]
             }
+        # 4. Omniscience for MaitreDuJeu
+        # Find the agent that has the MaitreDuJeu profile
+        mj_real_id = None
+        for aid, d in new_agents.items():
+            if d["profile_ref"] == "MaitreDuJeu":
+                mj_real_id = aid
+                break
+        
+        if mj_real_id:
+            mj_conns = []
             
+            # Create a "Truth List" for the MJ
+            for other_id, other_data in new_agents.items():
+                if other_id == mj_real_id:
+                    continue
+                
+                # Lookup internal description from Profile
+                p_ref = other_data["profile_ref"]
+                p_desc = "Inconnu"
+                
+                # Find profile doc
+                for p in profiles:
+                    if p["name"] == p_ref:
+                        p_desc = p.get("description", p_ref)
+                        break
+                
+                mj_conns.append({
+                    "target": other_id, 
+                    "context": f"Identité réelle: {p_desc}"
+                })
+            
+            # Assign connections to the INSTANCE
+            new_agents[mj_real_id]["connections"] = mj_conns
+            print(f"[Setup] Injected {len(mj_conns)} truth connections into {mj_real_id}")
+            
+        else:
+             print("[Setup] WARNING: MaitreDuJeu profile not found in active agents. Omniscience skipped.")
+
         state["agents"] = new_agents
         
         return "Werewolf Anonymized Setup Complete (10 roles, shuffled IDs)"

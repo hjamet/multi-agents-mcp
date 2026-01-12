@@ -4,7 +4,7 @@
       "from": "System",
       "content": "\ud83d\udfe2 Simulation Started. First turn assigned to **MaitreDuJeu**.",
       "public": true,
-      "timestamp": 1768176481.8027933
+      "timestamp": 1768181603.1914947
     },
     {
       "from": "System",
@@ -12,47 +12,7 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768176493.7537024
-    },
-    {
-      "from": "System",
-      "content": "\ud83d\udd35 **Habitant #2** has joined the simulation.",
-      "public": true,
-      "target": "all",
-      "audience": [],
-      "timestamp": 1768176503.6645718
-    },
-    {
-      "from": "System",
-      "content": "\ud83d\udd35 **Habitant #3** has joined the simulation.",
-      "public": true,
-      "target": "all",
-      "audience": [],
-      "timestamp": 1768176528.1295855
-    },
-    {
-      "from": "System",
-      "content": "\ud83d\udd35 **Habitant #4** has joined the simulation.",
-      "public": true,
-      "target": "all",
-      "audience": [],
-      "timestamp": 1768176530.3961198
-    },
-    {
-      "from": "System",
-      "content": "\ud83d\udd35 **Habitant #5** has joined the simulation.",
-      "public": true,
-      "target": "all",
-      "audience": [],
-      "timestamp": 1768176532.0779326
-    },
-    {
-      "from": "System",
-      "content": "\ud83d\udd35 **Habitant #6** has joined the simulation.",
-      "public": true,
-      "target": "all",
-      "audience": [],
-      "timestamp": 1768176533.302779
+      "timestamp": 1768181615.6765976
     },
     {
       "from": "System",
@@ -60,7 +20,47 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768176535.4166162
+      "timestamp": 1768181616.898622
+    },
+    {
+      "from": "System",
+      "content": "\ud83d\udd35 **Habitant #2** has joined the simulation.",
+      "public": true,
+      "target": "all",
+      "audience": [],
+      "timestamp": 1768181618.1117394
+    },
+    {
+      "from": "System",
+      "content": "\ud83d\udd35 **Habitant #3** has joined the simulation.",
+      "public": true,
+      "target": "all",
+      "audience": [],
+      "timestamp": 1768181620.8183045
+    },
+    {
+      "from": "System",
+      "content": "\ud83d\udd35 **Habitant #4** has joined the simulation.",
+      "public": true,
+      "target": "all",
+      "audience": [],
+      "timestamp": 1768181621.4602883
+    },
+    {
+      "from": "System",
+      "content": "\ud83d\udd35 **Habitant #5** has joined the simulation.",
+      "public": true,
+      "target": "all",
+      "audience": [],
+      "timestamp": 1768181622.8940554
+    },
+    {
+      "from": "System",
+      "content": "\ud83d\udd35 **Habitant #6** has joined the simulation.",
+      "public": true,
+      "target": "all",
+      "audience": [],
+      "timestamp": 1768181623.1943932
     },
     {
       "from": "System",
@@ -68,7 +68,7 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768176537.4615872
+      "timestamp": 1768181624.855087
     },
     {
       "from": "System",
@@ -76,7 +76,7 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768176539.066975
+      "timestamp": 1768181625.114842
     },
     {
       "from": "System",
@@ -84,48 +84,164 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768176539.8554242
+      "timestamp": 1768181625.843076
     },
     {
       "from": "MaitreDuJeu",
-      "content": "Le village de Thiercelieux s'endort. La nuit tombe sur le village... Les villageois ferment les yeux. \ud83c\udf11\n\n**La Voyante (Habitant #9)** se r\u00e9veille. Voyante, quel r\u00f4le souhaites-tu d\u00e9couvrir cette nuit ?",
+      "content": "Bienvenue \u00e0 tous dans le paisible village de Thiercelieux ! \ud83c\udf32\ud83d\udc3a\n\nLe soleil se l\u00e8ve sur une nouvelle journ\u00e9e. L'air est frais, mais une ombre plane sur notre communaut\u00e9. Des rumeurs circulent sur la pr\u00e9sence de loups-garous parmi nous...\n\nPour commencer, faisons connaissance. Que chaque habitant se pr\u00e9sente bri\u00e8vement au reste du village. \n\n**Habitant #1**, l'honneur vous revient d'ouvrir la marche. Comment vous sentez-vous ce matin ?",
       "public": true,
-      "target": "Habitant #9",
+      "target": "Habitant #1",
       "audience": [],
-      "timestamp": 1768176605.1129847
+      "timestamp": 1768181634.0049164
     },
     {
-      "from": "Habitant #9",
-      "content": "Maitre du Jeu, je souhaite d\u00e9couvrir le r\u00f4le de l'Habitant #2.",
-      "public": false,
+      "from": "Habitant #1",
+      "content": "Bonjour tout le monde. Je suis Habitant #1. Je suis un humble citoyen de Thiercelieux et je suis ravi d'\u00eatre parmi vous. Je suis pr\u00eat pour ce qui nous attend.",
+      "public": true,
       "target": "MaitreDuJeu",
-      "audience": [
-        "MaitreDuJeu"
-      ],
-      "timestamp": 1768176620.5792263
+      "audience": [],
+      "timestamp": 1768181644.1766956
     },
     {
       "from": "MaitreDuJeu",
-      "content": "Voyante, l'Habitant #2 est un Loup-Garou. Tu peux te rendormir.",
-      "public": false,
-      "target": "MaitreDuJeu",
-      "audience": [
-        "Habitant #9"
-      ],
-      "timestamp": 1768176638.2978127
-    },
-    {
-      "from": "MaitreDuJeu",
-      "content": "La Voyante a fini sa qu\u00eate et se rendort paisiblement. \ud83c\udf19\n\nLe village reste plong\u00e9 dans le silence... mais des yeux s'ouvrent dans l'ombre.\n**Les Loups-Garous (Habitant #2 et Habitant #4)** se r\u00e9veillent. Ils se reconnaissent, se concertent silencieusement, et d\u00e9signent leur proie pour ce soir.\n\nLoups, qui allez-vous d\u00e9vorer ?",
+      "content": "Merci, Habitant #1. Votre prudence est tout \u00e0 votre honneur. \n\n**Habitant #2**, c'est \u00e0 vous. Pouvez-vous vous pr\u00e9senter au village ?",
       "public": true,
       "target": "Habitant #2",
       "audience": [],
-      "timestamp": 1768176641.8211007
+      "timestamp": 1768181648.3565307
+    },
+    {
+      "from": "Habitant #2",
+      "content": "Bonjour \u00e0 tous. Je suis pr\u00eat \u00e0 prot\u00e9ger notre village.",
+      "public": true,
+      "target": "MaitreDuJeu",
+      "audience": [],
+      "timestamp": 1768181657.3300767
+    },
+    {
+      "from": "MaitreDuJeu",
+      "content": "Tr\u00e8s bien. **Habitant #3**, nous vous \u00e9coutons. Pr\u00e9sentez-vous au village.",
+      "public": true,
+      "target": "Habitant #3",
+      "audience": [],
+      "timestamp": 1768181664.415467
+    },
+    {
+      "from": "Habitant #3",
+      "content": "Bonjour \u00e0 tous, je suis Habitant #3. Ravi d'\u00eatre parmi vous dans ce beau village de Thiercelieux.",
+      "public": true,
+      "target": "MaitreDuJeu",
+      "audience": [],
+      "timestamp": 1768181674.7973475
+    },
+    {
+      "from": "MaitreDuJeu",
+      "content": "Bien entendu. Poursuivons. **Habitants #4, #5 et #6**, c'est \u00e0 vous. Dites-nous un mot sur vous. **Habitant #4**, commencez s'il vous pla\u00eet.",
+      "public": true,
+      "target": "Habitant #4",
+      "audience": [],
+      "timestamp": 1768181681.3595562
+    },
+    {
+      "from": "Habitant #4",
+      "content": "Bonjour Ma\u00eetre du Jeu. Je suis l'Habitant #4 et j'ai bien pris connaissance de mon r\u00f4le de Voyante. Je reste \u00e0 l'\u00e9coute de vos instructions pour le d\u00e9but de la partie.",
+      "public": false,
+      "target": "MaitreDuJeu",
+      "audience": [],
+      "timestamp": 1768181687.4240906
+    },
+    {
+      "from": "MaitreDuJeu",
+      "content": "Parfait. Merci Habitant #4. Pour conclure ces pr\u00e9sentations, **Habitants #7, #8 et #9**, la parole est \u00e0 vous. Commen\u00e7ons par vous, **Habitant #7**.",
+      "public": true,
+      "target": "Habitant #7",
+      "audience": [],
+      "timestamp": 1768181691.6943357
+    },
+    {
+      "from": "Habitant #7",
+      "content": "Habitant #7 au rapport. Je suis pr\u00eat pour cette journ\u00e9e \u00e0 Thiercelieux.",
+      "public": true,
+      "target": "MaitreDuJeu",
+      "audience": [],
+      "timestamp": 1768181701.01433
+    },
+    {
+      "from": "MaitreDuJeu",
+      "content": "Le soleil dispara\u00eet derri\u00e8re les collines et une brume \u00e9paisse envahit les rues de Thiercelieux. La nuit tombe sur le village.\n\n***Tout le village s'endort, fermez tous les yeux...*** \ud83c\udf11\ud83d\udca4",
+      "public": true,
+      "target": "Habitant #4",
+      "audience": [],
+      "timestamp": 1768181712.6998892
+    },
+    {
+      "from": "Habitant #4",
+      "content": "Bonjour \u00e0 tous ! D\u00e9sol\u00e9 pour ce petit temps de r\u00e9flexion. Je suis l'Habitant #4. Je suis un villageois attach\u00e9 \u00e0 la paix de Thiercelieux et j'esp\u00e8re que nous pourrons tous compter les uns sur les autres. Ma\u00eetre du Jeu, je vous repasse la parole.",
+      "public": true,
+      "target": "MaitreDuJeu",
+      "audience": [],
+      "timestamp": 1768181730.500049
+    },
+    {
+      "from": "MaitreDuJeu",
+      "content": "Voyante, r\u00e9veillez-vous. \n\nD\u00e9signez un habitant (par son num\u00e9ro) dont vous souhaitez d\u00e9couvrir l'identit\u00e9 secr\u00e8te ce soir. Je vous r\u00e9pondrai en toute discr\u00e9tion.",
+      "public": false,
+      "target": "Habitant #4",
+      "audience": [],
+      "timestamp": 1768181734.9263968
+    },
+    {
+      "from": "Habitant #4",
+      "content": "Ma\u00eetre du Jeu, la nuit est tomb\u00e9e et mon esprit s'\u00e9veille. J'aimerais utiliser mon pouvoir de Voyante pour d\u00e9couvrir la v\u00e9ritable identit\u00e9 de l'Habitant #1. Que me r\u00e9v\u00e8lent les astres \u00e0 son sujet ?",
+      "public": false,
+      "target": "MaitreDuJeu",
+      "audience": [],
+      "timestamp": 1768181739.557651
+    },
+    {
+      "from": "MaitreDuJeu",
+      "content": "J'attends votre choix, Voyante. Quel habitant souhaitez-vous sonder ? Habitant #1, #2, #3, #5, #6, #7, #8 ou #9 ?",
+      "public": false,
+      "target": "Habitant #4",
+      "audience": [],
+      "timestamp": 1768181750.1135578
+    },
+    {
+      "from": "Habitant #4",
+      "content": "Ma\u00eetre du Jeu, je d\u00e9signe l'Habitant #1. Montrez-moi sa carte, s'il vous pla\u00eet.",
+      "public": false,
+      "target": "MaitreDuJeu",
+      "audience": [],
+      "timestamp": 1768181756.19046
+    },
+    {
+      "from": "MaitreDuJeu",
+      "content": "Voyante (Habitant #4), c'est votre tour d'agir dans le secret de la nuit. R\u00e9pondez \u00e0 ce message par le num\u00e9ro de l'habitant que vous voulez sonder. \n\n(Rappel: Ne r\u00e9pondez pas en public pour ne pas vous d\u00e9masquer !)",
+      "public": false,
+      "target": "Habitant #4",
+      "audience": [],
+      "timestamp": 1768181763.6191893
+    },
+    {
+      "from": "Habitant #4",
+      "content": "Ma\u00eetre du Jeu, je d\u00e9signe l'Habitant n\u00b01 pour ma vision nocturne. Que sa v\u00e9ritable nature me soit r\u00e9v\u00e9l\u00e9e.",
+      "public": false,
+      "target": "MaitreDuJeu",
+      "audience": [],
+      "timestamp": 1768181772.004873
+    },
+    {
+      "from": "MaitreDuJeu",
+      "content": "Les astres vous parlent, Voyante... L'Habitant #1 est un **Simple Villageois**. \n\nVotre vision s'estompe... Refermez les yeux et rendormez-vous. \ud83c\udf11\ud83d\udca4",
+      "public": false,
+      "target": "Habitant #4",
+      "audience": [],
+      "timestamp": 1768181777.024302
     }
   ],
-  "conversation_id": "289e5650-84f9-4109-9764-025d7d00db32",
+  "conversation_id": "89ad5de1-09c1-475d-9403-fd8c17ef5fe8",
   "turn": {
-    "current": "Habitant #2",
+    "current": "Habitant #4",
     "next": null
   },
   "agents": {
@@ -134,10 +250,53 @@
       "status": "connected",
       "profile_ref": "Villageois"
     },
-    "Habitant #2": {
-      "role": "Tu es un Loup-Garou. Tu chasses la nuit avec tes alli\u00e9s.",
+    "MaitreDuJeu": {
+      "role": "Tu es le Maitre du Jeu. Tu diriges la partie. Fais tr\u00e8s attention de ne jamais r\u00e9v\u00e9ler des informations aux mauvaises personnes ! Un message public est vu par tout le monde, pas seulement pas next_agent ! Commence par une discussion en journ\u00e9e, puis fais tomber la nuit et orchestre le jeu.. :D",
       "status": "connected",
-      "profile_ref": "LoupGarou"
+      "profile_ref": "MaitreDuJeu",
+      "connections": [
+        {
+          "target": "Habitant #1",
+          "context": "Identit\u00e9 r\u00e9elle: Simple Villageois"
+        },
+        {
+          "target": "Habitant #2",
+          "context": "Identit\u00e9 r\u00e9elle: Simple Villageois"
+        },
+        {
+          "target": "Habitant #3",
+          "context": "Identit\u00e9 r\u00e9elle: Simple Villageois"
+        },
+        {
+          "target": "Habitant #4",
+          "context": "Identit\u00e9 r\u00e9elle: Peut voir les r\u00f4les"
+        },
+        {
+          "target": "Habitant #5",
+          "context": "Identit\u00e9 r\u00e9elle: Les Tueurs"
+        },
+        {
+          "target": "Habitant #6",
+          "context": "Identit\u00e9 r\u00e9elle: A des potions"
+        },
+        {
+          "target": "Habitant #7",
+          "context": "Identit\u00e9 r\u00e9elle: Simple Villageois"
+        },
+        {
+          "target": "Habitant #8",
+          "context": "Identit\u00e9 r\u00e9elle: Simple Villageois"
+        },
+        {
+          "target": "Habitant #9",
+          "context": "Identit\u00e9 r\u00e9elle: Les Tueurs"
+        }
+      ]
+    },
+    "Habitant #2": {
+      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.",
+      "status": "connected",
+      "profile_ref": "Villageois"
     },
     "Habitant #3": {
       "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.",
@@ -145,24 +304,19 @@
       "profile_ref": "Villageois"
     },
     "Habitant #4": {
+      "role": "Tu es la Voyante. Chaque nuit, tu peux demander au MJ de r\u00e9v\u00e9ler le r\u00f4le d'un joueur.",
+      "status": "connected",
+      "profile_ref": "Voyante"
+    },
+    "Habitant #5": {
       "role": "Tu es un Loup-Garou. Tu chasses la nuit avec tes alli\u00e9s.",
       "status": "connected",
       "profile_ref": "LoupGarou"
-    },
-    "Habitant #5": {
-      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.",
-      "status": "connected",
-      "profile_ref": "Villageois"
     },
     "Habitant #6": {
       "role": "Tu es la Sorci\u00e8re. Tu as une potion de vie et de mort.",
       "status": "connected",
       "profile_ref": "Sorciere"
-    },
-    "MaitreDuJeu": {
-      "role": "Tu es le Maitre du Jeu. Tu diriges la partie. Appelle les r\u00f4les : Voyante, puis Loups, puis Sorci\u00e8re.",
-      "status": "connected",
-      "profile_ref": "MaitreDuJeu"
     },
     "Habitant #7": {
       "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.",
@@ -175,9 +329,9 @@
       "profile_ref": "Villageois"
     },
     "Habitant #9": {
-      "role": "Tu es la Voyante. Chaque nuit, tu peux demander au MJ de r\u00e9v\u00e9ler le r\u00f4le d'un joueur.",
+      "role": "Tu es un Loup-Garou. Tu chasses la nuit avec tes alli\u00e9s.",
       "status": "connected",
-      "profile_ref": "Voyante"
+      "profile_ref": "LoupGarou"
     }
   },
   "config": {
@@ -187,7 +341,7 @@
         "description": "Admin du jeu",
         "display_name": "MaitreDuJeu",
         "public_description": "L'Orchestrateur",
-        "system_prompt": "Tu es le Maitre du Jeu. Tu diriges la partie. Appelle les r\u00f4les : Voyante, puis Loups, puis Sorci\u00e8re.",
+        "system_prompt": "Tu es le Maitre du Jeu. Tu diriges la partie. Fais tr\u00e8s attention de ne jamais r\u00e9v\u00e9ler des informations aux mauvaises personnes ! Un message public est vu par tout le monde, pas seulement pas next_agent ! Commence par une discussion en journ\u00e9e, puis fais tomber la nuit et orchestre le jeu.. :D",
         "capabilities": [
           "public",
           "private",
@@ -196,20 +350,20 @@
         ],
         "connections": [
           {
-            "target": "Voyante",
-            "context": "Appelle la voyante."
+            "target": "Villageois",
+            "context": "Villageois"
           },
           {
             "target": "LoupGarou",
-            "context": "Appelle les loups."
+            "context": "Loup-garou"
+          },
+          {
+            "target": "Voyante",
+            "context": "Voyante"
           },
           {
             "target": "Sorciere",
-            "context": "Appelle la sorci\u00e8re."
-          },
-          {
-            "target": "Villageois",
-            "context": "Parle aux villageois."
+            "context": "Sorci\u00e8re"
           }
         ],
         "count": 1
@@ -295,6 +449,6 @@
       }
     ],
     "total_agents": 10,
-    "context": "Nous jouons au Loup-Garou de Thiercelieux. C'est la Nuit. Tous le monde dort. Le MJ (Maitre du Jeu) va orchestrer les tours. Les Loups doivent se mettre d'accord pour tuer un Villageois. La Voyante peut voir un r\u00f4le. La Sorci\u00e8re peut tuer ou sauver. IMPORTANT: Les identit\u00e9s sont cach\u00e9es derri\u00e8re 'Habitant #N'."
+    "context": "Nous jouons au Loup-Garou de Thiercelieux. Interdiction absolue d'explorer la codebase, de lire, \u00e9crire ou modifier des ficheirs, d'effectuer des recherches. Seule la reflection et la discussion via l'outil talk est autoris\u00e9e."
   }
 }

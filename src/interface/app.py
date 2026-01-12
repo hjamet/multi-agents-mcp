@@ -201,6 +201,7 @@ if st.session_state.page == "Editor":
                 if c_add.button("Add", key=f"add_conn_btn_{k_suffix}"):
                     if target and context_rule:
                         connections.append({"target": target, "context": context_rule})
+                        save_config(config) # Persist immediately
                         st.rerun()
 
             # List
@@ -208,6 +209,7 @@ if st.session_state.page == "Editor":
                 c_del, c_info = st.columns([0.2, 4])
                 if c_del.button("x", key=f"del_c_{i}_{k_suffix}"):
                     connections.pop(i)
+                    save_config(config) # Persist immediately
                     st.rerun()
                 c_info.success(f"**-> {conn.get('target')}**: {conn.get('context')}")
 
@@ -399,6 +401,23 @@ elif st.session_state.page == "Cockpit":
             s["agents"] = new_agents
             s["config"]["total_agents"] = get_total_agents(profiles)
             
+            # --- 4. Omniscience for MaitreDuJeu (Sync with setup_werewolf.py) ---
+            mj_real_id = None
+            for aid, d in new_agents.items():
+                if d["profile_ref"] == "MaitreDuJeu":
+                    mj_real_id = aid
+                    break
+            
+            if mj_real_id:
+                mj_conns = []
+                for other_id, other_data in new_agents.items():
+                    if other_id == mj_real_id: continue
+                    p_ref = other_data["profile_ref"]
+                    # Find profile for description
+                    p_desc = next((p["description"] for p in profiles if p["name"] == p_ref), p_ref)
+                    mj_conns.append({"target": other_id, "context": f"Identité réelle: {p_desc}"})
+                new_agents[mj_real_id]["connections"] = mj_conns
+            
             # 4. Set Entry Point
             found_starter = None
             if starter_role:
@@ -474,20 +493,31 @@ elif st.session_state.page == "Chat":
                 st.write(content)
                 
                 # Metadata
-                sender_info = agents.get(sender, {})
-                real_id = sender_info.get("profile_ref", "")
-                id_tag = ""
-                if real_id and real_id not in sender:
-                    id_tag = f"**({real_id})** • "
+                # Metadata Construction
+                sender_node = agents.get(sender, {})
+                real_role = sender_node.get("profile_ref", "")
                 
-                meta = f"{id_tag}to {m.get('target', 'all')}"
-                if not m.get("public"): meta += " 🔒"
+                # 1. Sender Identity: "Display Name (RealRole)"
+                sender_label = f"**{sender}**"
+                if real_role and real_role not in sender:
+                    sender_label += f" ({real_role})"
                 
+                # 2. Target & Visibility
+                target = m.get('target', '?')
+                is_public = m.get('public', False)
+                visibility_icon = "📢 Public" if is_public else "🔒 Private"
+                
+                meta_parts = [f"{visibility_icon}"]
+                meta_parts.append(f"Next: **{target}**")
+                
+                # 3. Audience
                 audiences = m.get("audience", [])
                 if audiences:
                     aud_str = ", ".join(audiences)
-                    meta += f" (Hears: {aud_str})"
-                st.caption(meta)
+                    meta_parts.append(f"Audience: {aud_str}")
+                
+                st.markdown(f"{sender_label} : {content}")
+                st.caption(" | ".join(meta_parts))
 
     st.divider()
 
