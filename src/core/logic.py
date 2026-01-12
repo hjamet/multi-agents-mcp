@@ -245,6 +245,14 @@ class Engine:
             if audience and "audience" not in caps and not is_open:
                  return f"🚫 ACTION DENIED: You do not have the 'audience' capability. You cannot cc additional agents."
             
+            # C. Turn Enforcement (Strict)
+            current_turn = state.get("turn", {}).get("current")
+            
+            # Kernel-level exceptions: User and System can always speak.
+            # ALL other agents (including MaitreDuJeu) must respect the turn order.
+            if from_agent not in ["User", "System"] and current_turn != from_agent:
+                 return f"🚫 ACTION DENIED: It is not your turn. Current turn is with '{current_turn}'. Please wait."
+
             # B. Connection Checks (Skip if OPEN or sending to USER)
             # Special bypass for "User" if checking connections? 
             # Actually, we might want to enforce having a connection to "User" if we want to be strict.

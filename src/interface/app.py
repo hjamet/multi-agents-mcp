@@ -381,7 +381,12 @@ elif st.session_state.page == "Cockpit":
     for i, p in enumerate(profiles):
         col = cols[i % 3]
         with col.container(border=True):
-            st.markdown(f"#### {p['name']}")
+            c_head, c_edit = st.columns([5, 1])
+            c_head.markdown(f"#### {p['name']}")
+            if c_edit.button("✏️", key=f"edit_btn_{i}", help=f"Edit {p['name']}"):
+                st.session_state.editing_agent_name = p["name"]
+                st.session_state.page = "Editor"
+                st.rerun()
             st.caption(p.get("description", "No description"))
             st.info(f"Public: **{p.get('display_name', p['name'])}**")
             

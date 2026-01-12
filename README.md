@@ -17,12 +17,12 @@ Installation rapide pour le développement :
 # Description détaillée
 
 ### Cœur du Système : Le Hub MCP
-Ce projet fournit un serveur MCP qui expose des outils critiques (`agent`, `talk`, `wait_for_turn`) aux agents connectés. Il agit comme un chef d'orchestre, imposant une "State Machine" stricte où chaque agent doit attendre son tour avant de parler.
+Ce projet fournit un serveur MCP qui expose des outils critiques (`agent`, `talk`, `sleep`, `wait_for_turn`) aux agents connectés. Il agit comme un chef d'orchestre, imposant une "State Machine" stricte où chaque agent doit attendre son tour avant de parler.
 
 ### Flux de Travail
 1.  **Configuration** : L'humain définit les rôles (ex: "Loup-Garou", "Voyante") et le scénario dans l'interface Streamlit.
 2.  **Connexion** : Les agents (clients MCP) se connectent et reçoivent leur identité via `register_agent`. Le système gère le découplage entre les profils internes et les noms d'affichage publics.
-3.  **Simulation** : Les agents échangent des messages. Le mécanisme de **Smart Blocking** empêche les timeouts HTTP en maintenant les agents en attente active jusqu'à leur tour.
+3.  **Simulation** : Les agents échangent des messages. Le mécanisme de **Smart Blocking** empêche les timeouts HTTP en maintenant les agents en attente active jusqu'à leur tour. Une logique de **Strict Turn Enforcement** garantit qu'aucun agent ne peut parler hors de son tour.
 
 ### Rôle de l'Architecte & Direction
 Le système évolue vers une plateforme agnostique permettant des simulations complexes (Debates, Jeux, Planification Stratégique). Les travaux actuels se concentrent sur la robustesse de la gestion d'état (File Locking) et l'expérience utilisateur (Dashboard temps réel).

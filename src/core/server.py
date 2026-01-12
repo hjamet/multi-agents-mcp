@@ -3,6 +3,7 @@ import sys
 import os
 from typing import List, Optional
 from jinja2 import Environment, FileSystemLoader
+import asyncio
 
 # Add src to path to allow imports if run directly
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
@@ -356,6 +357,23 @@ async def talk(
         messages=result["messages"],
         instruction=result["instruction"]
     )
+
+@mcp.tool()
+async def sleep(seconds: int) -> str:
+    """
+    Pause execution for a specified duration by sleeping.
+    Useful for waiting for external events or pacing execution.
+    Maximum duration is 300 seconds (5 minutes).
+    """
+    MAX_SLEEP = 300
+    warning = ""
+    
+    if seconds > MAX_SLEEP:
+        warning = f"⚠️ WARNING: Requested sleep of {seconds}s exceeds limit. Capped at {MAX_SLEEP}s.\n"
+        seconds = MAX_SLEEP
+        
+    await asyncio.sleep(seconds)
+    return f"{warning}✅ Slept for {seconds} seconds."
 
 if __name__ == "__main__":
     mcp.run()
