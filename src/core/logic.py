@@ -136,7 +136,8 @@ class Engine:
         start_time = time.time()
         while time.time() - start_time < timeout_seconds:
             # Poll status (Sync load is fine as it uses LOCK_NB now)
-            info = self.get_network_status(name)
+            # BUT we must use to_thread because state.load() might sleep (time.sleep) on lock contention
+            info = await asyncio.to_thread(self.get_network_status, name)
             
             if info.get("error"):
                 return f"ERROR: {info['error']}"
@@ -168,6 +169,16 @@ class Engine:
             config = state.get("config", {})
             profiles = config.get("profiles", [])
             
+            nonlocal next_agent
+            if next_agent: next_agent = next_agent.strip()
+            
+            if not next_agent:
+                return "🚫 ACTION DENIED: 'next_agent' cannot be empty. You must specify who speaks next (e.g., 'MaitreDuJeu')."
+            
+            # Sanitize audience
+            nonlocal audience
+            audience = [a.strip() for a in audience if a.strip()]
+
             sender_info = agents.get(from_agent, {})
             sender_profile_name = sender_info.get("profile_ref")
             
@@ -179,6 +190,8 @@ class Engine:
                 # User asked for strict enforcement.
                 # However, let's allow if the system is bootstrapping (e.g. Role assignment phase? No, talk is later).
                 # Let's BLOCK unknown agents to force proper config.
+                import sys
+                print(f"[Logic] BLOCK: Agent '{from_agent}' has no profile.", file=sys.stderr)
                 return f"🚫 ACTION DENIED: Agent '{from_agent}' has no valid profile configuration. Please ask Admin to configure you in the Cockpit."
 
             caps = sender_profile.get("capabilities", [])
@@ -237,8 +250,12 @@ class Engine:
             state.setdefault("messages", []).append(msg)
             
             # 2. Update Turn
+            old_turn = state["turn"].get("current")
             state["turn"]["current"] = next_agent
             state["turn"]["next"] = None # Consumed
+            
+            import sys
+            print(f"[Logic] TURN CHANGE: {old_turn} -> {next_agent} (Sender: {from_agent})", file=sys.stderr)
             
             return f"Message posted. Next speaker is {next_agent}."
         
@@ -350,14 +367,16 @@ class Engine:
         start_time = time.time()
         
         try:
-            initial_state = self.state.load()
+            # Run blocking load() in a separate thread
+            initial_state = await asyncio.to_thread(self.state.load)
             current_conversation_id = initial_state.get("conversation_id")
         except Exception:
             current_conversation_id = None
 
         while time.time() - start_time < timeout_seconds:
             try:
-                data = self.state.load()
+                # Run blocking load() in a separate thread
+                data = await asyncio.to_thread(self.state.load)
             except Exception:
                 await asyncio.sleep(1)
                 continue

@@ -2,19 +2,17 @@
   "messages": [
     {
       "from": "System",
+      "content": "\ud83d\udfe2 Simulation Started. First turn assigned to **MaitreDuJeu**.",
+      "public": true,
+      "timestamp": 1768176481.8027933
+    },
+    {
+      "from": "System",
       "content": "\ud83d\udd35 **Habitant #1** has joined the simulation.",
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768175211.5303118
-    },
-    {
-      "from": "System",
-      "content": "\ud83d\udd35 **MaitreDuJeu** has joined the simulation.",
-      "public": true,
-      "target": "all",
-      "audience": [],
-      "timestamp": 1768175218.5236874
+      "timestamp": 1768176493.7537024
     },
     {
       "from": "System",
@@ -22,7 +20,7 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768175225.0557811
+      "timestamp": 1768176503.6645718
     },
     {
       "from": "System",
@@ -30,7 +28,7 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768175235.4700398
+      "timestamp": 1768176528.1295855
     },
     {
       "from": "System",
@@ -38,7 +36,7 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768175240.7929893
+      "timestamp": 1768176530.3961198
     },
     {
       "from": "System",
@@ -46,7 +44,7 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768175243.7994301
+      "timestamp": 1768176532.0779326
     },
     {
       "from": "System",
@@ -54,7 +52,15 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768175245.7714326
+      "timestamp": 1768176533.302779
+    },
+    {
+      "from": "System",
+      "content": "\ud83d\udd35 **MaitreDuJeu** has joined the simulation.",
+      "public": true,
+      "target": "all",
+      "audience": [],
+      "timestamp": 1768176535.4166162
     },
     {
       "from": "System",
@@ -62,7 +68,7 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768175248.918464
+      "timestamp": 1768176537.4615872
     },
     {
       "from": "System",
@@ -70,7 +76,7 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768175257.0114133
+      "timestamp": 1768176539.066975
     },
     {
       "from": "System",
@@ -78,100 +84,48 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768175266.142387
+      "timestamp": 1768176539.8554242
+    },
+    {
+      "from": "MaitreDuJeu",
+      "content": "Le village de Thiercelieux s'endort. La nuit tombe sur le village... Les villageois ferment les yeux. \ud83c\udf11\n\n**La Voyante (Habitant #9)** se r\u00e9veille. Voyante, quel r\u00f4le souhaites-tu d\u00e9couvrir cette nuit ?",
+      "public": true,
+      "target": "Habitant #9",
+      "audience": [],
+      "timestamp": 1768176605.1129847
     },
     {
       "from": "Habitant #9",
-      "content": "(Habitant #9 s'endort paisiblement, attendant le lever du soleil ou l'appel du MJ.)",
-      "public": true,
+      "content": "Maitre du Jeu, je souhaite d\u00e9couvrir le r\u00f4le de l'Habitant #2.",
+      "public": false,
       "target": "MaitreDuJeu",
-      "audience": [],
-      "timestamp": 1768175271.9458768
+      "audience": [
+        "MaitreDuJeu"
+      ],
+      "timestamp": 1768176620.5792263
     },
     {
-      "from": "Habitant #9",
-      "content": "(S'endort paisiblement pour la nuit...)",
-      "public": true,
+      "from": "MaitreDuJeu",
+      "content": "Voyante, l'Habitant #2 est un Loup-Garou. Tu peux te rendormir.",
+      "public": false,
       "target": "MaitreDuJeu",
-      "audience": [],
-      "timestamp": 1768175277.6040554
+      "audience": [
+        "Habitant #9"
+      ],
+      "timestamp": 1768176638.2978127
     },
     {
-      "from": "Habitant #9",
-      "content": "(Zzz... L'Habitant #1 dort profond\u00e9ment dans sa petite chaumi\u00e8re, attendant que le jour se l\u00e8ve.)",
+      "from": "MaitreDuJeu",
+      "content": "La Voyante a fini sa qu\u00eate et se rendort paisiblement. \ud83c\udf19\n\nLe village reste plong\u00e9 dans le silence... mais des yeux s'ouvrent dans l'ombre.\n**Les Loups-Garous (Habitant #2 et Habitant #4)** se r\u00e9veillent. Ils se reconnaissent, se concertent silencieusement, et d\u00e9signent leur proie pour ce soir.\n\nLoups, qui allez-vous d\u00e9vorer ?",
       "public": true,
-      "target": "MaitreDuJeu",
+      "target": "Habitant #2",
       "audience": [],
-      "timestamp": 1768175287.0155275
-    },
-    {
-      "from": "Habitant #9",
-      "content": "(S'endort paisiblement pour la nuit...)",
-      "public": true,
-      "target": "MaitreDuJeu",
-      "audience": [],
-      "timestamp": 1768175295.0063484
-    },
-    {
-      "from": "Habitant #9",
-      "content": "(S'endort \u00e9galement, pr\u00eat pour la nuit...)",
-      "public": true,
-      "target": "MaitreDuJeu",
-      "audience": [],
-      "timestamp": 1768175300.9907553
-    },
-    {
-      "from": "Habitant #9",
-      "content": "(Habitant #6 ferme les yeux et s'endort, tendant l'oreille pour l'appel du Maitre du Jeu.)",
-      "public": true,
-      "target": "MaitreDuJeu",
-      "audience": [],
-      "timestamp": 1768175302.0669796
-    },
-    {
-      "from": "Habitant #9",
-      "content": "(Habitant #3 s'endort paisiblement pour la nuit, attendant l'appel du MJ ou le lever du jour.)",
-      "public": true,
-      "target": "MaitreDuJeu",
-      "audience": [],
-      "timestamp": 1768175304.103918
-    },
-    {
-      "from": "Habitant #4",
-      "content": "(Habitant #4 s'endort pour la nuit.)",
-      "public": true,
-      "target": "MaitreDuJeu",
-      "audience": [],
-      "timestamp": 1768175306.3159754
-    },
-    {
-      "from": "Habitant #9",
-      "content": "(Habitant #8 s'endort paisiblement, attendant le lever du soleil ou l'appel du MJ.)",
-      "public": true,
-      "target": "MaitreDuJeu",
-      "audience": [],
-      "timestamp": 1768175313.1784937
-    },
-    {
-      "from": "Habitant #9",
-      "content": "(Habitant #9 dort toujours...)",
-      "public": true,
-      "target": "MaitreDuJeu",
-      "audience": [],
-      "timestamp": 1768175335.4151886
-    },
-    {
-      "from": "Habitant #9",
-      "content": "(Continuation de la nuit...)",
-      "public": true,
-      "target": "MaitreDuJeu",
-      "audience": [],
-      "timestamp": 1768175340.838878
+      "timestamp": 1768176641.8211007
     }
   ],
-  "conversation_id": "f8e4a9d6-9e08-43f7-a0e9-53f643b4c4bd",
+  "conversation_id": "289e5650-84f9-4109-9764-025d7d00db32",
   "turn": {
-    "current": "MaitreDuJeu",
+    "current": "Habitant #2",
     "next": null
   },
   "agents": {
@@ -179,11 +133,6 @@
       "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.",
       "status": "connected",
       "profile_ref": "Villageois"
-    },
-    "MaitreDuJeu": {
-      "role": "Tu es le Maitre du Jeu. Tu diriges la partie. Appelle les r\u00f4les : Voyante, puis Loups, puis Sorci\u00e8re.",
-      "status": "connected",
-      "profile_ref": "MaitreDuJeu"
     },
     "Habitant #2": {
       "role": "Tu es un Loup-Garou. Tu chasses la nuit avec tes alli\u00e9s.",
@@ -196,19 +145,24 @@
       "profile_ref": "Villageois"
     },
     "Habitant #4": {
-      "role": "Tu es la Sorci\u00e8re. Tu as une potion de vie et de mort.",
-      "status": "connected",
-      "profile_ref": "Sorciere"
-    },
-    "Habitant #5": {
       "role": "Tu es un Loup-Garou. Tu chasses la nuit avec tes alli\u00e9s.",
       "status": "connected",
       "profile_ref": "LoupGarou"
     },
-    "Habitant #6": {
-      "role": "Tu es la Voyante. Chaque nuit, tu peux demander au MJ de r\u00e9v\u00e9ler le r\u00f4le d'un joueur.",
+    "Habitant #5": {
+      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.",
       "status": "connected",
-      "profile_ref": "Voyante"
+      "profile_ref": "Villageois"
+    },
+    "Habitant #6": {
+      "role": "Tu es la Sorci\u00e8re. Tu as une potion de vie et de mort.",
+      "status": "connected",
+      "profile_ref": "Sorciere"
+    },
+    "MaitreDuJeu": {
+      "role": "Tu es le Maitre du Jeu. Tu diriges la partie. Appelle les r\u00f4les : Voyante, puis Loups, puis Sorci\u00e8re.",
+      "status": "connected",
+      "profile_ref": "MaitreDuJeu"
     },
     "Habitant #7": {
       "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.",
@@ -221,9 +175,9 @@
       "profile_ref": "Villageois"
     },
     "Habitant #9": {
-      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.",
+      "role": "Tu es la Voyante. Chaque nuit, tu peux demander au MJ de r\u00e9v\u00e9ler le r\u00f4le d'un joueur.",
       "status": "connected",
-      "profile_ref": "Villageois"
+      "profile_ref": "Voyante"
     }
   },
   "config": {
@@ -240,7 +194,24 @@
           "audience",
           "open"
         ],
-        "connections": [],
+        "connections": [
+          {
+            "target": "Voyante",
+            "context": "Appelle la voyante."
+          },
+          {
+            "target": "LoupGarou",
+            "context": "Appelle les loups."
+          },
+          {
+            "target": "Sorciere",
+            "context": "Appelle la sorci\u00e8re."
+          },
+          {
+            "target": "Villageois",
+            "context": "Parle aux villageois."
+          }
+        ],
         "count": 1
       },
       {

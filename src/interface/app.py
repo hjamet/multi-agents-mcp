@@ -345,6 +345,11 @@ elif st.session_state.page == "Cockpit":
 
     # RESET
     st.markdown("___")
+    
+    # 0.5 Starter Selection
+    profile_names = [p["name"] for p in profiles]
+    starter_role = st.selectbox("🏁 Entry Point (First Turn)", profile_names) if profile_names else None
+
     if st.button("🚀 INITIALIZE / RESET SIMULATION", type="primary", use_container_width=True):
         def reset_logic(s):
             s["conversation_id"] = str(uuid.uuid4())
@@ -393,6 +398,29 @@ elif st.session_state.page == "Cockpit":
                     
             s["agents"] = new_agents
             s["config"]["total_agents"] = get_total_agents(profiles)
+            
+            # 4. Set Entry Point
+            found_starter = None
+            if starter_role:
+                # Find first agent matching this profile
+                for aid, adata in new_agents.items():
+                    if adata.get("profile_ref") == starter_role:
+                        found_starter = aid
+                        break
+            
+            if found_starter:
+                s["turn"]["current"] = found_starter
+                sys_msg = f"🟢 Simulation Started. First turn assigned to **{found_starter}**."
+            else:
+                sys_msg = "🟢 Simulation Started. Waiting for agents..."
+                
+            s["messages"].append({
+                "from": "System",
+                "content": sys_msg,
+                "public": True,
+                "timestamp": time.time()
+            })
+
             return f"Simulation Launched! ID: {s['conversation_id']}"
             
         msg = state_store.update(reset_logic)
@@ -430,7 +458,40 @@ elif st.session_state.page == "Chat":
     turn = data.get("turn", {})
     agents = data.get("agents", {})
     
-    # 4. Mission Dashboard
+
+
+    # 5. Chat Stream (Moved Up)
+    st.markdown("### 📜 Communication Log")
+    
+    for m in messages:
+        sender = m.get("from", "?")
+        content = m.get("content", "")
+        
+        if sender == "System":
+             st.info(f"💾 **SYSTEM**: {content}")
+        else:
+            with st.chat_message(sender):
+                st.write(content)
+                
+                # Metadata
+                sender_info = agents.get(sender, {})
+                real_id = sender_info.get("profile_ref", "")
+                id_tag = ""
+                if real_id and real_id not in sender:
+                    id_tag = f"**({real_id})** • "
+                
+                meta = f"{id_tag}to {m.get('target', 'all')}"
+                if not m.get("public"): meta += " 🔒"
+                
+                audiences = m.get("audience", [])
+                if audiences:
+                    aud_str = ", ".join(audiences)
+                    meta += f" (Hears: {aud_str})"
+                st.caption(meta)
+
+    st.divider()
+
+    # 4. Mission Dashboard (Moved Down)
     connection_status = "🔴 OFFLINE"
     connected_count = sum(1 for a in agents.values() if a.get("status") == "connected")
     total_required = data.get('config', {}).get('total_agents', 0)
@@ -451,7 +512,9 @@ elif st.session_state.page == "Chat":
     
     st.markdown("---")
 
-    # 5. Agent Cards
+    # 6. Active Roles (Moved Down)
+    st.markdown("### 🎭 Active Roles & Stats")
+
     if not agents:
         st.info("No agents configured. Go to Cockpit to start.")
     else:
@@ -530,30 +593,53 @@ elif st.session_state.page == "Chat":
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
-    
-    st.divider()
 
-    # 6. Chat Stream
-    # Add a "System" filter?
+    # 7. User Input (God Mode)
+    st.divider()
     
-    for m in messages:
-        sender = m.get("from", "?")
-        content = m.get("content", "")
+    with st.container():
+        c_in, c_targ = st.columns([4, 1])
         
-        if sender == "System":
-             st.info(f"💾 **SYSTEM**: {content}")
-        else:
-            with st.chat_message(sender):
-                st.write(content)
+        # Determine valid targets
+        all_agent_keys = sorted(agents.keys())
+        targets = c_targ.multiselect("To:", all_agent_keys, placeholder="Broadcast (All)")
+        
+        user_input = c_in.chat_input("Inject message as USER...")
+        
+        if user_input:
+            def inject_msg(s):
+                targets_captured = targets # Close over variable
                 
-                # Metadata
-                sender_info = agents.get(sender, {})
-                real_id = sender_info.get("profile_ref", "")
-                id_tag = ""
-                if real_id and real_id not in sender:
-                    id_tag = f"**({real_id})** • "
+                msg = {
+                    "from": "USER",
+                    "content": user_input,
+                    "timestamp": time.time()
+                }
                 
-                meta = f"{id_tag}to {m.get('target', 'all')}"
-                if not m.get("public"): meta += " 🔒"
-                if m.get("audience"): meta += f" (+{len(m['audience'])})"
-                st.caption(meta)
+                status_msg = ""
+                
+                if not targets_captured:
+                    # Broadcast, No Turn Change
+                    msg["public"] = True
+                    msg["target"] = "all"
+                    msg["audience"] = []
+                    status_msg = "Broadcast sent."
+                else:
+                    # Targeted
+                    msg["public"] = False
+                    msg["target"] = targets_captured[0]
+                    msg["audience"] = targets_captured[1:]
+                    
+                    # TRIGGER TURN
+                    # The user explicitly selected agents, so we hand control to the first one
+                    s["turn"]["current"] = targets_captured[0]
+                    s["turn"]["next"] = None
+                    status_msg = f"Message sent. Turn handed to {targets_captured[0]}."
+
+                s.setdefault("messages", []).append(msg)
+                return status_msg
+            
+            res = state_store.update(inject_msg)
+            st.toast(res)
+            time.sleep(0.5)
+            st.rerun()

@@ -65,12 +65,38 @@ async def agent() -> str:
     if wait_msg.startswith("TIMEOUT"):
          return wait_msg
 
+    # BLOCKING: Wait for Turn (Strict Handshake)
+    print(f"[{name}] Network Ready. Waiting for Turn...", file=sys.stderr)
+    
+    turn_messages = []
+    instruction_text = ""
+    
+    while True:
+        # Loop indefinitely until it is our turn
+        turn_result = await engine.wait_for_turn_async(name, timeout_seconds=10)
+        
+        if turn_result["status"] == "success":
+            turn_messages = turn_result["messages"]
+            instruction_text = turn_result["instruction"]
+            break
+            
+        if turn_result["status"] == "reset":
+            return f"⚠️ SYSTEM ALERT: {turn_result['instruction']}"
+            
+        # If timeout, we just loop again. (User requested: Never return until turn)
+        # Using short timeout in wait_for_turn_async allows us to check for resets/signals more often
+        continue
+
     template = jinja_env.get_template("agent_response.j2")
     return template.render(
         name=name,
         role=result["role"],
         context=result["context"],
-        connections=connections
+        connections=connections,
+        # We might want to pass initial messages if template supports it, 
+        # but for now we stick to standard Context. The instruction_text helps.
+        # Actually, let's append instruction to context for visibility? 
+        # Or just rely on the standard "You may now speak" which the template likely has.
     )
 
 @mcp.tool()
@@ -115,11 +141,22 @@ async def talk(
     
     # 2. Smart Block (Wait for Turn)
     # The turn has passed to next_agent. We now wait until it comes back to 'sender'.
-    result = await engine.wait_for_turn_async(sender)
+    # User Request: NEVER return until it is our turn.
     
-    if result["status"] == "timeout":
-        # Return a special instruction to keep the tool loop alive without breaking connection
-        return f"TIMEOUT_WARNING: {result['instruction']}"
+    result = None
+    while True:
+        result = await engine.wait_for_turn_async(sender, timeout_seconds=10)
+        
+        if result["status"] == "success":
+            break
+            
+        if result["status"] == "reset":
+            return f"⚠️ SYSTEM ALERT: {result['instruction']}"
+            
+        # On timeout, loop again.
+        continue
+    
+    # result is guaranteed to be success here
 
     if result["status"] == "reset":
         return f"⚠️ SYSTEM ALERT: {result['instruction']}"
