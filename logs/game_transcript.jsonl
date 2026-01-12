@@ -672,3 +672,353 @@
 {"timestamp": 1768234915.8634841, "time_str": "2026-01-12 17:21:55", "type": "WARNING", "agent": "System", "content": "Session collision: Agent1 -> Agent2", "metadata": {}}
 {"timestamp": 1768234918.5611565, "time_str": "2026-01-12 17:21:58", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
 {"timestamp": 1768234923.577149, "time_str": "2026-01-12 17:22:03", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768234928.5957959, "time_str": "2026-01-12 17:22:08", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768234928.9103203, "time_str": "2026-01-12 17:22:08", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768234933.6212366, "time_str": "2026-01-12 17:22:13", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768234938.6467159, "time_str": "2026-01-12 17:22:18", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768234943.6607542, "time_str": "2026-01-12 17:22:23", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768234948.678572, "time_str": "2026-01-12 17:22:28", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768234949.096683, "time_str": "2026-01-12 17:22:29", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768234949.1006756, "time_str": "2026-01-12 17:22:29", "type": "REGISTER", "agent": "Agent2", "content": "Registration Result: {'name': 'Agent2', 'role': 'Test Role 2', 'context': ''}", "metadata": {}}
+{"timestamp": 1768234949.100786, "time_str": "2026-01-12 17:22:29", "type": "WARNING", "agent": "System", "content": "Session collision: Agent1 -> Agent2", "metadata": {}}
+{"timestamp": 1768234953.6980453, "time_str": "2026-01-12 17:22:33", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768234958.7226667, "time_str": "2026-01-12 17:22:38", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768234962.0516176, "time_str": "2026-01-12 17:22:42", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768234962.1385574, "time_str": "2026-01-12 17:22:42", "type": "MEMORY", "agent": "Agent1", "content": "Updated memory note.", "metadata": {}}
+{"timestamp": 1768234962.2383392, "time_str": "2026-01-12 17:22:42", "type": "ACTION", "agent": "Agent1", "content": "talking -> Agent1 (Public: True)", "metadata": {"message": "Hello World", "audience": []}}
+{"timestamp": 1768234962.2410798, "time_str": "2026-01-12 17:22:42", "type": "SECURITY", "agent": "System", "content": "Blocked unregistered agent Agent1", "metadata": {}}
+{"timestamp": 1768234962.244775, "time_str": "2026-01-12 17:22:42", "type": "DENIED", "agent": "System", "content": "🚫 ACTION DENIED: Agent 'Agent1' has no valid profile configuration. Please ask Admin to configure you in the Cockpit.", "metadata": {"target": "Agent1"}}
+{"timestamp": 1768234963.7418873, "time_str": "2026-01-12 17:22:43", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768234968.764698, "time_str": "2026-01-12 17:22:48", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768234973.785259, "time_str": "2026-01-12 17:22:53", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768234978.8047714, "time_str": "2026-01-12 17:22:58", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768234983.8253407, "time_str": "2026-01-12 17:23:03", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768234988.8494868, "time_str": "2026-01-12 17:23:08", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768234993.8682315, "time_str": "2026-01-12 17:23:13", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768234998.888775, "time_str": "2026-01-12 17:23:18", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235003.9207428, "time_str": "2026-01-12 17:23:23", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235008.943544, "time_str": "2026-01-12 17:23:28", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235012.1096253, "time_str": "2026-01-12 17:23:32", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235012.1150804, "time_str": "2026-01-12 17:23:32", "type": "REGISTER", "agent": "Agent2", "content": "Registration Result: {'name': 'Agent2', 'role': 'Test Role 2', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235012.1152241, "time_str": "2026-01-12 17:23:32", "type": "WARNING", "agent": "System", "content": "Session collision: Agent1 -> Agent2", "metadata": {}}
+{"timestamp": 1768235013.9659383, "time_str": "2026-01-12 17:23:33", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235018.9909523, "time_str": "2026-01-12 17:23:38", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235024.0185916, "time_str": "2026-01-12 17:23:44", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235025.1659133, "time_str": "2026-01-12 17:23:45", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235025.246092, "time_str": "2026-01-12 17:23:45", "type": "MEMORY", "agent": "Agent1", "content": "Updated memory note.", "metadata": {}}
+{"timestamp": 1768235025.347271, "time_str": "2026-01-12 17:23:45", "type": "ACTION", "agent": "Agent1", "content": "talking -> Agent1 (Public: True)", "metadata": {"message": "Hello World", "audience": []}}
+{"timestamp": 1768235025.3543608, "time_str": "2026-01-12 17:23:45", "type": "DENIED", "agent": "System", "content": "🚫 ACTION DENIED: You cannot pass the turn to yourself. Please choose another agent.", "metadata": {"target": "Agent1"}}
+{"timestamp": 1768235029.0353818, "time_str": "2026-01-12 17:23:49", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235034.0564735, "time_str": "2026-01-12 17:23:54", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235039.0772822, "time_str": "2026-01-12 17:23:59", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235044.0935628, "time_str": "2026-01-12 17:24:04", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235049.1268504, "time_str": "2026-01-12 17:24:09", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235054.1432056, "time_str": "2026-01-12 17:24:14", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235059.1542354, "time_str": "2026-01-12 17:24:19", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235064.1771047, "time_str": "2026-01-12 17:24:24", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235069.2090766, "time_str": "2026-01-12 17:24:29", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235074.2337186, "time_str": "2026-01-12 17:24:34", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235079.2530072, "time_str": "2026-01-12 17:24:39", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235080.6940713, "time_str": "2026-01-12 17:24:40", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235080.698008, "time_str": "2026-01-12 17:24:40", "type": "REGISTER", "agent": "Agent2", "content": "Registration Result: {'name': 'Agent2', 'role': 'Test Role 2', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235080.698121, "time_str": "2026-01-12 17:24:40", "type": "WARNING", "agent": "System", "content": "Session collision: Agent1 -> Agent2", "metadata": {}}
+{"timestamp": 1768235084.27219, "time_str": "2026-01-12 17:24:44", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235084.7051744, "time_str": "2026-01-12 17:24:44", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235084.7934983, "time_str": "2026-01-12 17:24:44", "type": "MEMORY", "agent": "Agent1", "content": "Updated memory note.", "metadata": {}}
+{"timestamp": 1768235084.8943398, "time_str": "2026-01-12 17:24:44", "type": "ACTION", "agent": "Agent1", "content": "talking -> User (Public: True)", "metadata": {"message": "Hello History", "audience": []}}
+{"timestamp": 1768235084.9028194, "time_str": "2026-01-12 17:24:44", "type": "SUCCESS", "agent": "System", "content": "Message posted: Message sent to User. You still have the turn.", "metadata": {}}
+{"timestamp": 1768235084.9034421, "time_str": "2026-01-12 17:24:44", "type": "TURN", "agent": "System", "content": "Turn passed to USER (Non-Blocking / Busy). Agent retains control.", "metadata": {}}
+{"timestamp": 1768235089.2875757, "time_str": "2026-01-12 17:24:49", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235094.3051121, "time_str": "2026-01-12 17:24:54", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235099.3330905, "time_str": "2026-01-12 17:24:59", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235104.353405, "time_str": "2026-01-12 17:25:04", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235108.1413167, "time_str": "2026-01-12 17:25:08", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235108.1480198, "time_str": "2026-01-12 17:25:08", "type": "REGISTER", "agent": "Agent2", "content": "Registration Result: {'name': 'Agent2', 'role': 'Test Role 2', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235108.1482158, "time_str": "2026-01-12 17:25:08", "type": "WARNING", "agent": "System", "content": "Session collision: Agent1 -> Agent2", "metadata": {}}
+{"timestamp": 1768235109.3764565, "time_str": "2026-01-12 17:25:09", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235112.1320043, "time_str": "2026-01-12 17:25:12", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235112.2200758, "time_str": "2026-01-12 17:25:12", "type": "MEMORY", "agent": "Agent1", "content": "Updated memory note.", "metadata": {}}
+{"timestamp": 1768235112.322365, "time_str": "2026-01-12 17:25:12", "type": "ACTION", "agent": "Agent1", "content": "talking -> User (Public: True)", "metadata": {"message": "Hello History", "audience": []}}
+{"timestamp": 1768235112.3312101, "time_str": "2026-01-12 17:25:12", "type": "SUCCESS", "agent": "System", "content": "Message posted: Message sent to User. You still have the turn.", "metadata": {}}
+{"timestamp": 1768235112.3317747, "time_str": "2026-01-12 17:25:12", "type": "TURN", "agent": "System", "content": "Turn passed to USER (Non-Blocking / Busy). Agent retains control.", "metadata": {}}
+{"timestamp": 1768235114.3970025, "time_str": "2026-01-12 17:25:14", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235119.4251742, "time_str": "2026-01-12 17:25:19", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235124.4425013, "time_str": "2026-01-12 17:25:24", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235129.4594421, "time_str": "2026-01-12 17:25:29", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235130.7682922, "time_str": "2026-01-12 17:25:30", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235130.7724624, "time_str": "2026-01-12 17:25:30", "type": "REGISTER", "agent": "Agent2", "content": "Registration Result: {'name': 'Agent2', 'role': 'Test Role 2', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235130.7725704, "time_str": "2026-01-12 17:25:30", "type": "WARNING", "agent": "System", "content": "Session collision: Agent1 -> Agent2", "metadata": {}}
+{"timestamp": 1768235134.467151, "time_str": "2026-01-12 17:25:34", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235134.7830267, "time_str": "2026-01-12 17:25:34", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235134.863153, "time_str": "2026-01-12 17:25:34", "type": "MEMORY", "agent": "Agent1", "content": "Updated memory note.", "metadata": {}}
+{"timestamp": 1768235134.964956, "time_str": "2026-01-12 17:25:34", "type": "ACTION", "agent": "Agent1", "content": "talking -> User (Public: True)", "metadata": {"message": "Hello History", "audience": []}}
+{"timestamp": 1768235134.9772835, "time_str": "2026-01-12 17:25:34", "type": "SUCCESS", "agent": "System", "content": "Message posted: Message sent to User. You still have the turn.", "metadata": {}}
+{"timestamp": 1768235134.9781237, "time_str": "2026-01-12 17:25:34", "type": "TURN", "agent": "System", "content": "Turn passed to USER (Non-Blocking / Busy). Agent retains control.", "metadata": {}}
+{"timestamp": 1768235137.0111625, "time_str": "2026-01-12 17:25:37", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235139.473319, "time_str": "2026-01-12 17:25:39", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235144.4822772, "time_str": "2026-01-12 17:25:44", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235149.498687, "time_str": "2026-01-12 17:25:49", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235154.52461, "time_str": "2026-01-12 17:25:54", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235159.54243, "time_str": "2026-01-12 17:25:59", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235164.566764, "time_str": "2026-01-12 17:26:04", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235169.5943367, "time_str": "2026-01-12 17:26:09", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235174.6387281, "time_str": "2026-01-12 17:26:14", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235179.6597528, "time_str": "2026-01-12 17:26:19", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235184.679458, "time_str": "2026-01-12 17:26:24", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235189.6961222, "time_str": "2026-01-12 17:26:29", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235194.721574, "time_str": "2026-01-12 17:26:34", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235199.7447028, "time_str": "2026-01-12 17:26:39", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235204.7605367, "time_str": "2026-01-12 17:26:44", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235209.798986, "time_str": "2026-01-12 17:26:49", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235214.8382168, "time_str": "2026-01-12 17:26:54", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235219.862546, "time_str": "2026-01-12 17:26:59", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235222.0827801, "time_str": "2026-01-12 17:27:02", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235222.087913, "time_str": "2026-01-12 17:27:02", "type": "REGISTER", "agent": "Agent2", "content": "Registration Result: {'name': 'Agent2', 'role': 'Test Role 2', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235222.0880232, "time_str": "2026-01-12 17:27:02", "type": "WARNING", "agent": "System", "content": "Session collision: Agent1 -> Agent2", "metadata": {}}
+{"timestamp": 1768235224.8732433, "time_str": "2026-01-12 17:27:04", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235226.0889966, "time_str": "2026-01-12 17:27:06", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235226.1758387, "time_str": "2026-01-12 17:27:06", "type": "MEMORY", "agent": "Agent1", "content": "Updated memory note.", "metadata": {}}
+{"timestamp": 1768235226.2767463, "time_str": "2026-01-12 17:27:06", "type": "ACTION", "agent": "Agent1", "content": "talking -> User (Public: True)", "metadata": {"message": "Hello History", "audience": []}}
+{"timestamp": 1768235226.285362, "time_str": "2026-01-12 17:27:06", "type": "SUCCESS", "agent": "System", "content": "Message posted: Message sent to User. You still have the turn.", "metadata": {}}
+{"timestamp": 1768235226.2857418, "time_str": "2026-01-12 17:27:06", "type": "TURN", "agent": "System", "content": "Turn passed to USER (Non-Blocking / Busy). Agent retains control.", "metadata": {}}
+{"timestamp": 1768235229.8973382, "time_str": "2026-01-12 17:27:09", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235234.9155529, "time_str": "2026-01-12 17:27:14", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235239.9470863, "time_str": "2026-01-12 17:27:19", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235244.9861965, "time_str": "2026-01-12 17:27:24", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235250.0086002, "time_str": "2026-01-12 17:27:30", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235254.257484, "time_str": "2026-01-12 17:27:34", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235254.2616901, "time_str": "2026-01-12 17:27:34", "type": "REGISTER", "agent": "Agent2", "content": "Registration Result: {'name': 'Agent2', 'role': 'Test Role 2', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235254.2618668, "time_str": "2026-01-12 17:27:34", "type": "WARNING", "agent": "System", "content": "Session collision: Agent1 -> Agent2", "metadata": {}}
+{"timestamp": 1768235255.024034, "time_str": "2026-01-12 17:27:35", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235258.2769496, "time_str": "2026-01-12 17:27:38", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235258.3585813, "time_str": "2026-01-12 17:27:38", "type": "MEMORY", "agent": "Agent1", "content": "Updated memory note.", "metadata": {}}
+{"timestamp": 1768235258.4607246, "time_str": "2026-01-12 17:27:38", "type": "ACTION", "agent": "Agent1", "content": "talking -> User (Public: True)", "metadata": {"message": "Hello History", "audience": []}}
+{"timestamp": 1768235258.4712267, "time_str": "2026-01-12 17:27:38", "type": "SUCCESS", "agent": "System", "content": "Message posted: Message sent to User. You still have the turn.", "metadata": {}}
+{"timestamp": 1768235258.4720335, "time_str": "2026-01-12 17:27:38", "type": "TURN", "agent": "System", "content": "Turn passed to USER (Non-Blocking / Busy). Agent retains control.", "metadata": {}}
+{"timestamp": 1768235260.0469043, "time_str": "2026-01-12 17:27:40", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235265.079621, "time_str": "2026-01-12 17:27:45", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235270.1332011, "time_str": "2026-01-12 17:27:50", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235275.152579, "time_str": "2026-01-12 17:27:55", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235280.1647546, "time_str": "2026-01-12 17:28:00", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235285.052621, "time_str": "2026-01-12 17:28:05", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235285.0573049, "time_str": "2026-01-12 17:28:05", "type": "REGISTER", "agent": "Agent2", "content": "Registration Result: {'name': 'Agent2', 'role': 'Test Role 2', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235285.0574353, "time_str": "2026-01-12 17:28:05", "type": "WARNING", "agent": "System", "content": "Session collision: Agent1 -> Agent2", "metadata": {}}
+{"timestamp": 1768235285.18306, "time_str": "2026-01-12 17:28:05", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235289.0728238, "time_str": "2026-01-12 17:28:09", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235289.1483712, "time_str": "2026-01-12 17:28:09", "type": "MEMORY", "agent": "Agent1", "content": "Updated memory note.", "metadata": {}}
+{"timestamp": 1768235289.2504725, "time_str": "2026-01-12 17:28:09", "type": "ACTION", "agent": "Agent1", "content": "talking -> User (Public: True)", "metadata": {"message": "Hello History", "audience": []}}
+{"timestamp": 1768235289.2572696, "time_str": "2026-01-12 17:28:09", "type": "SUCCESS", "agent": "System", "content": "Message posted: Message sent to User. You still have the turn.", "metadata": {}}
+{"timestamp": 1768235289.257887, "time_str": "2026-01-12 17:28:09", "type": "TURN", "agent": "System", "content": "Turn passed to USER (Non-Blocking / Busy). Agent retains control.", "metadata": {}}
+{"timestamp": 1768235290.207154, "time_str": "2026-01-12 17:28:10", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235290.2839952, "time_str": "2026-01-12 17:28:10", "type": "REGISTER", "agent": "??", "content": "Registration Result: {'error': 'GAME FULL: No pending roles available. Please wait or contact Admin.'}", "metadata": {}}
+{"timestamp": 1768235290.2842577, "time_str": "2026-01-12 17:28:10", "type": "ERROR", "agent": "System", "content": "GAME FULL: No pending roles available. Please wait or contact Admin.", "metadata": {"context": "registration"}}
+{"timestamp": 1768235295.221893, "time_str": "2026-01-12 17:28:15", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235300.2338514, "time_str": "2026-01-12 17:28:20", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235305.2743895, "time_str": "2026-01-12 17:28:25", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235310.297713, "time_str": "2026-01-12 17:28:30", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235310.3124244, "time_str": "2026-01-12 17:28:30", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235310.317181, "time_str": "2026-01-12 17:28:30", "type": "REGISTER", "agent": "Agent2", "content": "Registration Result: {'name': 'Agent2', 'role': 'Test Role 2', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235310.3173249, "time_str": "2026-01-12 17:28:30", "type": "WARNING", "agent": "System", "content": "Session collision: Agent1 -> Agent2", "metadata": {}}
+{"timestamp": 1768235314.3311858, "time_str": "2026-01-12 17:28:34", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235314.417549, "time_str": "2026-01-12 17:28:34", "type": "MEMORY", "agent": "Agent1", "content": "Updated memory note.", "metadata": {}}
+{"timestamp": 1768235314.5190089, "time_str": "2026-01-12 17:28:34", "type": "ACTION", "agent": "Agent1", "content": "talking -> User (Public: True)", "metadata": {"message": "Hello History", "audience": []}}
+{"timestamp": 1768235314.5229363, "time_str": "2026-01-12 17:28:34", "type": "SUCCESS", "agent": "System", "content": "Message posted: Message sent to User. You still have the turn.", "metadata": {}}
+{"timestamp": 1768235314.5231385, "time_str": "2026-01-12 17:28:34", "type": "TURN", "agent": "System", "content": "Turn passed to USER (Non-Blocking / Busy). Agent retains control.", "metadata": {}}
+{"timestamp": 1768235315.3098438, "time_str": "2026-01-12 17:28:35", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235315.5458648, "time_str": "2026-01-12 17:28:35", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235320.3234951, "time_str": "2026-01-12 17:28:40", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235325.3364964, "time_str": "2026-01-12 17:28:45", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235330.3552458, "time_str": "2026-01-12 17:28:50", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235335.3666198, "time_str": "2026-01-12 17:28:55", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235340.3950071, "time_str": "2026-01-12 17:29:00", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235345.4101315, "time_str": "2026-01-12 17:29:05", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235350.4276233, "time_str": "2026-01-12 17:29:10", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235355.4504664, "time_str": "2026-01-12 17:29:15", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235360.4722364, "time_str": "2026-01-12 17:29:20", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235365.492964, "time_str": "2026-01-12 17:29:25", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235370.516105, "time_str": "2026-01-12 17:29:30", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235375.5673718, "time_str": "2026-01-12 17:29:35", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235380.5813289, "time_str": "2026-01-12 17:29:40", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235385.5959442, "time_str": "2026-01-12 17:29:45", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235390.617314, "time_str": "2026-01-12 17:29:50", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235395.6340117, "time_str": "2026-01-12 17:29:55", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235400.6554525, "time_str": "2026-01-12 17:30:00", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235405.6786737, "time_str": "2026-01-12 17:30:05", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235410.6868494, "time_str": "2026-01-12 17:30:10", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235415.7108157, "time_str": "2026-01-12 17:30:15", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235420.7301, "time_str": "2026-01-12 17:30:20", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235425.7539496, "time_str": "2026-01-12 17:30:25", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235430.7817805, "time_str": "2026-01-12 17:30:30", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235435.80275, "time_str": "2026-01-12 17:30:35", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235440.8255138, "time_str": "2026-01-12 17:30:40", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235445.8631582, "time_str": "2026-01-12 17:30:45", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235450.8875027, "time_str": "2026-01-12 17:30:50", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235454.4146056, "time_str": "2026-01-12 17:30:54", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235454.4213667, "time_str": "2026-01-12 17:30:54", "type": "REGISTER", "agent": "Agent2", "content": "Registration Result: {'name': 'Agent2', 'role': 'Test Role 2', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235454.4214745, "time_str": "2026-01-12 17:30:54", "type": "WARNING", "agent": "System", "content": "Session collision: Agent1 -> Agent2", "metadata": {}}
+{"timestamp": 1768235455.9090104, "time_str": "2026-01-12 17:30:55", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235458.318294, "time_str": "2026-01-12 17:30:58", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235458.3987193, "time_str": "2026-01-12 17:30:58", "type": "MEMORY", "agent": "Agent1", "content": "Updated memory note.", "metadata": {}}
+{"timestamp": 1768235458.4993026, "time_str": "2026-01-12 17:30:58", "type": "ACTION", "agent": "Agent1", "content": "talking -> User (Public: True)", "metadata": {"message": "Hello History", "audience": []}}
+{"timestamp": 1768235458.505347, "time_str": "2026-01-12 17:30:58", "type": "SUCCESS", "agent": "System", "content": "Message posted: Message sent to User. You still have the turn.", "metadata": {}}
+{"timestamp": 1768235458.5058355, "time_str": "2026-01-12 17:30:58", "type": "TURN", "agent": "System", "content": "Turn passed to USER (Non-Blocking / Busy). Agent retains control.", "metadata": {}}
+{"timestamp": 1768235459.5322583, "time_str": "2026-01-12 17:30:59", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235460.5391705, "time_str": "2026-01-12 17:31:00", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235460.91847, "time_str": "2026-01-12 17:31:00", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235465.9373415, "time_str": "2026-01-12 17:31:05", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235470.9611108, "time_str": "2026-01-12 17:31:10", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235475.9807086, "time_str": "2026-01-12 17:31:15", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235481.0011797, "time_str": "2026-01-12 17:31:20", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235486.0187566, "time_str": "2026-01-12 17:31:26", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235491.0460978, "time_str": "2026-01-12 17:31:31", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235496.0703847, "time_str": "2026-01-12 17:31:36", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235501.0907323, "time_str": "2026-01-12 17:31:41", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235506.114042, "time_str": "2026-01-12 17:31:46", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235510.1714926, "time_str": "2026-01-12 17:31:50", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235510.1783772, "time_str": "2026-01-12 17:31:50", "type": "REGISTER", "agent": "Agent2", "content": "Registration Result: {'name': 'Agent2', 'role': 'Test Role 2', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235510.178643, "time_str": "2026-01-12 17:31:50", "type": "WARNING", "agent": "System", "content": "Session collision: Agent1 -> Agent2", "metadata": {}}
+{"timestamp": 1768235511.1297019, "time_str": "2026-01-12 17:31:51", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235514.0819812, "time_str": "2026-01-12 17:31:54", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235514.1575963, "time_str": "2026-01-12 17:31:54", "type": "MEMORY", "agent": "Agent1", "content": "Updated memory note.", "metadata": {}}
+{"timestamp": 1768235514.2580643, "time_str": "2026-01-12 17:31:54", "type": "ACTION", "agent": "Agent1", "content": "talking -> User (Public: True)", "metadata": {"message": "Hello History", "audience": []}}
+{"timestamp": 1768235514.2678595, "time_str": "2026-01-12 17:31:54", "type": "SUCCESS", "agent": "System", "content": "Message posted: Message sent to User. You still have the turn.", "metadata": {}}
+{"timestamp": 1768235514.2680554, "time_str": "2026-01-12 17:31:54", "type": "TURN", "agent": "System", "content": "Turn passed to USER (Non-Blocking / Busy). Agent retains control.", "metadata": {}}
+{"timestamp": 1768235515.2998927, "time_str": "2026-01-12 17:31:55", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235516.144942, "time_str": "2026-01-12 17:31:56", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235521.1586044, "time_str": "2026-01-12 17:32:01", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235526.1776583, "time_str": "2026-01-12 17:32:06", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235531.2036731, "time_str": "2026-01-12 17:32:11", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235534.9859266, "time_str": "2026-01-12 17:32:14", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235534.9960642, "time_str": "2026-01-12 17:32:14", "type": "REGISTER", "agent": "Agent2", "content": "Registration Result: {'name': 'Agent2', 'role': 'Test Role 2', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235534.996252, "time_str": "2026-01-12 17:32:14", "type": "WARNING", "agent": "System", "content": "Session collision: Agent1 -> Agent2", "metadata": {}}
+{"timestamp": 1768235536.2279394, "time_str": "2026-01-12 17:32:16", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235538.9992309, "time_str": "2026-01-12 17:32:18", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235539.0785193, "time_str": "2026-01-12 17:32:19", "type": "MEMORY", "agent": "Agent1", "content": "Updated memory note.", "metadata": {}}
+{"timestamp": 1768235539.1777077, "time_str": "2026-01-12 17:32:19", "type": "ACTION", "agent": "Agent1", "content": "talking -> User (Public: True)", "metadata": {"message": "Hello History", "audience": []}}
+{"timestamp": 1768235539.1841106, "time_str": "2026-01-12 17:32:19", "type": "SUCCESS", "agent": "System", "content": "Message posted: Message sent to User. You still have the turn.", "metadata": {}}
+{"timestamp": 1768235539.184468, "time_str": "2026-01-12 17:32:19", "type": "TURN", "agent": "System", "content": "Turn passed to USER (Non-Blocking / Busy). Agent retains control.", "metadata": {}}
+{"timestamp": 1768235540.218407, "time_str": "2026-01-12 17:32:20", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235541.2659047, "time_str": "2026-01-12 17:32:21", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235546.282446, "time_str": "2026-01-12 17:32:26", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235551.2937114, "time_str": "2026-01-12 17:32:31", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235556.321932, "time_str": "2026-01-12 17:32:36", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235561.3412719, "time_str": "2026-01-12 17:32:41", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235566.3529136, "time_str": "2026-01-12 17:32:46", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235571.3649905, "time_str": "2026-01-12 17:32:51", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235576.3770912, "time_str": "2026-01-12 17:32:56", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235581.408558, "time_str": "2026-01-12 17:33:01", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235582.4737413, "time_str": "2026-01-12 17:33:02", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235582.4809165, "time_str": "2026-01-12 17:33:02", "type": "REGISTER", "agent": "Agent2", "content": "Registration Result: {'name': 'Agent2', 'role': 'Test Role 2', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235582.4811168, "time_str": "2026-01-12 17:33:02", "type": "WARNING", "agent": "System", "content": "Session collision: Agent1 -> Agent2", "metadata": {}}
+{"timestamp": 1768235584.683915, "time_str": "2026-01-12 17:33:04", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235584.768099, "time_str": "2026-01-12 17:33:04", "type": "MEMORY", "agent": "Agent1", "content": "Updated memory note.", "metadata": {}}
+{"timestamp": 1768235584.8682542, "time_str": "2026-01-12 17:33:04", "type": "ACTION", "agent": "Agent1", "content": "talking -> User (Public: True)", "metadata": {"message": "Hello History", "audience": []}}
+{"timestamp": 1768235584.8736148, "time_str": "2026-01-12 17:33:04", "type": "SUCCESS", "agent": "System", "content": "Message posted: Message sent to User. You still have the turn.", "metadata": {}}
+{"timestamp": 1768235584.8738632, "time_str": "2026-01-12 17:33:04", "type": "TURN", "agent": "System", "content": "Turn passed to USER (Non-Blocking / Busy). Agent retains control.", "metadata": {}}
+{"timestamp": 1768235585.9010563, "time_str": "2026-01-12 17:33:05", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235586.152364, "time_str": "2026-01-12 17:33:06", "type": "TURN_CHANGE", "agent": "System", "content": "Turn passed to Agent2", "metadata": {"from": "Agent1", "to": "Agent2"}}
+{"timestamp": 1768235586.1633873, "time_str": "2026-01-12 17:33:06", "type": "TURN_CHANGE", "agent": "System", "content": "Turn passed to Agent1", "metadata": {"from": "Agent2", "to": "Agent1"}}
+{"timestamp": 1768235586.4210677, "time_str": "2026-01-12 17:33:06", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235591.4355614, "time_str": "2026-01-12 17:33:11", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235596.4581065, "time_str": "2026-01-12 17:33:16", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235599.7422163, "time_str": "2026-01-12 17:33:19", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235599.7506912, "time_str": "2026-01-12 17:33:19", "type": "REGISTER", "agent": "Agent2", "content": "Registration Result: {'name': 'Agent2', 'role': 'Test Role 2', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235599.7508585, "time_str": "2026-01-12 17:33:19", "type": "WARNING", "agent": "System", "content": "Session collision: Agent1 -> Agent2", "metadata": {}}
+{"timestamp": 1768235601.483212, "time_str": "2026-01-12 17:33:21", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235603.7552547, "time_str": "2026-01-12 17:33:23", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235603.836297, "time_str": "2026-01-12 17:33:23", "type": "MEMORY", "agent": "Agent1", "content": "Updated memory note.", "metadata": {}}
+{"timestamp": 1768235603.937178, "time_str": "2026-01-12 17:33:23", "type": "ACTION", "agent": "Agent1", "content": "talking -> User (Public: True)", "metadata": {"message": "Hello History", "audience": []}}
+{"timestamp": 1768235603.941072, "time_str": "2026-01-12 17:33:23", "type": "SUCCESS", "agent": "System", "content": "Message posted: Message sent to User. You still have the turn.", "metadata": {}}
+{"timestamp": 1768235603.9412568, "time_str": "2026-01-12 17:33:23", "type": "TURN", "agent": "System", "content": "Turn passed to USER (Non-Blocking / Busy). Agent retains control.", "metadata": {}}
+{"timestamp": 1768235604.8648193, "time_str": "2026-01-12 17:33:24", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235605.151062, "time_str": "2026-01-12 17:33:25", "type": "TURN_CHANGE", "agent": "System", "content": "Turn passed to Agent2", "metadata": {"from": "Agent1", "to": "Agent2"}}
+{"timestamp": 1768235605.160743, "time_str": "2026-01-12 17:33:25", "type": "TURN_CHANGE", "agent": "System", "content": "Turn passed to Agent1", "metadata": {"from": "Agent2", "to": "Agent1"}}
+{"timestamp": 1768235606.4957058, "time_str": "2026-01-12 17:33:26", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235611.507545, "time_str": "2026-01-12 17:33:31", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235616.5243633, "time_str": "2026-01-12 17:33:36", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235616.8109293, "time_str": "2026-01-12 17:33:36", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235616.8160458, "time_str": "2026-01-12 17:33:36", "type": "REGISTER", "agent": "Agent2", "content": "Registration Result: {'name': 'Agent2', 'role': 'Test Role 2', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235616.8161836, "time_str": "2026-01-12 17:33:36", "type": "WARNING", "agent": "System", "content": "Session collision: Agent1 -> Agent2", "metadata": {}}
+{"timestamp": 1768235620.7077, "time_str": "2026-01-12 17:33:40", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235620.7983816, "time_str": "2026-01-12 17:33:40", "type": "MEMORY", "agent": "Agent1", "content": "Updated memory note.", "metadata": {}}
+{"timestamp": 1768235620.8980026, "time_str": "2026-01-12 17:33:40", "type": "ACTION", "agent": "Agent1", "content": "talking -> User (Public: True)", "metadata": {"message": "Hello History", "audience": []}}
+{"timestamp": 1768235620.907876, "time_str": "2026-01-12 17:33:40", "type": "SUCCESS", "agent": "System", "content": "Message posted: Message sent to User. You still have the turn.", "metadata": {}}
+{"timestamp": 1768235620.9084313, "time_str": "2026-01-12 17:33:40", "type": "TURN", "agent": "System", "content": "Turn passed to USER (Non-Blocking / Busy). Agent retains control.", "metadata": {}}
+{"timestamp": 1768235621.54004, "time_str": "2026-01-12 17:33:41", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235621.9298313, "time_str": "2026-01-12 17:33:41", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235622.179007, "time_str": "2026-01-12 17:33:42", "type": "TURN_CHANGE", "agent": "System", "content": "Turn passed to Agent2", "metadata": {"from": "Agent1", "to": "Agent2"}}
+{"timestamp": 1768235622.1890526, "time_str": "2026-01-12 17:33:42", "type": "TURN_CHANGE", "agent": "System", "content": "Turn passed to Agent1", "metadata": {"from": "Agent2", "to": "Agent1"}}
+{"timestamp": 1768235626.5571272, "time_str": "2026-01-12 17:33:46", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235631.590821, "time_str": "2026-01-12 17:33:51", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235633.394665, "time_str": "2026-01-12 17:33:53", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235633.398652, "time_str": "2026-01-12 17:33:53", "type": "REGISTER", "agent": "Agent2", "content": "Registration Result: {'name': 'Agent2', 'role': 'Test Role 2', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235633.3987799, "time_str": "2026-01-12 17:33:53", "type": "WARNING", "agent": "System", "content": "Session collision: Agent1 -> Agent2", "metadata": {}}
+{"timestamp": 1768235636.6109545, "time_str": "2026-01-12 17:33:56", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235637.5334222, "time_str": "2026-01-12 17:33:57", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235637.6190367, "time_str": "2026-01-12 17:33:57", "type": "MEMORY", "agent": "Agent1", "content": "Updated memory note.", "metadata": {}}
+{"timestamp": 1768235637.7207036, "time_str": "2026-01-12 17:33:57", "type": "ACTION", "agent": "Agent1", "content": "talking -> User (Public: True)", "metadata": {"message": "Hello History", "audience": []}}
+{"timestamp": 1768235637.7298458, "time_str": "2026-01-12 17:33:57", "type": "SUCCESS", "agent": "System", "content": "Message posted: Message sent to User. You still have the turn.", "metadata": {}}
+{"timestamp": 1768235637.7301993, "time_str": "2026-01-12 17:33:57", "type": "TURN", "agent": "System", "content": "Turn passed to USER (Non-Blocking / Busy). Agent retains control.", "metadata": {}}
+{"timestamp": 1768235638.7509716, "time_str": "2026-01-12 17:33:58", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235639.0099676, "time_str": "2026-01-12 17:33:59", "type": "TURN_CHANGE", "agent": "System", "content": "Turn passed to Agent2", "metadata": {"from": "Agent1", "to": "Agent2"}}
+{"timestamp": 1768235639.019254, "time_str": "2026-01-12 17:33:59", "type": "TURN_CHANGE", "agent": "System", "content": "Turn passed to Agent1", "metadata": {"from": "Agent2", "to": "Agent1"}}
+{"timestamp": 1768235641.63876, "time_str": "2026-01-12 17:34:01", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235646.6602993, "time_str": "2026-01-12 17:34:06", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235651.6763732, "time_str": "2026-01-12 17:34:11", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235656.693666, "time_str": "2026-01-12 17:34:16", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235661.7128825, "time_str": "2026-01-12 17:34:21", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235666.7467213, "time_str": "2026-01-12 17:34:26", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235666.9953983, "time_str": "2026-01-12 17:34:26", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235666.999685, "time_str": "2026-01-12 17:34:26", "type": "REGISTER", "agent": "Agent2", "content": "Registration Result: {'name': 'Agent2', 'role': 'Test Role 2', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235666.9998057, "time_str": "2026-01-12 17:34:26", "type": "WARNING", "agent": "System", "content": "Session collision: Agent1 -> Agent2", "metadata": {}}
+{"timestamp": 1768235671.0148902, "time_str": "2026-01-12 17:34:31", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235671.101775, "time_str": "2026-01-12 17:34:31", "type": "MEMORY", "agent": "Agent1", "content": "Updated memory note.", "metadata": {}}
+{"timestamp": 1768235671.1998377, "time_str": "2026-01-12 17:34:31", "type": "ACTION", "agent": "Agent1", "content": "talking -> User (Public: True)", "metadata": {"message": "Hello History", "audience": []}}
+{"timestamp": 1768235671.2039359, "time_str": "2026-01-12 17:34:31", "type": "SUCCESS", "agent": "System", "content": "Message posted: Message sent to User. You still have the turn.", "metadata": {}}
+{"timestamp": 1768235671.2042003, "time_str": "2026-01-12 17:34:31", "type": "TURN", "agent": "System", "content": "Turn passed to USER (Non-Blocking / Busy). Agent retains control.", "metadata": {}}
+{"timestamp": 1768235671.771886, "time_str": "2026-01-12 17:34:31", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235672.1222234, "time_str": "2026-01-12 17:34:32", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235672.3783493, "time_str": "2026-01-12 17:34:32", "type": "TURN_CHANGE", "agent": "System", "content": "Turn passed to Agent2", "metadata": {"from": "Agent1", "to": "Agent2"}}
+{"timestamp": 1768235672.3882046, "time_str": "2026-01-12 17:34:32", "type": "TURN_CHANGE", "agent": "System", "content": "Turn passed to Agent1", "metadata": {"from": "Agent2", "to": "Agent1"}}
+{"timestamp": 1768235676.788975, "time_str": "2026-01-12 17:34:36", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235681.8226829, "time_str": "2026-01-12 17:34:41", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235685.1050997, "time_str": "2026-01-12 17:34:45", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235685.109108, "time_str": "2026-01-12 17:34:45", "type": "REGISTER", "agent": "Agent2", "content": "Registration Result: {'name': 'Agent2', 'role': 'Test Role 2', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235685.1092281, "time_str": "2026-01-12 17:34:45", "type": "WARNING", "agent": "System", "content": "Session collision: Agent1 -> Agent2", "metadata": {}}
+{"timestamp": 1768235686.8350313, "time_str": "2026-01-12 17:34:46", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235689.1215496, "time_str": "2026-01-12 17:34:49", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235689.2063081, "time_str": "2026-01-12 17:34:49", "type": "MEMORY", "agent": "Agent1", "content": "Updated memory note.", "metadata": {}}
+{"timestamp": 1768235689.3068185, "time_str": "2026-01-12 17:34:49", "type": "ACTION", "agent": "Agent1", "content": "talking -> User (Public: True)", "metadata": {"message": "Hello History", "audience": []}}
+{"timestamp": 1768235689.3113575, "time_str": "2026-01-12 17:34:49", "type": "SUCCESS", "agent": "System", "content": "Message posted: Message sent to User. You still have the turn.", "metadata": {}}
+{"timestamp": 1768235689.3115883, "time_str": "2026-01-12 17:34:49", "type": "TURN", "agent": "System", "content": "Turn passed to USER (Non-Blocking / Busy). Agent retains control.", "metadata": {}}
+{"timestamp": 1768235690.3356826, "time_str": "2026-01-12 17:34:50", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235690.588192, "time_str": "2026-01-12 17:34:50", "type": "TURN_CHANGE", "agent": "System", "content": "Turn passed to Agent2", "metadata": {"from": "Agent1", "to": "Agent2"}}
+{"timestamp": 1768235690.5990012, "time_str": "2026-01-12 17:34:50", "type": "TURN_CHANGE", "agent": "System", "content": "Turn passed to Agent1", "metadata": {"from": "Agent2", "to": "Agent1"}}
+{"timestamp": 1768235691.860536, "time_str": "2026-01-12 17:34:51", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235696.8710597, "time_str": "2026-01-12 17:34:56", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235701.8834944, "time_str": "2026-01-12 17:35:01", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235706.2500172, "time_str": "2026-01-12 17:35:06", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235706.2538404, "time_str": "2026-01-12 17:35:06", "type": "REGISTER", "agent": "Agent2", "content": "Registration Result: {'name': 'Agent2', 'role': 'Test Role 2', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235706.253956, "time_str": "2026-01-12 17:35:06", "type": "WARNING", "agent": "System", "content": "Session collision: Agent1 -> Agent2", "metadata": {}}
+{"timestamp": 1768235706.8932533, "time_str": "2026-01-12 17:35:06", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235710.46901, "time_str": "2026-01-12 17:35:10", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235710.560106, "time_str": "2026-01-12 17:35:10", "type": "MEMORY", "agent": "Agent1", "content": "Updated memory note.", "metadata": {}}
+{"timestamp": 1768235710.6586668, "time_str": "2026-01-12 17:35:10", "type": "ACTION", "agent": "Agent1", "content": "talking -> User (Public: True)", "metadata": {"message": "Hello History", "audience": []}}
+{"timestamp": 1768235710.66228, "time_str": "2026-01-12 17:35:10", "type": "SUCCESS", "agent": "System", "content": "Message posted: Message sent to User. You still have the turn.", "metadata": {}}
+{"timestamp": 1768235710.662498, "time_str": "2026-01-12 17:35:10", "type": "TURN", "agent": "System", "content": "Turn passed to USER (Non-Blocking / Busy). Agent retains control.", "metadata": {}}
+{"timestamp": 1768235711.6934733, "time_str": "2026-01-12 17:35:11", "type": "REGISTER", "agent": "Agent1", "content": "Registration Result: {'name': 'Agent1', 'role': 'Test Role 1', 'context': ''}", "metadata": {}}
+{"timestamp": 1768235711.91435, "time_str": "2026-01-12 17:35:11", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235711.9431694, "time_str": "2026-01-12 17:35:11", "type": "TURN_CHANGE", "agent": "System", "content": "Turn passed to Agent2", "metadata": {"from": "Agent1", "to": "Agent2"}}
+{"timestamp": 1768235711.9536479, "time_str": "2026-01-12 17:35:11", "type": "TURN_CHANGE", "agent": "System", "content": "Turn passed to Agent1", "metadata": {"from": "Agent2", "to": "Agent1"}}
+{"timestamp": 1768235716.9492252, "time_str": "2026-01-12 17:35:16", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235721.96749, "time_str": "2026-01-12 17:35:21", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235726.9864635, "time_str": "2026-01-12 17:35:26", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235731.9981537, "time_str": "2026-01-12 17:35:31", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235737.0181856, "time_str": "2026-01-12 17:35:37", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235742.0382857, "time_str": "2026-01-12 17:35:42", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235747.0629177, "time_str": "2026-01-12 17:35:47", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235752.0822434, "time_str": "2026-01-12 17:35:52", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235757.1047583, "time_str": "2026-01-12 17:35:57", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235762.1221917, "time_str": "2026-01-12 17:36:02", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235767.135178, "time_str": "2026-01-12 17:36:07", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}
+{"timestamp": 1768235772.1515067, "time_str": "2026-01-12 17:36:12", "type": "WAIT", "agent": "MaitreDuJeu", "content": "Blocking action until turn is acquired...", "metadata": {}}

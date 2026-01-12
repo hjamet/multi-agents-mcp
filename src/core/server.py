@@ -228,10 +228,7 @@ async def agent(ctx: Context) -> str:
     template = jinja_env.get_template("agent_response.j2")
     
     # Get History for Context
-    history_messages = engine.get_public_context_messages() # New method needed or use direct state access?
-    # Actually engine has get_public_context which returns string. We want list.
-    # Let's access state directly or add helper. 
-    # Direct access logic from here:
+    # Access state directly:
     try:
         data = engine.state.load()
         full_messages = data.get("messages", [])
