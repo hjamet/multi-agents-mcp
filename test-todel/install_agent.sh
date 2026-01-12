@@ -88,14 +88,17 @@ try:
     else:
         data = {'mcpServers': {}}
 
-    # Define the new server config with shell wrapper for compatibility
-    # This avoids dependency on uv version supporting --directory
-    command_str = f"cd {repo_path} && uv run python {server_script}"
-    
+    # Define the new server config
     new_server = {
-        "command": "sh",
-        "args": ["-c", command_str],
-        "env": {}
+        'command': 'uv',
+        'args': [
+            '--directory',
+            repo_path,
+            'run',
+            'python',
+            server_script
+        ],
+        'env': {}
     }
 
     # Verify write permission

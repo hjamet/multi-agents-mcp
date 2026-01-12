@@ -6,6 +6,11 @@ from .state import StateStore
 class Engine:
     def __init__(self, state_store: StateStore = None):
         self.state = state_store or StateStore()
+        try:
+            from ..utils.logger import get_logger
+            self.logger = get_logger()
+        except ImportError:
+            self.logger = None
 
     def get_public_context(self) -> str:
         """Returns the public conversation history."""
@@ -68,10 +73,14 @@ class Engine:
         
         # LOGGING
         import sys
-        print(f"[Logic] Register result for '{result.get('name', '??')}': {result}", file=sys.stderr)
+        if self.logger:
+            self.logger.log("REGISTER", result.get('name', '??'), f"Registration Result: {result}")
+        else:
+            print(f"[Logic] Register result for '{result.get('name', '??')}': {result}", file=sys.stderr)
         
         # If error was set inside update
         if "error" in result:
+            if self.logger: self.logger.error("System", result["error"], "registration")
             return result
             
         return result
@@ -191,8 +200,10 @@ class Engine:
                 # However, let's allow if the system is bootstrapping (e.g. Role assignment phase? No, talk is later).
                 # Let's BLOCK unknown agents to force proper config.
                 import sys
-                print(f"[Logic] BLOCK: Agent '{from_agent}' has no profile.", file=sys.stderr)
-                return f"🚫 ACTION DENIED: Agent '{from_agent}' has no valid profile configuration. Please ask Admin to configure you in the Cockpit."
+                msg = f"🚫 ACTION DENIED: Agent '{from_agent}' has no valid profile configuration. Please ask Admin to configure you in the Cockpit."
+                if self.logger: self.logger.log("SECURITY", "System", f"Blocked unregistered agent {from_agent}")
+                else: print(f"[Logic] BLOCK: Agent '{from_agent}' has no profile.", file=sys.stderr)
+                return msg
 
             caps = sender_profile.get("capabilities", [])
             connections = sender_profile.get("connections", [])
@@ -309,7 +320,10 @@ class Engine:
                 state["turn"]["next"] = None # Consumed
                 
                 import sys
-                print(f"[Logic] TURN CHANGE: {old_turn} -> {next_agent} (Sender: {from_agent})", file=sys.stderr)
+                if self.logger:
+                    self.logger.log("TURN_CHANGE", "System", f"Turn passed to {next_agent}", {"from": old_turn, "to": next_agent})
+                else:
+                    print(f"[Logic] TURN CHANGE: {old_turn} -> {next_agent} (Sender: {from_agent})", file=sys.stderr)
                 
                 return f"Message posted. Next speaker is {next_agent}."
         

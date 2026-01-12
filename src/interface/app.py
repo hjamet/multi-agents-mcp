@@ -130,40 +130,45 @@ with st.sidebar:
                     # Update directory to CURRENT absolute path
                     current_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
                     
-                    if "mcpServers" in data and "multi-agents-mcp" in data["mcpServers"]:
-                        args = data["mcpServers"]["multi-agents-mcp"]["args"]
-                        # Find --directory index
-                        try:
-                            idx = args.index("--directory")
-                            args[idx+1] = current_dir
-                            
-                            with open(config_path, "w") as f:
-                                json.dump(data, f, indent=2)
-                            
-                            st.success(f"Updated path to: {current_dir}")
-                            st.info("⚠️ Please Reload/Restart your MCP Client to apply.")
-                            
-                        except ValueError:
-                            st.error("Could not find '--directory' in arguments.")
-                    else:
-                        st.error("multi-agents-mcp not found in config.")
+                if os.path.exists(config_path):
+                    with open(config_path, "r") as f:
+                        data = json.load(f)
+                    
+                    # Update directory to CURRENT absolute path
+                    current_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+                    server_script = os.path.join(current_dir, "src", "core", "server.py")
+                    
+                    # Robust Command: cd [DIR] && uv run python [SCRIPT]
+                    command_str = f"cd {current_dir} && uv run python {server_script}"
+                    
+                    if "mcpServers" not in data:
+                        data["mcpServers"] = {}
+                        
+                    data["mcpServers"]["multi-agents-mcp"] = {
+                        "command": "sh",
+                        "args": ["-c", command_str],
+                        "env": {}
+                    }
+                    
+                    with open(config_path, "w") as f:
+                        json.dump(data, f, indent=2)
+                    
+                    st.success(f"Updated Config with Robust Path: {current_dir}")
+                    st.info("✅ Patched with 'sh -c' wrapper. Compatible with all uv versions.")
+                    st.info("⚠️ Please Reload/Restart your MCP Client to apply.")
+                        
                 else:
                     st.error(f"Config file not found: {config_path}")
             except Exception as e:
                 st.error(f"Error: {e}")
 
-            # 2. Check UV Version
+            # 2. Check UV Version (Info Only)
             try:
                 res = subprocess.run(["uv", "--version"], capture_output=True, text=True)
                 version = res.stdout.strip().split(" ")[1]
                 st.caption(f"uv version: {version}")
-                # Simple check (string comparison isn't perfect but works for large jumps)
-                if version < "0.4.0": 
-                    # 0.1.x is less than 0.4.0 lexicographically ?
-                    # 0.1.35 < 0.4.0 -> True
-                    st.warning("⚠️ uv version is old. Please run: `uv self update`")
             except:
-                st.warning("Could not check uv version.")    
+                pass    
     st.divider()
     st.caption(f"Current Mode: **{st.session_state.page}**")
 

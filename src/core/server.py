@@ -17,6 +17,16 @@ except ImportError:
 mcp = FastMCP("MultiAgent-Hub", dependencies=["portalocker", "streamlit", "jinja2"])
 engine = Engine()
 
+# Logger Setup
+try:
+    from src.utils.logger import get_logger
+    logger = get_logger()
+except ImportError:
+    # Fallback to local import if structure is flat (though src.utils should be there)
+    # Using sys.stderr if logger fails
+    logger = None
+
+
 # Setup Templates
 TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "templates")
 # Ensure absolute path matches where we are running from
@@ -216,7 +226,6 @@ async def talk(
     message: str,
     public: bool,
     to: str,
-    my_name: str,
     audience: List[str] = []
 ) -> str:
     """
@@ -229,29 +238,39 @@ async def talk(
         message: The content to speak.
         public: If true, everyone sees the message. If false, only 'to' and 'audience' see it.
         to: The name of the agent who should speak next. (The message is always visible to them).
-        my_name: YOUR exact name (e.g. "MaitreDuJeu"). REQUIRED for identity verification.
         audience: (Optional) List of other agents who can see a Private message.
     """
-    sender = my_name
-    next_agent = to
+    # 0. Resolve Sender Identity using Session
+    global SESSION_AGENT_NAME
+    sender = SESSION_AGENT_NAME
     
     if not sender:
-        return "ERROR: Unknown sender. You MUST provide 'my_name' argument."
+         error_msg = "CRITICAL ERROR: 'SESSION_AGENT_NAME' is not set. You must call the 'agent()' tool FIRST to register your identity before speaking."
+         if logger: logger.error("SYSTEM", error_msg, "talk_tool_check")
+         return error_msg
 
-    print(f"[{sender}] talking -> Next: {next_agent}", file=sys.stderr)
+    next_agent = to
+    
+    if logger:
+        logger.log("ACTION", sender, f"talking -> {next_agent} (Public: {public})", {"message": message, "audience": audience})
+    else:
+        print(f"[{sender}] talking -> Next: {next_agent}", file=sys.stderr)
     
     # 1. Post Message
     post_result = engine.post_message(sender, message, public, next_agent, audience)
     
     # Check for DENIED action
     if post_result.startswith("🚫"):
+        if logger: logger.log("DENIED", "System", post_result, {"target": sender})
         # Return the error directly so the agent can retry
         return post_result
         
-    print(f"Post Success: {post_result}", file=sys.stderr)
+    if logger: logger.log("SUCCESS", "System", f"Message posted: {post_result}")
+    else: print(f"Post Success: {post_result}", file=sys.stderr)
     
     # SPECIAL: User Turn Handling
     if next_agent == "User":
+        if logger: logger.log("TURN", "System", "Turn passed to USER. Agent retains control for feedback.")
         # Do NOT block. Return special message immediately.
         # Construct the response using the template but with a specific instruction.
         
@@ -261,7 +280,8 @@ async def talk(
             global_context = data.get("config", {}).get("context", "")
             agent_directory = _build_agent_directory(data, sender)
         except Exception as e:
-            print(f"Error loading state in talk (User): {e}", file=sys.stderr)
+            if logger: logger.error(sender, f"Error loading state in talk (User): {e}")
+            else: print(f"Error loading state in talk (User): {e}", file=sys.stderr)
             role_snippet = "Unknown"
             global_context = ""
             agent_directory = []
@@ -271,21 +291,13 @@ async def talk(
         # User defined message:
         user_feedback_msg = "Message bien envoyé à l'utilisateur, il vous répondra en temps voulu. En attendant, continuez votre travail d'agent en appelant un agent suivant."
         
-        # We append a fake message to the list just for valid rendering, or pass empty?
-        # The template iterates `messages`. If we pass empty, it shows "Aucun nouveau message".
-        # We want to show the feedback? No, return string is tool output.
-        # But the tool output IS the prompt for next step.
-        
-        # We prepend the user feedback to the rendered template?
-        # Or we pass it as 'instruction' in the template?
-        
         rendered = template.render(
             name=sender,
             role_snippet=role_snippet,
             context=global_context,
             agent_directory=agent_directory,
             connections=[d for d in agent_directory if d['has_connection']],
-            messages=[], # No NEW messages from others since we didn't wait
+            messages=[],
             instruction=f"✅ {user_feedback_msg}" # Override instruction
         )
         return rendered
@@ -298,6 +310,7 @@ async def talk(
         result = await engine.wait_for_turn_async(sender, timeout_seconds=10)
         
         if result["status"] == "success":
+            if logger: logger.log("TURN", sender, "It is my turn again.")
             break
             
         if result["status"] == "reset":
@@ -315,6 +328,7 @@ async def talk(
     # Fetch Data
     role_snippet = "(Unknown Role)"
     global_context = ""
+    agent_directory = [] # Fix: Initialize empty list before try block to avoid UnboundLocalError
     connections = []
     
     try:
@@ -324,12 +338,11 @@ async def talk(
         # Context
         global_context = data.get("config", {}).get("context", "")
         # Directory
-        agent_directory = _build_agent_directory(state, sender) # Re-using state from load() would be better but `state.load()` called inside try
-        # Actually logic is robust
         agent_directory = _build_agent_directory(data, sender)
             
     except Exception as e:
-        print(f"Error loading state in talk: {e}", file=sys.stderr)
+        if logger: logger.error(sender, f"Error loading state in talk: {e}")
+        else: print(f"Error loading state in talk: {e}", file=sys.stderr)
         pass
 
     template = jinja_env.get_template("talk_response.j2")

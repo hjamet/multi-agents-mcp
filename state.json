@@ -4,10 +4,106 @@
       "from": "System",
       "content": "\ud83d\udfe2 Simulation Started. First turn assigned to **MaitreDuJeu**.",
       "public": true,
-      "timestamp": 1768218672.7186813
+      "timestamp": 1768221754.2968228
+    },
+    {
+      "from": "System",
+      "content": "\ud83d\udd35 **Habitant #1** has joined the simulation.",
+      "public": true,
+      "target": "all",
+      "audience": [],
+      "timestamp": 1768221766.2762866
+    },
+    {
+      "from": "System",
+      "content": "\ud83d\udd35 **Habitant #2** has joined the simulation.",
+      "public": true,
+      "target": "all",
+      "audience": [],
+      "timestamp": 1768221768.7401943
+    },
+    {
+      "from": "System",
+      "content": "\ud83d\udd35 **Habitant #3** has joined the simulation.",
+      "public": true,
+      "target": "all",
+      "audience": [],
+      "timestamp": 1768221776.8802218
+    },
+    {
+      "from": "System",
+      "content": "\ud83d\udd35 **Habitant #4** has joined the simulation.",
+      "public": true,
+      "target": "all",
+      "audience": [],
+      "timestamp": 1768221777.7303283
+    },
+    {
+      "from": "System",
+      "content": "\ud83d\udd35 **Habitant #5** has joined the simulation.",
+      "public": true,
+      "target": "all",
+      "audience": [],
+      "timestamp": 1768221778.374946
+    },
+    {
+      "from": "System",
+      "content": "\ud83d\udd35 **Habitant #6** has joined the simulation.",
+      "public": true,
+      "target": "all",
+      "audience": [],
+      "timestamp": 1768221779.9863875
+    },
+    {
+      "from": "System",
+      "content": "\ud83d\udd35 **MaitreDuJeu** has joined the simulation.",
+      "public": true,
+      "target": "all",
+      "audience": [],
+      "timestamp": 1768221781.9352593
+    },
+    {
+      "from": "System",
+      "content": "\ud83d\udd35 **Habitant #7** has joined the simulation.",
+      "public": true,
+      "target": "all",
+      "audience": [],
+      "timestamp": 1768221782.2453527
+    },
+    {
+      "from": "System",
+      "content": "\ud83d\udd35 **Habitant #8** has joined the simulation.",
+      "public": true,
+      "target": "all",
+      "audience": [],
+      "timestamp": 1768221784.1384735
+    },
+    {
+      "from": "System",
+      "content": "\ud83d\udd35 **Habitant #9** has joined the simulation.",
+      "public": true,
+      "target": "all",
+      "audience": [],
+      "timestamp": 1768221785.8226326
+    },
+    {
+      "from": "Habitant #9",
+      "content": "Bienvenue \u00e0 tous dans le village de Thiercelieux ! \ud83c\udf32\ud83d\udc3a\n\nLe soleil se l\u00e8ve sur une journ\u00e9e magnifique. Pour l'instant, tout semble paisible. Vous vous r\u00e9unissez tous sur la place du village. C'est le moment id\u00e9al pour faire connaissance avant que les ombres ne s'allongent.\n\nPrenez le temps de vous pr\u00e9senter aux autres villageois. Habitant #1, voudriez-vous commencer ?",
+      "public": true,
+      "target": "Habitant #1",
+      "audience": [],
+      "timestamp": 1768221790.706118
+    },
+    {
+      "from": "Habitant #9",
+      "content": "Je suis pr\u00eat, Ma\u00eetre du Jeu. Habitant #1 est arriv\u00e9 au village de Thiercelieux.",
+      "public": true,
+      "target": "MaitreDuJeu",
+      "audience": [],
+      "timestamp": 1768221798.2623332
     }
   ],
-  "conversation_id": "b371f646-6efd-47e9-b688-2413d9bdc1a3",
+  "conversation_id": "38cdef11-7d43-42e7-ab22-c5ad3b3754be",
   "turn": {
     "current": "MaitreDuJeu",
     "next": null
@@ -15,12 +111,37 @@
   "agents": {
     "Habitant #1": {
       "role": "Tu es un Loup-Garou. Tu chasses la nuit avec tes alli\u00e9s.",
-      "status": "pending_connection",
+      "status": "connected",
+      "profile_ref": "LoupGarou"
+    },
+    "Habitant #2": {
+      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.",
+      "status": "connected",
+      "profile_ref": "Villageois"
+    },
+    "Habitant #3": {
+      "role": "Tu es la Voyante. Chaque nuit, tu peux demander au MJ de r\u00e9v\u00e9ler le r\u00f4le d'un joueur.",
+      "status": "connected",
+      "profile_ref": "Voyante"
+    },
+    "Habitant #4": {
+      "role": "Tu es la Sorci\u00e8re. Tu as une potion de vie et de mort.",
+      "status": "connected",
+      "profile_ref": "Sorciere"
+    },
+    "Habitant #5": {
+      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.",
+      "status": "connected",
+      "profile_ref": "Villageois"
+    },
+    "Habitant #6": {
+      "role": "Tu es un Loup-Garou. Tu chasses la nuit avec tes alli\u00e9s.",
+      "status": "connected",
       "profile_ref": "LoupGarou"
     },
     "MaitreDuJeu": {
       "role": "Tu es le Ma\u00eetre du jeu. Fais tr\u00e8s attention \u00e0 ne pas d\u00e9voiler des infos aux mauvais joueurs ! Commence par une journ\u00e9e ou tout le monde apprends \u00e0 ce connaitre, puis d\u00e9marre la nuit et c'est parti :D",
-      "status": "pending_connection",
+      "status": "connected",
       "profile_ref": "MaitreDuJeu",
       "connections": [
         {
@@ -29,19 +150,19 @@
         },
         {
           "target": "Habitant #2",
-          "context": "Identit\u00e9 r\u00e9elle: A des potions"
+          "context": "Identit\u00e9 r\u00e9elle: Simple Villageois"
         },
         {
           "target": "Habitant #3",
-          "context": "Identit\u00e9 r\u00e9elle: Simple Villageois"
+          "context": "Identit\u00e9 r\u00e9elle: Peut voir les r\u00f4les"
         },
         {
           "target": "Habitant #4",
-          "context": "Identit\u00e9 r\u00e9elle: Simple Villageois"
+          "context": "Identit\u00e9 r\u00e9elle: A des potions"
         },
         {
           "target": "Habitant #5",
-          "context": "Identit\u00e9 r\u00e9elle: Peut voir les r\u00f4les"
+          "context": "Identit\u00e9 r\u00e9elle: Simple Villageois"
         },
         {
           "target": "Habitant #6",
@@ -61,44 +182,19 @@
         }
       ]
     },
-    "Habitant #2": {
-      "role": "Tu es la Sorci\u00e8re. Tu as une potion de vie et de mort.",
-      "status": "pending_connection",
-      "profile_ref": "Sorciere"
-    },
-    "Habitant #3": {
-      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.",
-      "status": "pending_connection",
-      "profile_ref": "Villageois"
-    },
-    "Habitant #4": {
-      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.",
-      "status": "pending_connection",
-      "profile_ref": "Villageois"
-    },
-    "Habitant #5": {
-      "role": "Tu es la Voyante. Chaque nuit, tu peux demander au MJ de r\u00e9v\u00e9ler le r\u00f4le d'un joueur.",
-      "status": "pending_connection",
-      "profile_ref": "Voyante"
-    },
-    "Habitant #6": {
-      "role": "Tu es un Loup-Garou. Tu chasses la nuit avec tes alli\u00e9s.",
-      "status": "pending_connection",
-      "profile_ref": "LoupGarou"
-    },
     "Habitant #7": {
       "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.",
-      "status": "pending_connection",
+      "status": "connected",
       "profile_ref": "Villageois"
     },
     "Habitant #8": {
       "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.",
-      "status": "pending_connection",
+      "status": "connected",
       "profile_ref": "Villageois"
     },
     "Habitant #9": {
       "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.",
-      "status": "pending_connection",
+      "status": "connected",
       "profile_ref": "Villageois"
     }
   },
