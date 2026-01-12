@@ -722,6 +722,14 @@ elif st.session_state.page == "Chat":
                         status_icon = "✅"
                         status_label = "READY"
                         text_color = "#0f5132"
+                elif status.startswith("sleeping"):
+                    opacity = "0.9"
+                    bg_color = "#e2e3f5" # Purple tint
+                    border_color = "#d6d8db"
+                    status_icon = "💤"
+                    status_label = status.upper() # SLEEPING: 5S
+                    text_color = "#383d41"
+                    box_shadow = "inset 0 0 10px rgba(0,0,0,0.05)"
                 
                 with col:
                     st.markdown(f"""

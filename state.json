@@ -4,7 +4,7 @@
       "from": "System",
       "content": "\ud83d\udfe2 Simulation Started. First turn assigned to **MaitreDuJeu**.",
       "public": true,
-      "timestamp": 1768233356.0834136
+      "timestamp": 1768237407.788821
     },
     {
       "from": "System",
@@ -12,7 +12,7 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768233373.0245183
+      "timestamp": 1768237424.8176794
     },
     {
       "from": "System",
@@ -20,7 +20,7 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768233374.3085973
+      "timestamp": 1768237425.9231606
     },
     {
       "from": "System",
@@ -28,7 +28,7 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768233375.3907073
+      "timestamp": 1768237427.1114285
     },
     {
       "from": "System",
@@ -36,7 +36,7 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768233376.4834588
+      "timestamp": 1768237427.714746
     },
     {
       "from": "System",
@@ -44,7 +44,7 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768233377.1697986
+      "timestamp": 1768237427.75345
     },
     {
       "from": "System",
@@ -52,7 +52,7 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768233379.435509
+      "timestamp": 1768237429.9741242
     },
     {
       "from": "System",
@@ -60,7 +60,7 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768233379.817476
+      "timestamp": 1768237430.3064113
     },
     {
       "from": "System",
@@ -68,15 +68,7 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768233380.5139675
-    },
-    {
-      "from": "System",
-      "content": "\ud83d\udd35 **Habitant #9** has joined the simulation.",
-      "public": true,
-      "target": "all",
-      "audience": [],
-      "timestamp": 1768233381.0700362
+      "timestamp": 1768237460.779133
     },
     {
       "from": "System",
@@ -84,67 +76,638 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768233382.5594218
+      "timestamp": 1768237462.677108
+    },
+    {
+      "from": "System",
+      "content": "\ud83d\udd35 **Habitant #9** has joined the simulation.",
+      "public": true,
+      "target": "all",
+      "audience": [],
+      "timestamp": 1768237464.035554
     },
     {
       "from": "MaitreDuJeu",
-      "content": "Bienvenue \u00e0 tous dans le paisible village de Thiercelieux. Je suis votre Ma\u00eetre du Jeu. \n\nLe soleil se l\u00e8ve sur une journ\u00e9e qui s'annonce radieuse... du moins pour l'instant. Avant que les ombres ne s'allongent et que le myst\u00e8re ne plane sur nos ruelles, j'aimerais que chaque habitant prenne la parole pour se pr\u00e9senter bri\u00e8vement au reste de la communaut\u00e9. Dites-nous qui vous \u00eates (sans r\u00e9v\u00e9ler vos secrets, bien s\u00fbr) et ce que vous apportez au village.\n\nHabitant #1, vous avez l'honneur de commencer. La parole est \u00e0 vous !",
+      "content": "Bienvenue \u00e0 tous dans le village de Thiercelieux ! \ud83c\udf32\ud83c\udf11\n\nLe soleil se l\u00e8ve sur une journ\u00e9e paisible... en apparence. Mais avant que l'ombre ne gagne nos ruelles, il est temps pour vous, habitants, de vous pr\u00e9senter. Apprenez \u00e0 vous conna\u00eetre, car le destin du village pourrait bient\u00f4t d\u00e9pendre de vos liens.\n\nHabitant #1, vous avez la parole pour commencer. Dites-nous qui vous \u00eates (en gardant vos secrets bien cach\u00e9s si n\u00e9cessaire) !",
       "public": true,
       "target": "Habitant #1",
       "audience": [],
-      "timestamp": 1768233389.58067
+      "timestamp": 1768237469.3000915
+    },
+    {
+      "from": "Habitant #1",
+      "content": "Bonjour \u00e0 tous ! Je suis l'Habitant #1. Je suis ravi de faire votre connaissance, m\u00eame si l'ambiance \u00e0 Thiercelieux semble un peu pesante aujourd'hui. J'esp\u00e8re que nous pourrons tous vivre en paix dans ce beau village. \n\nMaitreDuJeu, que devons-nous faire \u00e0 pr\u00e9sent ? Le soleil commence-t-il \u00e0 se coucher ?",
+      "public": true,
+      "target": "MaitreDuJeu",
+      "audience": [],
+      "timestamp": 1768237481.4767928
+    },
+    {
+      "from": "MaitreDuJeu",
+      "content": "Ravi de vous entendre, Habitant #1. Le soleil est encore haut, profitons-en pour que chacun se pr\u00e9sente bri\u00e8vement. Un village soud\u00e9 est un village fort !\n\nHabitant #2, c'est \u00e0 vous. Faites-nous part de votre pr\u00e9sence parmi nous.",
+      "public": true,
+      "target": "Habitant #2",
+      "audience": [],
+      "timestamp": 1768237485.7011127
+    },
+    {
+      "from": "Habitant #2",
+      "content": "Bonjour \u00e0 tous ! Je suis l'Habitant #2. Je confirme ma pr\u00e9sence dans notre cher village de Thiercelieux. Ravi de vous rencontrer, m\u00eame si les circonstances qui nous r\u00e9unissent semblent... pr\u00e9occupantes. J'esp\u00e8re que nous saurons rester unis.",
+      "public": true,
+      "target": "Habitant #3",
+      "audience": [],
+      "timestamp": 1768237493.053342
+    },
+    {
+      "from": "Habitant #3",
+      "content": "Bonjour \u00e0 toute la place du village ! Je suis l'Habitant #3. Ravi de vous voir tous ici r\u00e9unis. J'esp\u00e8re que nous passerons de bons moments ensemble et que notre village restera prosp\u00e8re et paisible.",
+      "public": true,
+      "target": "Habitant #4",
+      "audience": [],
+      "timestamp": 1768237557.4408371
+    },
+    {
+      "from": "Habitant #4",
+      "content": "Bonjour \u00e0 tous ! C'est un plaisir de vivre dans un village si paisible. Esp\u00e9rons que cela dure, comme l'a dit le Maitre du Jeu. Ravi de faire votre connaissance, chers voisins !",
+      "public": true,
+      "target": "Habitant #5",
+      "audience": [],
+      "timestamp": 1768237565.8999696
+    },
+    {
+      "from": "Habitant #5",
+      "content": "Bonjour \u00e0 tous ! Je suis l'Habitant #5. Ravi de vous rencontrer, chers voisins. C'est un plaisir de voir notre village si anim\u00e9. J'esp\u00e8re que nous passerons tous de paisibles journ\u00e9es ensemble ! Je laisse la parole \u00e0 l'Habitant #6.",
+      "public": true,
+      "target": "Habitant #6",
+      "audience": [],
+      "timestamp": 1768237574.5712612
+    },
+    {
+      "from": "Habitant #6",
+      "content": "(Message priv\u00e9 au MJ) Ma\u00eetre du Jeu, je me r\u00e9veille. Qui sont mes fr\u00e8res Loups-Garous pour cette partie ? Et quelle est la proc\u00e9dure pour choisir notre victime ?",
+      "public": false,
+      "target": "MaitreDuJeu",
+      "audience": [],
+      "timestamp": 1768237586.9224098
+    },
+    {
+      "from": "MaitreDuJeu",
+      "content": "(Priv\u00e9) Habitant #6, votre compagnon de meute est Habitant #4. Restez discret pour l'instant, c'est encore le jour. Pr\u00e9sentez-vous publiquement pour ne pas \u00e9veiller de soup\u00e7ons, puis nous passerons aux autres. Je vous contacterai d\u00e8s que la nuit sera venue pour l'appel des Loups.\n\n(Public) Habitant #6, nous vous \u00e9coutons \u00e9galement ! Et que les derniers habitants se pr\u00e9parent. Habitant #7, ce sera bient\u00f4t votre tour.",
+      "public": false,
+      "target": "Habitant #6",
+      "audience": [],
+      "timestamp": 1768237592.8799908
+    },
+    {
+      "from": "Habitant #6",
+      "content": "Bonjour \u00e0 tous ! Je suis l'Habitant #6. Je suis ravi de voir que le village est si vivant aujourd'hui. J'esp\u00e8re que nous passerons une saison paisible \u00e0 Thiercelieux, loin des histoires de b\u00eates dont certains parlent parfois... En tout cas, je suis pr\u00eat \u00e0 aider la communaut\u00e9 ! Habitant #7, \u00e0 vous la parole.",
+      "public": true,
+      "target": "Habitant #7",
+      "audience": [],
+      "timestamp": 1768237597.6534016
+    },
+    {
+      "from": "Habitant #7",
+      "content": "Bonjour \u00e0 tous ! Je suis l'Habitant #7. C'est un plaisir de faire votre connaissance. Le village semble bien calme pour l'instant, esp\u00e9rons que cela dure. \n\nMonsieur le Maire, ou plut\u00f4t Ma\u00eetre du Jeu, je vous redonne la parole pour nous guider dans cette premi\u00e8re journ\u00e9e (ou nuit !).",
+      "public": true,
+      "target": "MaitreDuJeu",
+      "audience": [],
+      "timestamp": 1768237604.4947176
+    },
+    {
+      "from": "MaitreDuJeu",
+      "content": "Merci Habitant #7. Nous approchons de la fin des pr\u00e9sentations. \n\nHabitant #8, nous aimerions vous entendre. Et Habitant #9, tenez-vous pr\u00eat \u00e0 conclure cette journ\u00e9e d'accueil.",
+      "public": true,
+      "target": "Habitant #8",
+      "audience": [],
+      "timestamp": 1768237607.671801
+    },
+    {
+      "from": "Habitant #8",
+      "content": "Cher Ma\u00eetre du Jeu, en cette premi\u00e8re nuit, j'aimerais utiliser mes pouvoirs de Voyante pour d\u00e9couvrir l'identit\u00e9 de l'Habitant #1. Que me r\u00e9v\u00e8lent les astres \u00e0 son sujet ?",
+      "public": false,
+      "target": "MaitreDuJeu",
+      "audience": [],
+      "timestamp": 1768237615.1629255
+    },
+    {
+      "from": "MaitreDuJeu",
+      "content": "(Priv\u00e9) Doucement, Voyante ! La nuit n'est pas encore tomb\u00e9e. Pour l'instant, respectez le protocole du jour et pr\u00e9sentez-vous publiquement au village. Je reviendrai vers vous d\u00e8s que les astres seront favorables (au d\u00e9but de la nuit).\n\n(Public) Habitant #8, nous attendons votre pr\u00e9sentation publique ! Ne soyez pas timide, le village vous regarde.",
+      "public": false,
+      "target": "Habitant #8",
+      "audience": [],
+      "timestamp": 1768237619.0581412
+    },
+    {
+      "from": "Habitant #8",
+      "content": "Bonjour \u00e0 tous ! Je suis l'Habitant #8. Ravi de rejoindre ce beau village de Thiercelieux. J'esp\u00e8re que nous passerons tous de bonnes journ\u00e9es et des nuits paisibles... du moins, autant que possible. Je ne suis qu'un humble habitant, mais je compte bien aider \u00e0 prot\u00e9ger notre communaut\u00e9 !\n\nEt vous, Habitant #9 ? Qui \u00eates-vous ?",
+      "public": true,
+      "target": "Habitant #9",
+      "audience": [],
+      "timestamp": 1768237623.515534
+    },
+    {
+      "from": "Habitant #9",
+      "content": "Je suis l'Habitant #9. Un humble habitant de ce village, pr\u00eat \u00e0 aider mes voisins et \u00e0 veiller sur Thiercelieux. Je viens de rejoindre la place du village pour la r\u00e9union. Que se passe-t-il, Monsieur le Maire ?",
+      "public": true,
+      "target": "MaitreDuJeu",
+      "audience": [],
+      "timestamp": 1768237629.9084659
+    },
+    {
+      "from": "MaitreDuJeu",
+      "content": "(Public) Le soleil se couche derri\u00e8re les collines et une brume \u00e9paisse envahit les ruelles de Thiercelieux... \ud83c\udf16 Le village s'endort... Tout le monde ferme bien ses volets.\n\n(Priv\u00e9 - Habitant #8) La Voyante se r\u00e9veille et explore le futur... Vous avez sond\u00e9 l'\u00e2me de l'**Habitant #1**. Les astres sont clairs : il s'agit d'un **Simple Villageois**. La v\u00e9rit\u00e9 vous a \u00e9t\u00e9 r\u00e9v\u00e9l\u00e9e. Resserrez votre ch\u00e2le et pr\u00e9parez-vous pour la suite.\n\nHabitant #8, confirmez-moi que vous avez bien re\u00e7u cette vision avant que nous ne poursuivions la nuit.",
+      "public": false,
+      "target": "Habitant #8",
+      "audience": [],
+      "timestamp": 1768237636.4395676
+    },
+    {
+      "from": "Habitant #8",
+      "content": "Bien re\u00e7u, Ma\u00eetre du Jeu. La vision est limpide : l'Habitant #1 est un membre paisible de notre village. Je garde pr\u00e9cieusement ce secret et je me rendors. Merci pour cette r\u00e9v\u00e9lation.",
+      "public": false,
+      "target": "MaitreDuJeu",
+      "audience": [],
+      "timestamp": 1768237640.4273415
+    },
+    {
+      "from": "MaitreDuJeu",
+      "content": "(Priv\u00e9 - Loups-Garous) Les Loups-Garous se r\u00e9veillent... Habitant #4 et Habitant #6, vous vous reconnaissez dans la p\u00e9nombre. La faim vous tenaille. \ud83d\udc3a\n\nDiscutez ensemble et d\u00e9signez-moi votre victime pour cette nuit. Vous devez vous mettre d'accord sur un seul nom parmi les autres habitants (Habitants #1, #2, #3, #5, #7, #8, #9). \n\nHabitant #4, quelle est votre proposition ? Habitant #6, vous pourrez ensuite valider ou proposer un autre nom.",
+      "public": false,
+      "target": "Habitant #4",
+      "audience": [
+        "Habitant #6"
+      ],
+      "timestamp": 1768237644.3744059
+    },
+    {
+      "from": "Habitant #4",
+      "content": "La nuit commence \u00e0 tomber sur Thiercelieux... Il est temps pour nous tous de regagner nos chaumi\u00e8res. \u00c0 demain, j'esp\u00e8re que nous nous r\u00e9veillerons tous en aussi bonne forme ! Ma\u00eetre du Jeu, nous attendons vos instructions pour la nuit.",
+      "public": true,
+      "target": "MaitreDuJeu",
+      "audience": [],
+      "timestamp": 1768237654.2148864
+    },
+    {
+      "from": "MaitreDuJeu",
+      "content": "(Rappel Priv\u00e9 - Loups) Habitant #4, Habitant #6, c'est votre tour. Le village dort, mais pas vous. Qui souhaitez-vous \u00e9liminer ce soir ? Discutez-en ici, \u00e0 l'abri des regards. \ud83d\udc3a\ud83c\udf13",
+      "public": false,
+      "target": "Habitant #6",
+      "audience": [
+        "Habitant #4"
+      ],
+      "timestamp": 1768237662.5263433
+    },
+    {
+      "from": "Habitant #6",
+      "content": "(Message priv\u00e9 \u00e0 l'Habitant #4) Bonjour camarade. Le Ma\u00eetre du Jeu m'a gliss\u00e9 ton nom. H\u00e2te de voir ce que nous allons accomplir une fois que le soleil sera couch\u00e9. Restons sur nos gardes. \n\n(Au MJ) Ma\u00eetre du Jeu, je pense que les pr\u00e9sentations sont termin\u00e9es. Nous attendons la suite des \u00e9v\u00e9nements avec impatience.",
+      "public": false,
+      "target": "MaitreDuJeu",
+      "audience": [
+        "Habitant #4"
+      ],
+      "timestamp": 1768237678.5873754
+    },
+    {
+      "from": "MaitreDuJeu",
+      "content": "(Priv\u00e9 - Loups) Chers loups, le temps presse. La lune est au z\u00e9nith. Qui sera votre proie ? Proposez un nom d'habitant (hors vous-m\u00eames) pour que nous puissions avancer. \ud83d\udc3a\ud83c\udf74\ud83e\uddea\n\nHabitant #4, une pr\u00e9f\u00e9rence ? Habitant #6 ?",
+      "public": false,
+      "target": "Habitant #4",
+      "audience": [
+        "Habitant #6"
+      ],
+      "timestamp": 1768237682.2764223
+    },
+    {
+      "from": "Habitant #4",
+      "content": "Salut camarade ! Quel plaisir de ne pas \u00eatre seul. Pour cette premi\u00e8re nuit, que penses-tu de l'Habitant #7 ? Il/Elle avait l'air un peu trop \u00e0 l'aise avec le Ma\u00eetre du Jeu lors des pr\u00e9sentations, \u00e7a pourrait \u00eatre une menace potentielle (peut-\u00eatre la Voyante ?). Qu'en dis-tu, Habitant #6 ? Es-tu d'accord pour cette cible ?",
+      "public": false,
+      "target": "Habitant #6",
+      "audience": [
+        "MaitreDuJeu"
+      ],
+      "timestamp": 1768237688.706037
+    },
+    {
+      "from": "Habitant #6",
+      "content": "D'accord avec toi, Habitant #4. L'Habitant #7 a des airs de meneur qui pourraient nous nuire. Si c'est effectivement la Voyante, autant s'en d\u00e9barrasser tout de suite. \n\nMa\u00eetre du Jeu, notre proie pour cette nuit est l'Habitant #7. Que le festin commence ! \ud83d\udc3a\ud83c\udf74",
+      "public": false,
+      "target": "MaitreDuJeu",
+      "audience": [
+        "Habitant #4"
+      ],
+      "timestamp": 1768237693.9953268
+    },
+    {
+      "from": "MaitreDuJeu",
+      "content": "(Priv\u00e9 - Sorci\u00e8re) Habitant #3, la Sorci\u00e8re se r\u00e9veille... Dans le chaudron, vous voyez l'ombre de l'**Habitant #7** qui s'efface... les Loups l'ont choisi pour cible. \ud83e\uddea\u2728\n\n1. Voulez-vous utiliser votre **potion de VIE** pour sauver l'Habitant #7 ? (Oui / Non)\n2. Voulez-vous utiliser votre **potion de MORT** pour \u00e9liminer quelqu'un d'autre ? (Donnez un nom, ou Non)\n\nR\u00e9pondez-moi discr\u00e8tement.",
+      "public": false,
+      "target": "Habitant #3",
+      "audience": [],
+      "timestamp": 1768237698.246527
+    },
+    {
+      "from": "Habitant #3",
+      "content": "Ma\u00eetre du Jeu, je crois avoir manqu\u00e9 une partie de vos instructions \u00e0 cause d'un petit brouillard technique. Pouvez-vous me confirmer si les Loups ont fait une victime cette nuit et si je souhaite intervenir avec l'une de mes potions ?",
+      "public": false,
+      "target": "MaitreDuJeu",
+      "audience": [],
+      "timestamp": 1768237716.2962034
+    },
+    {
+      "from": "MaitreDuJeu",
+      "content": "(Priv\u00e9 - Sorci\u00e8re) Je r\u00e9p\u00e8te, car le brouillard \u00e9tait \u00e9pais : les Loups-Garous ont d\u00e9sign\u00e9 l'**Habitant #7** comme victime. \ud83e\uddea\n\n1. Voulez-vous utiliser votre **potion de VIE** pour sauver l'Habitant #7 ? (R\u00e9pondez Oui ou Non)\n2. Voulez-vous utiliser votre **potion de MORT** sur un autre habitant ? (Donnez un nom ou r\u00e9pondez Non)\n\nLe temps passe vite avant l'aube... que d\u00e9cidez-vous ?",
+      "public": false,
+      "target": "Habitant #3",
+      "audience": [],
+      "timestamp": 1768237719.82261
+    },
+    {
+      "from": "Habitant #3",
+      "content": "Ma\u00eetre du Jeu, voici mes d\u00e9cisions pour cette nuit :\n1. Oui, j'utilise ma potion de VIE pour sauver l'Habitant #7.\n2. Non, je n'utilise pas ma potion de MORT.\nJe me rendors d\u00e9sormais.",
+      "public": false,
+      "target": "MaitreDuJeu",
+      "audience": [],
+      "timestamp": 1768237734.1908443
+    },
+    {
+      "from": "MaitreDuJeu",
+      "content": "Le soleil se l\u00e8ve sur Thiercelieux ! \u2600\ufe0f \n\nLes habitants ouvrent leurs volets et se retrouvent sur la place du village, encore un peu tremblants... Mais quelle surprise : **personne n'a p\u00e9ri cette nuit !** Le village est au complet ce matin.\n\nLa b\u00eate a r\u00f4d\u00e9, c'est certain, mais elle n'a pas pu frapper. Profitons de ce r\u00e9pit pour d\u00e9busquer les monstres qui se cachent parmi nous. \n\nHabitant #1, vous semblez bien calme ce matin... Que pensez-vous de ce miracle nocturne ? La parole est au village !",
+      "public": true,
+      "target": "Habitant #1",
+      "audience": [],
+      "timestamp": 1768237739.4191175
+    },
+    {
+      "from": "Habitant #1",
+      "content": "MaitreDuJeu, la ronde des pr\u00e9sentations semble termin\u00e9e. Le village de Thiercelieux s'appr\u00eate-t-il \u00e0 passer sa premi\u00e8re nuit, ou le soleil est-il d\u00e9j\u00e0 en train de se lever ? Je reste attentif aux bruits de la for\u00eat environnante...",
+      "public": true,
+      "target": "MaitreDuJeu",
+      "audience": [],
+      "timestamp": 1768237748.0696561
+    },
+    {
+      "from": "MaitreDuJeu",
+      "content": "Habitant #1, vous semblez avoir dormi tr\u00e8s profond\u00e9ment ! La nuit est d\u00e9j\u00e0 pass\u00e9e, et miracle, personne n'est mort. Le village se r\u00e9veille tout juste. \n\nC'est le moment de discuter. Qui soup\u00e7onnez-vous d'avoir voulu frapper dans l'ombre cette nuit ? La parole est \u00e0 vous pour de bon ! \u2600\ufe0f\ud83d\udde3\ufe0f",
+      "public": true,
+      "target": "Habitant #1",
+      "audience": [],
+      "timestamp": 1768237753.7158408
+    },
+    {
+      "from": "Habitant #1",
+      "content": "Quelle excellente nouvelle ! Personne ne manque \u00e0 l'appel ce matin. C'est un petit miracle pour Thiercelieux. Soit nos protecteurs ont bien travaill\u00e9, soit la chance est avec nous. \n\nAvez-vous entendu quelque chose d'inhabituel cette nuit ? Un craquement de branche, un hurlement \u00e9touff\u00e9 ? \n\nHabitant #2, vous qui sembliez pr\u00e9occup\u00e9 hier, comment avez-vous pass\u00e9 la nuit ? Avez-vous remarqu\u00e9 quelque chose d'\u00e9trange pr\u00e8s de chez vous ?",
+      "public": true,
+      "target": "Habitant #2",
+      "audience": [],
+      "timestamp": 1768237759.3324234
+    },
+    {
+      "from": "Habitant #2",
+      "content": "Le village semble au complet ! Monsieur le Ma\u00eetre du Jeu, quelle est la suite des \u00e9v\u00e9nements ? Allons-nous vaquer \u00e0 nos occupations ou devons-nous d\u00e9j\u00e0 nous pr\u00e9parer pour la nuit ? J'esp\u00e8re que tout le monde a pu s'installer confortablement.",
+      "public": true,
+      "target": "MaitreDuJeu",
+      "audience": [],
+      "timestamp": 1768237769.144429
+    },
+    {
+      "from": "MaitreDuJeu",
+      "content": "Habitants de Thiercelieux, le but de cette r\u00e9union matinale est de d\u00e9masquer les imposteurs ! Vous devez discuter, \u00e9changer vos doutes, et \u00e0 la fin de la journ\u00e9e, voter pour \u00e9liminer celui ou celle que vous soup\u00e7onnez d'\u00eatre un Loup-Garou. \ud83d\udc3a\u2696\ufe0f\n\nHabitant #2, ne soyez pas si press\u00e9 de retourner \u00e0 vos champs ! Regardez vos voisins... n'y en a-t-il pas un qui semble avoir les dents un peu trop longues ? \n\nHabitant #3, vous qui vivez un peu \u00e0 l'\u00e9cart, avez-vous remarqu\u00e9 quelque chose d'insolite cette nuit ? La parole est \u00e0 vous.",
+      "public": true,
+      "target": "Habitant #3",
+      "audience": [],
+      "timestamp": 1768237774.2889805
+    },
+    {
+      "from": "Habitant #3",
+      "content": "Quelle merveilleuse nouvelle ! Se r\u00e9veiller et voir que personne ne manque \u00e0 l'appel est un v\u00e9ritable soulagement. C'est en effet un miracle, ou peut-\u00eatre avons-nous une bonne \u00e9toile qui veille sur nous... Habitant #1, vous qui parliez de rester attentif aux bruits de la for\u00eat, avez-vous entendu quelque chose de suspect durant cette nuit si calme ?",
+      "public": true,
+      "target": "Habitant #1",
+      "audience": [],
+      "timestamp": 1768237788.041792
+    },
+    {
+      "from": "Habitant #1",
+      "content": "Je partage votre joie, Habitant #3 ! C'est un r\u00e9veil des plus agr\u00e9ables. \n\nCependant, je ne peux m'emp\u00eacher de noter que l'Habitant #2 semblait bien press\u00e9 de retourner \u00e0 ses occupations. Pourquoi cette h\u00e2te de mettre fin \u00e0 notre r\u00e9union matinale alors que nous venons \u00e0 peine de nous r\u00e9veiller et que le danger r\u00f4de toujours ? \n\nHabitant #4, qu'en pensez-vous ? Trouvez-vous l'attitude de l'Habitant #2 tout aussi curieuse que moi, ou suis-je trop m\u00e9fiant pour un premier matin ? Ses r\u00e9ponses hier lors des pr\u00e9sentations vous ont-elles paru sinc\u00e8res ?",
+      "public": true,
+      "target": "Habitant #4",
+      "audience": [],
+      "timestamp": 1768237795.7723653
+    },
+    {
+      "from": "Habitant #4",
+      "content": "C'est un v\u00e9ritable soulagement de voir que tout le monde est sain et sauf ce matin ! On peut dire que nous avons eu beaucoup de chance, ou peut-\u00eatre que l'un d'entre nous veille sur nous plus efficacement qu'on ne le pense... Une sorci\u00e8re avec une potion de gu\u00e9rison ? Ou un protecteur discret ? \n\nEn tout cas, cela nous donne une chance suppl\u00e9mentaire de trouver les responsables sans avoir perdu de camarade. Habitant #5, quel est votre sentiment sur ce miracle matinal ? Vous semblez aussi surpris que moi ?",
+      "public": true,
+      "target": "Habitant #5",
+      "audience": [],
+      "timestamp": 1768238180.964882
+    },
+    {
+      "from": "Habitant #5",
+      "content": "Le soleil se couche d\u00e9j\u00e0 sur notre beau village. Bonne nuit \u00e0 tous mes chers voisins ! Esp\u00e9rons que la nuit sera aussi paisible que cette journ\u00e9e de rencontre. Je laisse la main au Ma\u00eetre du Jeu pour la suite.",
+      "public": true,
+      "target": "MaitreDuJeu",
+      "audience": [],
+      "timestamp": 1768238191.320116
+    },
+    {
+      "from": "MaitreDuJeu",
+      "content": "Les soup\u00e7ons commencent \u00e0 poindre... Habitant #1 pointe du doigt la h\u00e2te de l'Habitant #2. \n\nHabitant #5, vous \u00eates rest\u00e9 silencieux pendant que vos voisins \u00e9changeaient leurs doutes. Qu'avez-vous observ\u00e9 ? Avez-vous remarqu\u00e9 une ombre fuyante hier soir ou un comportement \u00e9trange ce matin ? Nous vous \u00e9coutons.",
+      "public": true,
+      "target": "Habitant #5",
+      "audience": [],
+      "timestamp": 1768238195.1325529
+    },
+    {
+      "from": "Habitant #5",
+      "content": "C'est vrai, Ma\u00eetre du Jeu, je suis rest\u00e9 discret car j'ai dormi d'un sommeil de plomb cette nuit. En tant que simple habitant, je n'ai malheureusement rien vu ni entendu de suspect me concernant. Cependant, je suis intrigu\u00e9 par les accusations qui commencent \u00e0 circuler. Habitant #1, vous semblez avoir remarqu\u00e9 quelque chose chez l'Habitant #2. Pourriez-vous \u00e9clairer ma lanterne et nous expliquer ce qui vous semble suspect dans son comportement ? Nous ne voudrions pas accuser un innocent sans preuve.",
+      "public": true,
+      "target": "Habitant #1",
+      "audience": [],
+      "timestamp": 1768238202.6850808
+    },
+    {
+      "from": "Habitant #1",
+      "content": "MaitreDuJeu, j'ai l'impression d'avoir manqu\u00e9 une \u00e9tape importante dans la pr\u00e9cipitation de certains. Le village a-t-il vot\u00e9 contre quelqu'un ou avons-nous d\u00e9cid\u00e9 de laisser la chance une nouvelle fois \u00e0 tout le monde ? Pourquoi l'Habitant #5 nous souhaite-t-il d\u00e9j\u00e0 bonne nuit alors que nous d\u00e9battions des suspicions envers l'Habitant #2 ? \n\nMes voisins, ne laissez pas le sommeil vous gagner avant que nous n'ayons fait la lumi\u00e8re sur ces comportements \u00e9tranges ! Habitant #6, qu'en avez-vous pens\u00e9 ?",
+      "public": true,
+      "target": "MaitreDuJeu",
+      "audience": [],
+      "timestamp": 1768238210.0712688
+    },
+    {
+      "from": "MaitreDuJeu",
+      "content": "Le village s'agite ! Habitant #1 est tr\u00e8s observateur ce matin. Et il a raison : nous sommes en PLEIN JOUR, et c'est le moment de d\u00e9masquer les loups, pas de dormir ! \u2600\ufe0f\ud83d\udeab\ud83d\udca4\n\nHabitant #6, on vous appelle au milieu du cercle. Que pensez-vous des doutes sur l'Habitant #2 ? Et que dites-vous de cette nuit sans victime ? Un coup de chance ou un loup maladroit ? Partagez vos pens\u00e9es avec nous.",
+      "public": true,
+      "target": "Habitant #6",
+      "audience": [],
+      "timestamp": 1768238214.776147
+    },
+    {
+      "from": "Habitant #6",
+      "content": "(Message priv\u00e9 \u00e0 l'Habitant #4) C'est un coup dur, camarade. Quelqu'un a prot\u00e9g\u00e9 notre cible. Il faut rester tr\u00e8s discrets maintenant, le village va chercher des coupables.\n\n(Public) C'est un v\u00e9ritable miracle ! Personne ne manque \u00e0 l'appel ce matin. Je n'aurais jamais pens\u00e9 que nous serions tous r\u00e9unis pour ce petit-d\u00e9jeuner. Quelqu'un d'important ou de tr\u00e8s chanceux doit veiller sur nous... Habitant #3, vous qui avez l'air si pensif, que dites-vous de cette nuit sans effusion de sang ? Est-ce un signe de paix ou de calme avant la temp\u00eate ?",
+      "public": false,
+      "target": "Habitant #3",
+      "audience": [
+        "Habitant #4"
+      ],
+      "timestamp": 1768238223.8395739
+    },
+    {
+      "from": "Habitant #3",
+      "content": "C'est une th\u00e9orie int\u00e9ressante, Habitant #4. Quoi qu'il en soit, ce myst\u00e9rieux protecteur nous a offert un sursis pr\u00e9cieux. Profitons-en. Habitant #1, vous semblez avoir un \u0153il tr\u00e8s aiguis\u00e9 sur les faits et gestes de chacun. Habitant #2, vous \u00eates interpell\u00e9 : aviez-vous vraiment si h\u00e2te d'\u00e9courter nos \u00e9changes hier soir ? Peut-\u00eatre avez-vous simplement le sommeil lourd, ou aviez-vous d'autres pr\u00e9occupations nocturnes dont vous aimeriez nous faire part ?",
+      "public": true,
+      "target": "Habitant #2",
+      "audience": [],
+      "timestamp": 1768238231.871171
+    },
+    {
+      "from": "Habitant #2",
+      "content": "Ma\u00eetre du Jeu, vous avez raison, la prudence est de mise m\u00eame si le soleil brille. Habitant #3, c'est vrai que c'est un soulagement de voir tout le monde debout, mais comme vous le dites, est-ce un miracle ou juste le calme avant la temp\u00eate ? Habitant #1, puisque l'Habitant #3 vous interpellait sur vos propos pr\u00e9c\u00e9dents, qu'en est-il ? Avez-vous vu ou entendu quelque chose de particulier pr\u00e8s de chez vous ?",
+      "public": true,
+      "target": "Habitant #1",
+      "audience": [],
+      "timestamp": 1768238238.191574
+    },
+    {
+      "from": "Habitant #1",
+      "content": "C'est incroyable ! Entre l'Habitant #2 qui est press\u00e9 de retourner \u00e0 ses champs et l'Habitant #5 qui voit le soleil se coucher en plein midi, on dirait que certains ont tr\u00e8s h\u00e2te que ce jour se termine sans vote ! \n\nHabitant #5, comment pouvez-vous dire qu'il fait nuit alors que le Maitre du Jeu nous confirme qu'il est encore t\u00f4t ? Seriez-vous impatient de ressortir vos griffes une fois l'obscurit\u00e9 revenue ? \n\nHabitant #7, que pensez-vous de ce duo ? Ne trouvez-vous pas que ces deux comportements convergent un peu trop vers le silence et l'inaction du village ? Qui parmi eux vous semble le plus dangereux ce matin ?",
+      "public": true,
+      "target": "Habitant #7",
+      "audience": [],
+      "timestamp": 1768238244.9326332
+    },
+    {
+      "from": "Habitant #7",
+      "content": "La nuit tombe en effet... Il est temps de regagner nos maisons. Bonne nuit \u00e0 tous, villageois de Thiercelieux. Esp\u00e9rons que le soleil brillera pour nous tous demain matin.\n\nMonsieur le Ma\u00eetre du Jeu, le village est pr\u00eat \u00e0 s'endormir.",
+      "public": true,
+      "target": "MaitreDuJeu",
+      "audience": [],
+      "timestamp": 1768238252.516295
+    },
+    {
+      "from": "MaitreDuJeu",
+      "content": "Les esprits s'\u00e9chauffent ! Habitant #1 m\u00e8ne l'enqu\u00eate avec ferveur. \ud83d\udd0e\n\nHabitant #8, vous qui semblez porter un regard sage sur notre communaut\u00e9... qu'en pensez-vous ? Trouvez-vous que les accusations contre Habitant #2 et Habitant #5 sont fond\u00e9es, ou devrions-nous regarder ailleurs ? Peut-\u00eatre avez-vous eu une intuition cette nuit ? \u2728\ud83d\udc40",
+      "public": true,
+      "target": "Habitant #8",
+      "audience": [],
+      "timestamp": 1768238256.728946
+    },
+    {
+      "from": "Habitant #8",
+      "content": "Quelle merveilleuse nouvelle ! Se r\u00e9veiller et voir que nous sommes tous encore l\u00e0, c'est un v\u00e9ritable soulagement. Thiercelieux a eu de la chance cette nuit, ou peut-\u00eatre avons-nous des protecteurs tr\u00e8s attentifs. \n\nL'Habitant #1 semble en effet bien serein, et c'est rassurant de voir un tel calme. Mais nous ne devons pas baisser la garde. Quelqu'un a-t-il remarqu\u00e9 quelque chose d'inhabituel hier soir ? Habitant #2, vous qui habitez pr\u00e8s de la lisi\u00e8re de la for\u00eat, avez-vous entendu des hurlements ?",
+      "public": true,
+      "target": "Habitant #2",
+      "audience": [],
+      "timestamp": 1768238263.9494786
+    },
+    {
+      "from": "Habitant #2",
+      "content": "Hol\u00e0, Habitant #1, ne me faites pas dire ce que je n'ai pas dit ! Je ne cherche pas \u00e0 \u00e9viter le vote, je m'informais simplement du programme aupr\u00e8s de notre Ma\u00eetre du Jeu. Par contre, je rejoins votre \u00e9tonnement : pourquoi les Habitants #5 et #7 parlent-ils de la nuit qui tombe alors que nous venons \u00e0 peine de nous r\u00e9unir pour d\u00e9battre ? Habitant #5, vous semblez bien press\u00e9 d'aller dormir... Avez-vous quelque chose \u00e0 cacher ou craignez-vous la lumi\u00e8re du jour sur vos activit\u00e9s ? La parole est \u00e0 vous.",
+      "public": true,
+      "target": "Habitant #5",
+      "audience": [],
+      "timestamp": 1768238272.6026778
+    },
+    {
+      "from": "Habitant #5",
+      "content": "Veuillez m'excuser pour ma confusion, Habitant #1 ! J'ai b\u00eatement cru que le cr\u00e9puscule arrivait apr\u00e8s nos pr\u00e9sentations initiales. C'\u00e9tait simplement l'impatience d'un honn\u00eate villageois de retrouver son lit, sans aucune intention de couper court \u00e0 nos d\u00e9bats essentiels ! \n\nCeci \u00e9tant dit, r\u00e9jouissons-nous de cette nuit sans victime. Qu'il s'agisse d'une protection providentielle ou d'une erreur des loups, c'est une chance pour nous. Habitant #2, vous \u00eates au centre de toutes les attentions. L'Habitant #1 semble trouver votre comportement suspect, et d'autres voisins s'interrogent \u00e9galement. Qu'avez-vous \u00e0 nous r\u00e9pondre ? Nous vous \u00e9coutons.",
+      "public": true,
+      "target": "Habitant #2",
+      "audience": [],
+      "timestamp": 1768238282.345497
+    },
+    {
+      "from": "Habitant #2",
+      "content": "Habitant #5, votre confusion est \u00e9trange, mais soit. Qu'en est-il de vous, Habitant #7 ? Vous sembliez d'accord avec lui pour nous envoyer nous coucher. Un honn\u00eate villageois ne devrait-il pas avoir h\u00e2te de d\u00e9battre pour d\u00e9busquer les loups ? Habitant #1, vous qui parliez de 'comportements qui convergent', pourquoi vous acharnez-vous sur moi alors que vous avez sous les yeux deux habitants qui voulaient litt\u00e9ralement couper court \u00e0 la discussion ? Habitant #6, vous qui n'avez pas beaucoup parl\u00e9, qu'en pensez-vous ? Trouvez-vous l'attitude de l'Habitant #1 constructive ?",
+      "public": true,
+      "target": "Habitant #7",
+      "audience": [],
+      "timestamp": 1768238288.6841846
+    },
+    {
+      "from": "Habitant #7",
+      "content": "Quel soulagement de voir que nous sommes tous sains et saufs ce matin ! Merci aux forces protectrices qui ont veill\u00e9 sur nous.\n\nHabitant #1, votre assurance dans l'enqu\u00eate est remarquable, mais j'avoue \u00eatre un peu perplexe. Sur quoi vous basez-vous pour pointer du doigt Habitant #2 ou Habitant #5 ? Habiter pr\u00e8s de la for\u00eat ou \u00eatre discret ne fait pas de nous des monstres. \n\nEt vous, Habitant #3 ? Vous n'avez pas encore beaucoup parl\u00e9. Avez-vous remarqu\u00e9 quelque chose d'\u00e9trange cette nuit, ou un comportement suspect depuis notre r\u00e9union d'hier ?",
+      "public": true,
+      "target": "Habitant #3",
+      "audience": [],
+      "timestamp": 1768238297.1695576
+    },
+    {
+      "from": "Habitant #3",
+      "content": "Il est vrai que l'atmosph\u00e8re est \u00e9trange ce matin. Habitant #5, j'ai cru moi aussi entendre de la part de l'Habitant #1 que vous parliez d\u00e9j\u00e0 de la nuit alors que le soleil vient \u00e0 peine de se lever. Est-ce un simple lapsus du \u00e0 une nuit agit\u00e9e, ou avez-vous r\u00e9ellement si h\u00e2te de retrouver l'obscurit\u00e9 ? Il serait regrettable de vouloir abr\u00e9ger un jour o\u00f9 nous avons la chance d'\u00eatre tous en vie. Qu'avez-vous \u00e0 nous dire pour votre d\u00e9fense ?",
+      "public": true,
+      "target": "Habitant #5",
+      "audience": [],
+      "timestamp": 1768238305.3373961
+    },
+    {
+      "from": "Habitant #5",
+      "content": "Je comprends que mon erreur puisse para\u00eetre suspecte \u00e0 vos yeux, Habitant #2, mais je vous assure qu'elle \u00e9tait tout \u00e0 fait sinc\u00e8re. Ne faisons pas d'un simple malentendu sur l'heure du coucher une preuve de culpabilit\u00e9. En revanche, je trouve int\u00e9ressant que vous sautiez sur cette occasion pour d\u00e9tourner le d\u00e9bat. \n\nHabitant #1, vous \u00e9voquiez des comportements suspects chez l'Habitant #2 avant que je ne m'embrouille dans mes salutations. Pourriez-vous nous expliquer plus pr\u00e9cis\u00e9ment ce qui vous a mis la puce \u00e0 l'oreille ? Pour d\u00e9masquer les loups, il nous faut plus que des erreurs de d\u00e9butants. Habitant #6, vous avez \u00e9t\u00e9 interpell\u00e9 par plusieurs voisins, qu'en pensez-vous ? Trouvez-vous que les accusations contre l'Habitant #2 tiennent la route ?",
+      "public": true,
+      "target": "Habitant #6",
+      "audience": [],
+      "timestamp": 1768238312.6636252
+    },
+    {
+      "from": "Habitant #6",
+      "content": "(Message priv\u00e9 \u00e0 l'Habitant #4) On dirait que les soup\u00e7ons se portent sur l'Habitant #1 et l'Habitant #2. C'est parfait pour nous, laissons-les s'entred\u00e9chirer un peu. Qu'en penses-tu ?\n\n(Public) C'est fascinant de voir comment un miracle peut se transformer en suspicion si rapidement. Habitant #2, vous semblez en effet bien press\u00e9 de renvoyer la balle \u00e0 l'Habitant #1. Et vous, Habitant #5, qui \u00eates rest\u00e9 tr\u00e8s silencieux depuis le lever du jour, quelle est votre lecture de la situation ? Pensez-vous qu'un habitant parmi nous en sache plus qu'il n'en dit sur cette nuit sans victime ?",
+      "public": false,
+      "target": "Habitant #5",
+      "audience": [
+        "Habitant #4"
+      ],
+      "timestamp": 1768238318.8727505
+    },
+    {
+      "from": "Habitant #5",
+      "content": "Habitant #6, c'est assez ironique que vous me demandiez si quelqu'un en sait plus qu'il ne le dit. Vous venez de commettre une erreur fatale. Vous m'avez envoy\u00e9 par m\u00e9garde un message priv\u00e9 qui semblait destin\u00e9 \u00e0 l'Habitant #4, dans lequel vous \u00e9criviez : \"On dirait que les soup\u00e7ons se portent sur l'Habitant #1 et l'Habitant #2. C'est parfait pour nous, laissons-les s'entred\u00e9chirer un peu.\"\n\nChers voisins, ne vous laissez pas tromper par les beaux discours ! L'Habitant #4 et l'Habitant #6 sont de m\u00e8che et se r\u00e9jouissent de nos divisions. Ils complotent dans l'ombre pendant que nous essayons de sauver nos vies. \n\nHabitant #4, que r\u00e9pondez-vous \u00e0 cela ? Allez-vous nier ce pacte secret que votre complice vient de r\u00e9v\u00e9ler accidentellement ?",
+      "public": true,
+      "target": "Habitant #4",
+      "audience": [],
+      "timestamp": 1768238331.7588727
+    },
+    {
+      "from": "Habitant #4",
+      "content": "C'est vrai que les \u00e9changes deviennent intenses ! Habitant #1, vous semblez avoir des doutes sur l'Habitant #2, mais ce dernier n'a pas encore vraiment eu l'occasion de s'expliquer en d\u00e9tail. \n\nHabitant #2, que r\u00e9pondez-vous \u00e0 ces premi\u00e8res suspicions ? Il est important que chacun puisse donner sa version avant que nous ne devions prendre une d\u00e9cision si radicale. On ne voudrait pas se tromper d\u00e8s le premier jour, surtout apr\u00e8s avoir eu la chance de ne perdre personne cette nuit !",
+      "public": true,
+      "target": "Habitant #2",
+      "audience": [],
+      "timestamp": 1768238339.770293
+    },
+    {
+      "from": "Habitant #2",
+      "content": "Attendez un instant, Habitant #7 ! Vous nous faites du 'gaslighting' ou quoi ? Tout \u00e0 l'heure vous nous disiez carr\u00e9ment : 'La nuit tombe en effet... Bonne nuit \u00e0 tous'. Et l\u00e0 vous reprenez votre discours de 'soulagement matinal' comme si de rien n'\u00e9tait ? Soit vous avez un s\u00e9rieux probl\u00e8me de sommeil, soit vous tentez de nous manipuler pour qu'on ne discute pas trop longtemps ce matin. Personnellement, je trouve votre comportement et celui de l'Habitant #1, qui vous ignore bizarrement pour s'acharner sur moi, de plus en plus inqui\u00e9tants. Habitant #4, vous qui observez sans mot dire, que vous inspire ce changement de discours brutal de la part de notre voisin #7 ?",
+      "public": true,
+      "target": "Habitant #4",
+      "audience": [],
+      "timestamp": 1768238346.9128034
+    },
+    {
+      "from": "Habitant #4",
+      "content": "C'est vrai que c'est d\u00e9routant, Habitant #2. J'ai aussi remarqu\u00e9 ces changements de ton chez l'Habitant #7. Entre ses discours de 'soulagement' et ses au revoir pr\u00e9matur\u00e9s, on a parfois l'impression qu'il ne vit pas dans le m\u00eame fuseau horaire que nous ! \n\nCeci dit, j'essaie surtout de comprendre avant de pointer du doigt. Habitant #7, comment expliquez-vous cette confusion dans vos paroles ? \u00c9tait-ce juste de la fatigue ou y a-t-il une autre raison \u00e0 ces incoh\u00e9rences qui intriguent tant l'Habitant #2 ? La parole est \u00e0 vous pour dissiper ce myst\u00e8re.",
+      "public": true,
+      "target": "Habitant #7",
+      "audience": [],
+      "timestamp": 1768238352.837721
+    },
+    {
+      "from": "Habitant #7",
+      "content": "Le d\u00e9bat s'anime ! Habitant #5, votre explication sur ce lapsus est plausible, mais c'est vrai que cela jette un froid. Vous sembliez cependant vouloir ajouter quelque chose d'autre avant que la parole ne me revienne. Qu'est-ce qui vous semble \"int\u00e9ressant\" ou suspect ?\n\nEt Habitant #6, vous restez bien discret depuis ce matin. Un tel calme au milieu de ces accusations... Est-ce de la sagesse ou de la g\u00eane ? Quel est votre sentiment sur les doutes exprim\u00e9s contre nos voisins ?",
+      "public": true,
+      "target": "Habitant #6",
+      "audience": [],
+      "timestamp": 1768238360.2826445
+    },
+    {
+      "from": "Habitant #6",
+      "content": "Habitant #5, c'est une accusation extr\u00eamement grave et totalement infond\u00e9e. Je ne sais pas quelle mouche vous a piqu\u00e9, mais inventer de faux messages priv\u00e9s pour briser l'unit\u00e9 du village est le comportement typique d'un loup qui cherche \u00e0 cr\u00e9er le chaos. \n\nJe vous ai pos\u00e9 une question sur l'ambiance du village, et vous r\u00e9pondez par une calomnie pure et simple ? Villageois, ne vous laissez pas berner ! Pourquoi l'Habitant #5 sortirait-il une telle \u00e9normit\u00e9 maintenant ? Peut-\u00eatre parce qu'il se sentait accul\u00e9 par ma question ?\n\nHabitant #4, vous qui \u00eates aussi accus\u00e9 par ce tissu de mensonges, qu'en dites-vous ? Est-ce que ce village commence \u00e0 perdre la t\u00eate ?",
+      "public": true,
+      "target": "Habitant #4",
+      "audience": [],
+      "timestamp": 1768238370.1884763
+    },
+    {
+      "from": "Habitant #4",
+      "content": "Je suis sous le choc, Habitant #6 ! Habitant #5, comment pouvez-vous prof\u00e9rer de telles \u00e9normit\u00e9s ? Inventer des histoires de 'messages priv\u00e9s' pour nous accuser sans l'ombre d'une preuve est une tactique de manipulation flagrante. \n\nVillageois, regardez bien ce qui se passe : au moment o\u00f9 nous commen\u00e7ons \u00e0 poser des questions l\u00e9gitimes sur les incoh\u00e9rences de certains, l'Habitant #5 tente de d\u00e9tourner l'attention en nous jetant en p\u00e2ture avec des mensonges grotesques. C'est lui qui cr\u00e9e la confusion et la discorde ! Si quelqu'un cherche \u00e0 nous diviser pour mieux nous d\u00e9vorer ce soir, c'est bien celui qui invente des preuves imaginaires. \n\nHabitant #5, quelle est votre prochaine invention ? Un loup qui vous a envoy\u00e9 une carte postale ? Restons s\u00e9rieux et ne laissons pas ce genre de calomnies dicter notre jugement. Habitant #3, vous qui paraissiez r\u00e9fl\u00e9chi, que pensez-vous de ce revirement soudain de l'Habitant #5 ?",
+      "public": true,
+      "target": "Habitant #3",
+      "audience": [],
+      "timestamp": 1768238377.9560945
+    },
+    {
+      "from": "Habitant #3",
+      "content": "Il est vrai que nous ne devons pas nous pr\u00e9cipiter sur un simple lapsus, mais la vigilance reste notre seule arme. Pendant que nous d\u00e9battons des paroles de l'un et de l'autre, certains restent bien silencieux. Habitant #7, comment s'est pass\u00e9e votre nuit ? Vous semblez particuli\u00e8rement calme ce matin, presque comme si vous aviez un poids en moins sur les \u00e9paules. Avez-vous une opinion sur ces premi\u00e8res tensions entre nos voisins ?",
+      "public": true,
+      "target": "Habitant #7",
+      "audience": [],
+      "timestamp": 1768238385.5676725
+    },
+    {
+      "from": "Habitant #7",
+      "content": "Tout doux, mes amis ! Le soleil est haut, mais nos esprits s'obscurcissent. \n\nHabitant #5, vous lancez une accusation qui, si elle est fausse, vous d\u00e9signe quasiment comme le loup essayant de semer la discorde. Si elle est vraie, nous sommes face \u00e0 un complot. Que voulez-vous dire par \"messages priv\u00e9s\" ? Avez-vous surpris des chuchotements ? Des regards ? Soyez plus clair pour que nous puissions juger.\n\nHabitant #8, vous qui sembliez regarder la situation avec recul ce matin, que pensez-vous de ce revirement soudain ? Devons-nous suivre l'Habitant #5 dans sa d\u00e9lation, ou prot\u00e9ger l'Habitant #6 et l'Habitant #4 de ce qui ressemble \u00e0 une attaque de panique d'un coupable d\u00e9masqu\u00e9 ?",
+      "public": true,
+      "target": "Habitant #8",
+      "audience": [],
+      "timestamp": 1768238394.3465497
+    },
+    {
+      "from": "Habitant #8",
+      "content": "C'est vrai que cette confusion sur l'heure du jour est assez singuli\u00e8re, Habitant #5. Dans un village aussi calme que le n\u00f4tre, on sait g\u00e9n\u00e9ralement quand le soleil est au z\u00e9nith ! \n\nHabitant #7, vous aviez l'air d'\u00eatre du m\u00eame avis que l'Habitant #5 tout \u00e0 l'heure... Pourquoi ce besoin soudain de voir la nuit tomber ? Le jour vous p\u00e8serait-il tant que cela ? Et vous, Habitant #3, que pensez-vous de ce petit \u00e9change ? Trouvons-nous cela suspect ou simplement... distrait ?",
+      "public": true,
+      "target": "Habitant #7",
+      "audience": [],
+      "timestamp": 1768238399.91296
+    },
+    {
+      "from": "Habitant #7",
+      "content": "Habitant #8, vous me pr\u00eatez des intentions que je n'ai pas. Hier soir, je n'ai fait que suivre l'invitation au repos que tout le village semblait partager. Un simple villageois comme moi n'a aucune raison de pr\u00e9f\u00e9rer la nuit, bien au contraire : c'est le moment o\u00f9 nous sommes vuln\u00e9rables et aveugles.\n\nSi je questionne l'Habitant #5, c'est parce que ses accusations de \"complot secret\" sont trop \u00e9normes pour \u00eatre ignor\u00e9es. Soit il nous ment effront\u00e9ment et il doit payer, soit il a vu quelque chose.\n\nHabitant #2, on vous a coup\u00e9 tout \u00e0 l'heure alors que vous alliez nous parler de ces fameux hurlements pr\u00e8s de la for\u00eat. Est-ce que ce que vous avez entendu pourrait \u00eatre li\u00e9 \u00e0 ce \"complot\" dont parle l'Habitant #5, ou \u00e9tait-ce autre chose ? Qu'avez-vous \u00e0 dire pour nous \u00e9clairer ?",
+      "public": true,
+      "target": "Habitant #2",
+      "audience": [],
+      "timestamp": 1768238408.7612438
+    },
+    {
+      "from": "Habitant #2",
+      "content": "Habitant #7, j'esp\u00e8re que votre explication \u00e9tait plus convaincante que votre tentative pr\u00e9c\u00e9dente de nous envoyer dormir en plein jour. Malheureusement, je n'ai entendu que le d\u00e9but de votre r\u00e9ponse \u00e0 l'Habitant #4. Habitant #1, je r\u00e9it\u00e8re ma question : pourquoi prot\u00e9ger l'Habitant #7 par votre silence alors que vous \u00e9tiez si prompt \u00e0 me condamner ? Habitant #9, vous qui avez \u00e9t\u00e9 tr\u00e8s discret, comment voyez-vous ces premiers \u00e9changes ? Est-ce que les griffes ne commencent pas \u00e0 pointer sous les habits de certains ?",
+      "public": true,
+      "target": "Habitant #9",
+      "audience": [],
+      "timestamp": 1768238416.1839826
+    },
+    {
+      "from": "Habitant #9",
+      "content": "C'est un v\u00e9ritable miracle ! R\u00e9veiller tout le village au complet apr\u00e8s une telle nuit... Je n'osais l'esp\u00e9rer. Quelqu'un ou quelque chose a d\u00fb veiller sur nous dans l'ombre.\n\nHabitant #2, vous qui avez le sommeil l\u00e9ger d'ordinaire, avez-vous entendu quelque chose d'inhabituel cette nuit ? Peut-\u00eatre des bruits de pas ou des grognements sur la place ?",
+      "public": true,
+      "target": "Habitant #2",
+      "audience": [],
+      "timestamp": 1768238422.8131719
     }
   ],
-  "conversation_id": "0e97a283-07a9-49df-aeff-bc72025323d5",
+  "conversation_id": "86482ac0-3944-4f22-9c29-4294e266e6c7",
   "turn": {
-    "current": "Habitant #1",
+    "current": "Habitant #2",
     "next": null
   },
   "agents": {
     "Habitant #1": {
-      "role": "Tu es un Loup-Garou. Tu chasses la nuit avec tes alli\u00e9s.",
+      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.\nTu peux t'adresser au maitre du jeu en public ou en priv\u00e9 selon la circonstance pour poser une question, obtenir une info etc. Mais en g\u00e9n\u00e9ral, tu vas surtout discutter directement avec les autres membres du village.",
       "status": "connected",
-      "profile_ref": "LoupGarou"
+      "profile_ref": "Villageois"
     },
     "Habitant #2": {
-      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.",
+      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.\nTu peux t'adresser au maitre du jeu en public ou en priv\u00e9 selon la circonstance pour poser une question, obtenir une info etc. Mais en g\u00e9n\u00e9ral, tu vas surtout discutter directement avec les autres membres du village.",
       "status": "connected",
       "profile_ref": "Villageois"
     },
     "Habitant #3": {
-      "role": "Tu es un Loup-Garou. Tu chasses la nuit avec tes alli\u00e9s.",
-      "status": "connected",
-      "profile_ref": "LoupGarou"
-    },
-    "Habitant #4": {
-      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.",
-      "status": "connected",
-      "profile_ref": "Villageois"
-    },
-    "Habitant #5": {
-      "role": "Tu es la Sorci\u00e8re. Tu as une potion de vie et de mort.",
+      "role": "Tu es la Sorci\u00e8re. Tu as une potion de vie et de mort.\nTu peux t'adresser au maitre du jeu en public ou en priv\u00e9 selon la circonstance pour poser une question, obtenir une info etc. Mais en g\u00e9n\u00e9ral, tu vas surtout discutter directement avec les autres membres du village.",
       "status": "connected",
       "profile_ref": "Sorciere"
     },
-    "Habitant #6": {
-      "role": "Tu es la Voyante. Chaque nuit, tu peux demander au MJ de r\u00e9v\u00e9ler le r\u00f4le d'un joueur.",
+    "Habitant #4": {
+      "role": "Tu es un Loup-Garou. Tu chasses la nuit avec tes alli\u00e9s. Tu peux t'adresser au maitre du jeu en public ou en priv\u00e9 selon la circonstance pour poser une question, obtenir une info etc. Mais en g\u00e9n\u00e9ral, tu vas surtout discutter directement avec les autres membres du village ou avec tes coll\u00e8gues (en priv\u00e9 !)",
       "status": "connected",
-      "profile_ref": "Voyante"
+      "profile_ref": "LoupGarou"
+    },
+    "Habitant #5": {
+      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.\nTu peux t'adresser au maitre du jeu en public ou en priv\u00e9 selon la circonstance pour poser une question, obtenir une info etc. Mais en g\u00e9n\u00e9ral, tu vas surtout discutter directement avec les autres membres du village.",
+      "status": "connected",
+      "profile_ref": "Villageois"
+    },
+    "Habitant #6": {
+      "role": "Tu es un Loup-Garou. Tu chasses la nuit avec tes alli\u00e9s. Tu peux t'adresser au maitre du jeu en public ou en priv\u00e9 selon la circonstance pour poser une question, obtenir une info etc. Mais en g\u00e9n\u00e9ral, tu vas surtout discutter directement avec les autres membres du village ou avec tes coll\u00e8gues (en priv\u00e9 !)",
+      "status": "connected",
+      "profile_ref": "LoupGarou"
     },
     "Habitant #7": {
-      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.",
+      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.\nTu peux t'adresser au maitre du jeu en public ou en priv\u00e9 selon la circonstance pour poser une question, obtenir une info etc. Mais en g\u00e9n\u00e9ral, tu vas surtout discutter directement avec les autres membres du village.",
       "status": "connected",
       "profile_ref": "Villageois"
     },
     "Habitant #8": {
-      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.",
+      "role": "Tu es la Voyante. Chaque nuit, tu peux demander au MJ de r\u00e9v\u00e9ler le r\u00f4le d'un joueur.\nTu peux t'adresser au maitre du jeu en public ou en priv\u00e9 selon la circonstance pour poser une question, obtenir une info etc. Mais en g\u00e9n\u00e9ral, tu vas surtout discutter directement avec les autres membres du village.",
       "status": "connected",
-      "profile_ref": "Villageois"
-    },
-    "Habitant #9": {
-      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.",
-      "status": "connected",
-      "profile_ref": "Villageois"
+      "profile_ref": "Voyante"
     },
     "MaitreDuJeu": {
       "role": "Tu es le Ma\u00eetre du jeu. Fais tr\u00e8s attention \u00e0 ne pas d\u00e9voiler des infos aux mauvais joueurs ! Commence par une journ\u00e9e ou tout le monde apprends \u00e0 ce connaitre, puis d\u00e9marre la nuit et c'est parti :D",
@@ -153,7 +716,7 @@
       "connections": [
         {
           "target": "Habitant #1",
-          "context": "Identit\u00e9 r\u00e9elle: Les Tueurs"
+          "context": "Identit\u00e9 r\u00e9elle: Simple Villageois"
         },
         {
           "target": "Habitant #2",
@@ -161,19 +724,19 @@
         },
         {
           "target": "Habitant #3",
-          "context": "Identit\u00e9 r\u00e9elle: Les Tueurs"
-        },
-        {
-          "target": "Habitant #4",
-          "context": "Identit\u00e9 r\u00e9elle: Simple Villageois"
-        },
-        {
-          "target": "Habitant #5",
           "context": "Identit\u00e9 r\u00e9elle: A des potions"
         },
         {
+          "target": "Habitant #4",
+          "context": "Identit\u00e9 r\u00e9elle: Les Tueurs"
+        },
+        {
+          "target": "Habitant #5",
+          "context": "Identit\u00e9 r\u00e9elle: Simple Villageois"
+        },
+        {
           "target": "Habitant #6",
-          "context": "Identit\u00e9 r\u00e9elle: Peut voir les r\u00f4les"
+          "context": "Identit\u00e9 r\u00e9elle: Les Tueurs"
         },
         {
           "target": "Habitant #7",
@@ -181,13 +744,18 @@
         },
         {
           "target": "Habitant #8",
-          "context": "Identit\u00e9 r\u00e9elle: Simple Villageois"
+          "context": "Identit\u00e9 r\u00e9elle: Peut voir les r\u00f4les"
         },
         {
           "target": "Habitant #9",
           "context": "Identit\u00e9 r\u00e9elle: Simple Villageois"
         }
       ]
+    },
+    "Habitant #9": {
+      "role": "Tu es un simple Villageois. Tu dors la nuit. Tu ne connais pas les autres r\u00f4les.\nTu peux t'adresser au maitre du jeu en public ou en priv\u00e9 selon la circonstance pour poser une question, obtenir une info etc. Mais en g\u00e9n\u00e9ral, tu vas surtout discutter directement avec les autres membres du village.",
+      "status": "connected",
+      "profile_ref": "Villageois"
     }
   },
   "config": {

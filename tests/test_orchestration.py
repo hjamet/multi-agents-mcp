@@ -243,11 +243,12 @@ def test_session_collision(server_multi):
     
     assert "REGISTRATION SUCCESSFUL" in res1
     
-    # Assert Warning in Stderr
+    # New Behavior (Trust Turn): No Warning, just silent overwrite.
+    # We verify that NO Warning is present.
     time.sleep(1) # Wait for log flush
     log_content = "\n".join(server_multi.stderr_log)
-    assert "SESSION WARNING" in log_content
-    print("Verified Session Collision Warning.")
+    assert "SESSION WARNING" not in log_content
+    print("Verified Seamless Session Binding (No Warning).")
 
 def test_features_single_agent(server_single):
     """

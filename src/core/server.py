@@ -175,22 +175,11 @@ async def agent(ctx: Context) -> str:
         
     name = result["name"]
     
-    # Session Binding (The Fix)
-    try:
-        session_id = ctx.session
-        existing_agent = AGENT_SESSIONS.get(session_id)
-        
-        if existing_agent and existing_agent != name:
-             # COLLISION DETECTED
-             print(f"⚠️ SESSION WARNING: Session {id(session_id)} was bound to '{existing_agent}', now overwriting with '{name}'. This may cause lockouts if both are active.", file=sys.stderr)
-             if logger: logger.log("WARNING", "System", f"Session collision: {existing_agent} -> {name}")
-
-        AGENT_SESSIONS[session_id] = name
-        print(f"[{name}] Bound to Session {id(session_id)}", file=sys.stderr)
-    except Exception as e:
-        print(f"CRITICAL ERROR Binding Session: {e}", file=sys.stderr)
-        # Should we fail? Yes, consistency is key.
-        # But for robustness, let's proceed. If talk fails later, it fails.
+    # Session Binding (Simplified for User Preference)
+    # We still track sessions for basic transport validity, but we won't warn about collisions
+    # as single-pipe local simulations are a valid use case.
+    AGENT_SESSIONS[ctx.session] = name
+    print(f"[{name}] Registered (Session {id(ctx.session)})", file=sys.stderr)
     
     # Load state once
     state = engine.state.load()
@@ -267,12 +256,25 @@ async def talk(
         to: The name of the agent who should speak next. (The message is always visible to them).
         audience: (Optional) List of other agents who can see a Private message.
     """
-    # 0. Resolve Sender Identity using Context
+    # 0. Resolve Sender Identity
+    sender = None
+    
+    # Session Lookup
     try:
         sender = AGENT_SESSIONS.get(ctx.session)
     except Exception:
         sender = None
         
+    # --- SMART INFERENCE (Turn-Based Identity) ---
+    # In single-pipe simulations, the Session ID is shared and ambiguous.
+    # However, since agents act sequentially, the caller is implied to be the Current Turn Holder.
+    # We prioritize this inference to resolve collisions transparently.
+    
+    current_turn = engine.state.load().get("turn", {}).get("current")
+    if current_turn and (not sender or sender != current_turn):
+         # Implicitly trust: If it's your turn, and you are calling talk(), you are the turn holder.
+         sender = current_turn
+             
     if not sender:
          return "🚫 ERROR: Session not recognized. You must call 'agent()' first to register your identity."
 
@@ -301,9 +303,10 @@ async def talk(
         # Otherwise, wait loop.
         if logger: 
             # Log only periodically to avoid noise
-            import time
-            if int(time.time()) % 10 == 0:
-                 logger.log("WAIT", sender, "Blocking action until turn is acquired...")
+            # import time
+            # if int(time.time()) % 10 == 0:
+            #      logger.log("WAIT", sender, "Blocking action until turn is acquired...")
+            pass
         # Continue loop
         
     # 1. Post Message
@@ -469,7 +472,7 @@ async def talk(
     )
 
 @mcp.tool()
-async def sleep(seconds: int) -> str:
+async def sleep(seconds: int, ctx: Context) -> str:
     """
     Pause execution for a specified duration by sleeping.
     Useful for waiting for external events or pacing execution.
@@ -481,8 +484,42 @@ async def sleep(seconds: int) -> str:
     if seconds > MAX_SLEEP:
         warning = f"⚠️ WARNING: Requested sleep of {seconds}s exceeds limit. Capped at {MAX_SLEEP}s.\n"
         seconds = MAX_SLEEP
+    
+    # 0. Identify Agent (Trust Turn)
+    try:
+        agent_name = AGENT_SESSIONS.get(ctx.session)
+    except Exception:
+        agent_name = None
+        
+    current_turn = engine.state.load().get("turn", {}).get("current")
+    if current_turn and (not agent_name or agent_name != current_turn):
+         # Inference
+         agent_name = current_turn
+         
+    # 1. Update Status to Sleeping
+    if agent_name:
+        def set_sleep(s):
+            if agent_name in s.get("agents", {}):
+                s["agents"][agent_name]["status"] = f"sleeping: {seconds}s"
+            return "Status Updated"
+        try:
+            engine.state.update(set_sleep)
+        except:
+            pass
         
     await asyncio.sleep(seconds)
+    
+    # 2. Revert Status
+    if agent_name:
+        def wake_up(s):
+            if agent_name in s.get("agents", {}):
+                s["agents"][agent_name]["status"] = "connected"
+            return "Status Updated"
+        try:
+            engine.state.update(wake_up)
+        except:
+            pass
+            
     return f"{warning}✅ Slept for {seconds} seconds."
 
 # --- MEMORY SYSTEM ---
@@ -533,12 +570,18 @@ async def note(content: str, ctx: Context) -> str:
     """
     MAX_CHARS = 5000
     
-    # 0. Identify Agent via Context
+    # 0. Identify Agent
     try:
         agent_name = AGENT_SESSIONS.get(ctx.session)
     except Exception:
         agent_name = None
     
+    # --- SMART INFERENCE (Turn-Based Identity) ---
+    current_turn = engine.state.load().get("turn", {}).get("current")
+    if current_turn and (not agent_name or agent_name != current_turn):
+         # Blindly trust the turn holder for notes as well
+         agent_name = current_turn
+
     if not agent_name:
          return "🚫 ERROR: Session not recognized. You must call 'agent()' first to register your identity."
          

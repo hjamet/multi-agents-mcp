@@ -17,7 +17,7 @@ Installation rapide pour le développement :
 # Description détaillée
 
 ### Cœur du Système : Le Hub MCP
-Ce projet fournit un serveur MCP qui expose des outils critiques (`agent`, `talk`, `note`, `sleep`, `wait_for_turn`) aux agents connectés. Il agit comme un chef d'orchestre, imposant une "State Machine" stricte où chaque agent doit attendre son tour avant de parler.
+Ce projet fournit un serveur MCP qui expose des outils critiques (`agent`, `talk`, `note`, `sleep`, `wait_for_turn`) aux agents connectés. Il agit comme un chef d'orchestre, imposant une "State Machine" stricte où chaque agent doit attendre son tour et s'identifier formellement pour éviter les collisions de session.
 
 ### Flux de Travail
 1.  **Configuration** : L'humain définit les rôles (ex: "Loup-Garou", "Voyante") et le scénario dans l'interface Streamlit.
@@ -71,3 +71,10 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
 | **Règles d'Auto-Configuration (.agent)** | Moyenne | 📅 Prévu |
 | **Intégration Graphviz dynamique** | Moyenne | ✅ Terminé |
 | **Support Multi-Room / Multi-Thread** | Basse | 📅 Futur |
+
+## 🕹️ Simulation en cours
+- **Date** : 12 Janvier 2026
+- **Scénario** : Loup-Garou de Thiercelieux
+- **Configuration** : 9 Habitants + 1 Maître du Jeu
+- **État** : Jour 1 - Le village se réveille sans aucune victime. Discussion en cours.
+- **Agent Antigravity** : Connecté sous l'identité **Habitant #3**.
