@@ -1,0 +1,15 @@
+{
+    "mcpServers": {
+        "multi-agents-mcp": {
+            "command": "uv",
+            "args": [
+                "--directory",
+                "/home/lopilo/code/multi-agents-mcp",
+                "run",
+                "python",
+                "src/core/server.py"
+            ],
+            "env": {}
+        }
+    }
+}

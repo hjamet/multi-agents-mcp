@@ -67,7 +67,7 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
 
 | Fonctionnalité | Priorité | Statut |
 | :--- | :--- | :--- |
-| **Script d'installation universel** | Haute | 🚧 En cours |
+| **Script d'installation universel** | Haute | ✅ Terminé |
 | **Règles d'Auto-Configuration (.agent)** | Moyenne | 📅 Prévu |
 | **Intégration Graphviz dynamique** | Moyenne | ✅ Terminé |
 | **Support Multi-Room / Multi-Thread** | Basse | 📅 Futur |

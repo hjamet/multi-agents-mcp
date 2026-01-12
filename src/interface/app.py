@@ -111,7 +111,59 @@ with st.sidebar:
     if st.button("📱 Direct Chat", use_container_width=True):
         st.session_state.page = "Direct"
         st.rerun()
+
+    st.divider()
     
+    # --- FIX MCP CONFIG ---
+    with st.expander("🔧 MCP Fix"):
+        st.caption("Fixes the absolute path in mcp_config.json")
+        if st.button("Update Config Path"):
+            import subprocess
+            
+            # 1. Update JSON
+            try:
+                config_path = os.path.expanduser("~/.gemini/antigravity/mcp_config.json")
+                if os.path.exists(config_path):
+                    with open(config_path, "r") as f:
+                        data = json.load(f)
+                    
+                    # Update directory to CURRENT absolute path
+                    current_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+                    
+                    if "mcpServers" in data and "multi-agents-mcp" in data["mcpServers"]:
+                        args = data["mcpServers"]["multi-agents-mcp"]["args"]
+                        # Find --directory index
+                        try:
+                            idx = args.index("--directory")
+                            args[idx+1] = current_dir
+                            
+                            with open(config_path, "w") as f:
+                                json.dump(data, f, indent=2)
+                            
+                            st.success(f"Updated path to: {current_dir}")
+                            st.info("⚠️ Please Reload/Restart your MCP Client to apply.")
+                            
+                        except ValueError:
+                            st.error("Could not find '--directory' in arguments.")
+                    else:
+                        st.error("multi-agents-mcp not found in config.")
+                else:
+                    st.error(f"Config file not found: {config_path}")
+            except Exception as e:
+                st.error(f"Error: {e}")
+
+            # 2. Check UV Version
+            try:
+                res = subprocess.run(["uv", "--version"], capture_output=True, text=True)
+                version = res.stdout.strip().split(" ")[1]
+                st.caption(f"uv version: {version}")
+                # Simple check (string comparison isn't perfect but works for large jumps)
+                if version < "0.4.0": 
+                    # 0.1.x is less than 0.4.0 lexicographically ?
+                    # 0.1.35 < 0.4.0 -> True
+                    st.warning("⚠️ uv version is old. Please run: `uv self update`")
+            except:
+                st.warning("Could not check uv version.")    
     st.divider()
     st.caption(f"Current Mode: **{st.session_state.page}**")
 
