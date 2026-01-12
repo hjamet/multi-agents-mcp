@@ -505,10 +505,15 @@ elif st.session_state.page == "Chat":
                 # 2. Target & Visibility
                 target = m.get('target', '?')
                 is_public = m.get('public', False)
-                visibility_icon = "📢 Public" if is_public else "🔒 Private"
+                
+                if is_public:
+                    visibility_icon = "📢 Public"
+                else:
+                    visibility_icon = "🔒 Private"
                 
                 meta_parts = [f"{visibility_icon}"]
-                meta_parts.append(f"Next: **{target}**")
+                if target:
+                    meta_parts.append(f"Next: **{target}**")
                 
                 # 3. Audience
                 audiences = m.get("audience", [])
@@ -516,7 +521,8 @@ elif st.session_state.page == "Chat":
                     aud_str = ", ".join(audiences)
                     meta_parts.append(f"Audience: {aud_str}")
                 
-                st.markdown(f"{sender_label} : {content}")
+                # NO DUPLICATE RENDER: st.write(content) above handles the main text.
+                # We just add a caption for metadata.
                 st.caption(" | ".join(meta_parts))
 
     st.divider()

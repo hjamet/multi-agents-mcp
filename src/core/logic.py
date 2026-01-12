@@ -325,10 +325,24 @@ class Engine:
                 # It's my turn!
                 messages = data.get("messages", [])
                 
-                # Filter messages for this agent
+                # 2. History Delta Logic: Get messages since my last turn
+                # Find the index of the last message sent by ME
+                last_my_index = -1
+                for i, m in enumerate(messages):
+                    if m.get("from") == agent_name:
+                        last_my_index = i
+                
+                # If I have never spoken, this is my first turn (or re-entry). 
+                # To be safe, we give full history (or maybe a reasonable startup window? No, full history is safer for context).
+                # If last_my_index is -1, we slice from 0 (start).
+                # If last_my_index is 5, we slice from 6 (next message).
+                start_slice_index = last_my_index + 1
+                recent_messages = messages[start_slice_index:]
+
+                # 3. Filter for Visibility on this Delta
                 # Visible = Public OR (Private AND (To Me OR From Me OR In Audience))
                 visible_messages = []
-                for m in messages:
+                for m in recent_messages:
                     is_public = m.get("public", True)
                     sender = m.get("from")
                     target = m.get("target")
@@ -376,7 +390,7 @@ class Engine:
 
                 return {
                     "status": "success",
-                    "messages": visible_messages[-10:], # Return last 10 relevant messages
+                    "messages": visible_messages, # FULL Delta, no truncation
                     "instruction": f"It is your turn. Speak.{advice_text}"
                 }
             
@@ -423,8 +437,19 @@ class Engine:
             if current_turn == agent_name:
                 # Reuse logic from sync version (code duplication is acceptable for safety here vs refactoring everything)
                 messages = data.get("messages", [])
+                
+                # 2. History Delta Logic: Get messages since my last turn
+                last_my_index = -1
+                for i, m in enumerate(messages):
+                    if m.get("from") == agent_name:
+                        last_my_index = i
+                
+                start_slice_index = last_my_index + 1
+                recent_messages = messages[start_slice_index:]
+
+                # 3. Filter for Visibility
                 visible_messages = []
-                for m in messages:
+                for m in recent_messages:
                     is_public = m.get("public", True)
                     sender = m.get("from")
                     target = m.get("target")
@@ -459,7 +484,7 @@ class Engine:
 
                 return {
                     "status": "success",
-                    "messages": visible_messages[-10:],
+                    "messages": visible_messages,
                     "instruction": f"It is your turn. Speak.{advice_text}"
                 }
             
