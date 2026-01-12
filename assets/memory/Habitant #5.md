@@ -1,5 +1,16 @@
-Rôle : Loup-Garou (Habitant #5)
-Phase : Introduction (Jour 0)
-Stratégie : Se faire passer pour un simple villageois (paysan). Rester discret mais coopératif.
-Prochaine action : Répondre au MJ en public et passer le tour à l'Habitant #6.
-Note sur les règles : Les règles du MJ interdisent l'accès aux fichiers. Je respecte cela pour l'immersion dans la simulation, malgré la règle générale du README qui semble en conflit ici. L'objectif immédiat est de ne pas se faire démasquer.
+# Optimizing Streamlit Chat Interface
+
+## User Requirements
+1.  **Pagination**: [DONE] Live Chat & Direct Chat -> Show last 10 messages initially. "Load more" button for older ones.
+2.  **Design**: [DONE] Improve chat aesthetics.
+3.  **Emoji Identity**:
+    *   Add emoji selection during Agent creation.
+    *   [NEW] **Grid Picker**: Replace text input with a UI grid (WhatsApp style).
+
+## Plan (Updated)
+1.  **Modify Agent Editor (`src/interface/app.py`)**:
+    *   Define `EMOJI_CATEGORIES` (Faces, Roles/Fantasy, Objects).
+    *   Replace `st.text_input` for emoji with a `st.popover`.
+    *   Inside the popover, render tabs/grid of buttons.
+    *   Callback mechanism to update the profile's emoji logic on click.
+    *   Ensure "Save" persists the selection.

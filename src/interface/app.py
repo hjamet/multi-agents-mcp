@@ -34,13 +34,20 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+
 # --- HELPER FUNCTIONS ---
+EMOJI_CATEGORIES = {
+    "Smileys & People": ["😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣", "🥲", "☺️", "😊", "😇", "🙂", "🙃", "😉", "😌", "😍", "🥰", "😘", "😗", "😙", "😚", "😋", "😛", "😝", "😜", "🤪", "🤨", "🧐", "🤓", "😎", "🥸", "🤩", "🥳", "😏", "😒", "😞", "😔", "😟", "😕", "🙁", "☹️", "😣", "😖", "😫", "😩", "🥺", "😢", "😭", "😤", "😠", "😡", "🤬", "🤯", "😳", "🥵", "🥶", "😱", "😨", "😰", "😥", "😓", "🤗", "🤔", "🤭", "🤫", "🤥", "😶", "😐", "😑", "😬", "🙄", "😯", "😦", "😧", "😮", "😲", "🥱", "😴", "🤤", "😪", "😵", "🤐", "🥴", "🤢", "🤮", "🤧", "😷", "🤒", "🤕", "🤑", "🤠", "😈", "👿", "👹", "👺", "🤡", "💩", "👻", "💀", "☠️", "👽", "👾", "🤖", "🎃", "😺", "😸", "😹", "😻", "😼", "😽", "🙀", "😿", "😾"],
+    "Roles & Fantasy": ["🐺", "🦊", "🐻", "🐼", "🐨", "🐯", "🦁", "🐮", "🐷", "🐸", "🐵", "🐔", "🐧", "🐦", "🐤", "🦅", "🦉", "🦇", "🐝", "🪱", "🐛", "🦋", "🐌", "🐞", "🐜", "🪰", "🪲", "🪳", "🦟", "🦗", "🕷️", "🕸️", "🦂", "🐢", "🐍", "🦎", "🦖", "🦕", "🐙", "🦑", "🦐", "🦞", "🦀", "🐡", "🐠", "🐟", "🐬", "🐳", "🐋", "🦈", "🐊", "🐅", "🐆", "🦓", "🦍", "🦧", "🦣", "🐘", "🦛", "🦏", "🐪", "🐫", "🦒", "🦘", "🦬", "🐃", "🐂", "🐄", "🐎", "🐖", "🐏", "🐑", "🦙", "🐐", "🦌", "🐕", "🐩", "🦮", "🐕‍🦺", "🐈", "🐈‍⬛", "🐓", "🦃", "🦚", "🦜", "🦢", "🦩", "🕊️", "🐇", "🦝", "🦨", "🦡", "🦫", "🦦", "🦥", "🐁", "🐀", "🐿️", "🦔", "🐾", "🐉", "🐲", "🧙", "🧚", "🧛", "🧜", "🧝", "🧞", "🧟", "👼", "🤴", "👸", "👮", "🕵️", "💂", "🥷", "👳", "🤵", "👰"],
+    "Objects & Symbols": ["💡", "💣", "💤", "💥", "💦", "💨", "💫", "🗨️", "👁️‍🗨️", "💍", "💎", "👑", "👒", "🎩", "🎓", "🧢", "⛑️", "📿", "💄", "🏹", "🗡️", "⚔️", "🛡️", "🔮", "🧿", "🩹", "💊", "🧬", "🔭", "🔬", "🩸", "🖼️", "🎭", "🎰", "🚂", "🚓", "🚑", "🚒", "🛸", "🚀", "🛶", "⚓", "🚧", "🚦", "🛑", "🔔", "📣", "📢", "🎙️", "🎤", "🎧", "📻", "🎷", "🎸", "🎹", "🎺", "🎻", "🪕", "🥁", "📱", "📲", "☎️", "📞", "📟", "📠", "🔋", "🔌", "💻", "🖥️", "🖨️", "⌨️", "🖱️", "🖲️", "💽", "💾", "💿", "📀", "🧮", "🎥", "🎞️", "📽️", "🎬", "📺", "📷", "📸", "📹", "📼", "🔍", "🔎", "🕯️", "💡", "🔦", "🏮", "📔", "📕", "📖", "📗", "📘", "📙", "📚", "📓", "📒", "📃", "📜", "📄", "📰", "🗞️", "📑", "🔖", "🏷️", "💰", "💴", "💵", "💶", "💷", "🪙", "💸", "💳", "🧾", "✉️", "📧", "📨", "📩", "📤", "📥", "📦", "📫", "📪", "📬", "📭", "📮", "🗳️", "✏️", "✒️", "🖋️", "🖊️", "🖌️", "🖍️", "📝", "💼", "📁", "📂", "🗂️", "📅", "📆", "🗒️", "🗓️", "📇", "📈", "📉", "📊", "📋", "📌", "📍", "📎", "🖇️", "📏", "📐", "✂️", "🗃️", "🗄️", "🗑️"]
+}
+
 def load_config():
     state = state_store.load()
     config = state.get("config", {})
     if "profiles" not in config:
         config["profiles"] = [
-            {"name": "Agent", "description": "Generic Agent", "system_prompt": "You are a helpful assistant.", "connections": [], "count": 1, "capabilities": ["public", "private", "audience"]}
+            {"name": "Agent", "description": "Generic Agent", "emoji": "🤖", "system_prompt": "You are a helpful assistant.", "connections": [], "count": 1, "capabilities": ["public", "private", "audience"]}
         ]
     return state, config
 
@@ -268,13 +275,49 @@ if st.session_state.page == "Editor":
             # Header
             st.markdown(f"### ✏️ Editing: {current_profile.get('name', 'New')}")
             
-            c1, c2 = st.columns(2)
+            c1, c2, c_emoji = st.columns([3, 3, 1])
             # Dynamic keys force refresh
             new_name = c1.text_input("Internal Profile Name", current_profile.get("name", ""), key=f"p_name_{k_suffix}", help="Used for Admin Logic and Connections (e.g. 'LoupGarou').")
             # Display Name
             # Default to empty if not set, let placeholder show the fallback
             d_val = current_profile.get("display_name", "")
             display_name = c2.text_input("Public Display Name", d_val, placeholder=f"Par défaut: {new_name}", key=f"p_disp_{k_suffix}", help="Base name shown in chat (e.g. 'Habitant').")
+            # Emoji Picker
+            current_emoji = current_profile.get("emoji", "🤖")
+            
+            # Use Popover for "WhatsApp-style" grid
+            with c_emoji:
+                st.markdown("Avatar")
+                # Using a container or columns to keep label alignment
+                popover = st.popover(f"{current_emoji} Change")
+                
+                # Hidden/State input to store the selection for Save
+                # We initialize it with current, but if a button in popover is clicked, we need to update this.
+                # Since st.button rerun, we rely on session_state to persist the "new_emoji_selection".
+                
+                emoji_key = f"selected_emoji_{k_suffix}"
+                if emoji_key not in st.session_state:
+                    st.session_state[emoji_key] = current_emoji
+                
+                # Determine 'new_emoji' from session state
+                new_emoji = st.session_state[emoji_key]
+                
+                with popover:
+                    st.markdown("### Select an Avatar")
+                    tabs = st.tabs(list(EMOJI_CATEGORIES.keys()))
+                    
+                    for i, (cat_name, emojis) in enumerate(EMOJI_CATEGORIES.items()):
+                        with tabs[i]:
+                            # Render grid (e.g. 8 columns)
+                            cols = st.columns(8)
+                            for idx, emo in enumerate(emojis):
+                                with cols[idx % 8]:
+                                    if st.button(emo, key=f"emo_{k_suffix}_{i}_{idx}"):
+                                         st.session_state[emoji_key] = emo
+                                         st.rerun()
+                
+                # Show selection feedback
+                st.caption(f"Selected: {new_emoji}")
 
             c3, c4 = st.columns(2)
             new_desc = c3.text_input("Admin Description (Internal)", current_profile.get("description", ""), key=f"p_desc_{k_suffix}", help="Note for you (e.g. 'The Bad Guy').")
@@ -381,6 +424,7 @@ if st.session_state.page == "Editor":
                 
                 # Update object
                 current_profile["name"] = new_name
+                current_profile["emoji"] = new_emoji
                 current_profile["description"] = new_desc
                 current_profile["display_name"] = display_name
                 current_profile["public_description"] = public_desc
@@ -544,7 +588,8 @@ elif st.session_state.page == "Cockpit":
                     pending_slots.append({
                         "profile_ref": p["name"],
                         "role": p.get("system_prompt", ""),
-                        "display_base": p.get("display_name") or p["name"]
+                        "display_base": p.get("display_name") or p["name"],
+                        "emoji": p.get("emoji", "🤖")
                     })
             
             # 2. Shuffle
@@ -570,7 +615,8 @@ elif st.session_state.page == "Cockpit":
                 new_agents[agent_id] = {
                     "role": slot["role"], 
                     "status": "pending_connection",
-                    "profile_ref": slot["profile_ref"]
+                    "profile_ref": slot["profile_ref"],
+                    "emoji": slot["emoji"]
                 }
                     
             s["agents"] = new_agents
@@ -654,7 +700,25 @@ elif st.session_state.page == "Chat":
     # 5. Chat Stream
     st.markdown("### 📜 Communication Log")
     
-    for m in messages:
+    # --- PAGINATION LOGIC ---
+    if "live_chat_limit" not in st.session_state:
+        st.session_state.live_chat_limit = 10
+    
+    total_msgs = len(messages)
+    limit = st.session_state.live_chat_limit
+    
+    # Show "Load More" if there are more messages hidden
+    if total_msgs > limit:
+        if st.button(f"⬆️ Load Previous Messages ({total_msgs - limit} hidden)", key="load_more_live"):
+            st.session_state.live_chat_limit += 10
+            st.rerun()
+            
+    # Slicing: Get the last 'limit' messages
+    # Messages are usually appended, so valid slice is starts from max(0, total - limit)
+    start_idx = max(0, total_msgs - limit)
+    visible_messages = messages[start_idx:]
+    
+    for m in visible_messages:
         sender = m.get("from", "?")
         content = m.get("content", "")
         
@@ -663,36 +727,56 @@ elif st.session_state.page == "Chat":
         # Private: Blue tint
         is_public = m.get('public', False)
         
-        style_css = ""
-        if not is_public and sender != "System":
-             style_css = "background-color: #e3f2fd; border-radius: 10px; padding: 10px; border-left: 5px solid #2196f3;"
+        # Retrieve Sender Logic
+        agent_info = agents.get(sender, {})
+        sender_emoji = agent_info.get("emoji", "🤖") if sender != "System" else "💾"
         
+        # Override for System
         if sender == "System":
-             st.info(f"💾 **SYSTEM**: {content}")
+             with st.chat_message(sender, avatar=sender_emoji):
+                 st.markdown(f"**{sender}**: {content}")
         else:
-            with st.container():
-                # Sender Visuals
-                sender_node = agents.get(sender, {})
-                profile_ref = sender_node.get("profile_ref", "Unknown")
+            # Metadata Construction
+            target = m.get('target', '?')
+            audiences = m.get("audience", [])
+            profile_ref = agent_info.get("profile_ref", "Unknown")
+            
+            meta_parts = [f"**{sender}** ({profile_ref})"]
+            
+            if is_public:
+                meta_parts.append("📢 **PUBLIC**")
+                msg_bg = "transparent" # Default
+            else:
+                meta_parts.append(f"🔒 **PRIVATE** to **{target}**")
+                if audiences:
+                     meta_parts.append(f"(cc: {', '.join(audiences)})")
+                msg_bg = "#e3f2fd" # Light Blue for private
+            
+            meta_str = " | ".join(meta_parts)
+            
+            # Use st.chat_message for avatar handling + Custom rendering inside
+            with st.chat_message(sender, avatar=sender_emoji):
+                # We can't easily change the bubble bg color in st.chat_message without hacky CSS.
+                # But we can style the content inside.
                 
-                # Metadata Line
-                target = m.get('target', '?')
-                audiences = m.get("audience", [])
+                # Header
+                st.caption(meta_str)
                 
-                meta_info = f"From: **{sender}** ({profile_ref})"
-                if is_public:
-                    meta_info += " | 📢 **PUBLIC**"
+                # Content Body
+                if not is_public:
+                    # distinct visualization for private
+                    st.markdown(f"""
+                    <div style="
+                        background-color: {msg_bg}; 
+                        padding: 10px; 
+                        border-radius: 8px; 
+                        border-left: 4px solid #2196f3;
+                    ">
+                        {content}
+                    </div>
+                    """, unsafe_allow_html=True)
                 else:
-                    meta_info += f" | 🔒 **PRIVATE** to **{target}**"
-                    if audiences:
-                         meta_info += f" (cc: {', '.join(audiences)})"
-                
-                st.markdown(f"""
-                <div style="{style_css} margin-bottom: 10px;">
-                    <div style="font-size: 0.8em; color: gray; margin-bottom:4px;">{meta_info}</div>
-                    <div style="font-size: 1.0em;">{content}</div>
-                </div>
-                """, unsafe_allow_html=True)
+                    st.markdown(content)
 
     st.divider()
 
@@ -840,140 +924,143 @@ elif st.session_state.page == "Direct":
     # Relevant = Public OR Private to "User" OR From "User"
     
     # Render Chat Log
-    st.markdown("### 📥 Inbox")
+    st.markdown("### 📥 Inbox (Tâches en attente)")
     
-    for m in messages:
+    # Filter messages addressed to User
+    all_inbox_messages = []
+    for i, m in enumerate(messages):
+        if m.get("target") == "User":
+            all_inbox_messages.append((i, m))
+    
+    # Sort by timestamp desc (Newest first)
+    all_inbox_messages.sort(key=lambda x: x[1].get("timestamp", 0), reverse=True)
+    
+    # --- PAGINATION LOGIC ---
+    if "direct_chat_limit" not in st.session_state:
+        st.session_state.direct_chat_limit = 10
+        
+    limit = st.session_state.direct_chat_limit
+    total_inbox = len(all_inbox_messages)
+    
+    visible_inbox = all_inbox_messages[:limit]
+    
+    if total_inbox > limit:
+         if st.button(f"⬇️ Load Older Messages ({total_inbox - limit} remaining)", key="load_more_direct"):
+             st.session_state.direct_chat_limit += 10
+             st.rerun()
+
+    if not visible_inbox:
+        st.info("Aucun message reçu pour le moment.")
+    
+    for real_idx, m in visible_inbox:
         sender = m.get("from", "?")
-        target = m.get("target", "?")
         content = m.get("content", "")
-        audience = m.get("audience", [])
-        is_public = m.get("public", False)
+        timestamp = m.get("timestamp", 0)
+        is_replied = m.get("replied", False)
         
-        # Filter: Show only User related
-        # Show public? Maybe not in "Direct Chat", stick to relevant.
-        # Let's show:
-        # 1. Private messages TO User
-        # 2. Private messages FROM User
-        # 3. Public messages? Maybe too noisy. User asked for "Direct Chat".
+        # Get Sender Emoji from full agent list lookup
+        # Since 'agents' isn't explicitly loaded in Direct Chat (it is calling state_store.load which returns data), 
+        # let's grab it from 'data.get("agents", {})' which we have.
+        # Wait, 'state' was loaded, and 'data' is the dict.
+        # But we need 'agents' dict to lookup emoji.
+        live_agents = data.get("agents", {})
+        sender_info = live_agents.get(sender, {})
+        sender_emoji = sender_info.get("emoji", "👤") # Default user icon
         
-        is_relevant = (target == "User") or (sender == "User") or ("User" in audience)
-        
-        if is_relevant:
-            align = "left"
-            color = "#f1f0f0"
-            if sender == "User":
-                align = "right"
-                color = "#dcf8c6" # Whatsapp greenish
-                
-            st.markdown(f"""
-            <div style="display: flex; justify-content: {align}; width: 100%;">
-                <div style="background-color: {color}; padding: 10px; border-radius: 10px; max-width: 70%; margin-bottom: 5px; box-shadow: 0 1px 1px rgba(0,0,0,0.1);">
-                    <div style="font-size: 0.75em; color: #555; margin-bottom: 2px;"><b>{sender}</b> &rarr; {target}</div>
-                    <div>{content}</div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+        # Style
+        if is_replied:
+            status_intro = "✅ **RÉPONDU**"
+            msg_opacity = 0.6
+        else:
+            status_intro = "🛑 **À TRAITER**"
+            msg_opacity = 1.0
             
+        with st.chat_message(sender, avatar=sender_emoji):
+            # Layout
+            st.markdown(f"{status_intro} | 🕒 {time.ctime(timestamp)}")
+            st.markdown(f"**{sender}**: {content}")
+            if is_replied:
+                st.caption(f"ID: {real_idx} (Archived)")
+            else:
+                st.caption(f"ID: {real_idx} (Active)")
+            
+            # Action Area
+            if not is_replied:
+                c_input, c_btn = st.columns([4, 1])
+                # Unique keys using real_idx
+                reply_text = c_input.text_input("Réponse", key=f"reply_input_{real_idx}", label_visibility="collapsed", placeholder="Votre réponse...")
+                
+                if c_btn.button("Envoyer", key=f"reply_btn_{real_idx}", type="primary", use_container_width=True):
+                    if reply_text:
+                        def send_reply(s):
+                            # 1. Add Message
+                            msg = {
+                                "from": "User",
+                                "content": reply_text,
+                                "public": False,
+                                "target": sender,
+                                "audience": [],
+                                "timestamp": time.time()
+                            }
+                            s.setdefault("messages", []).append(msg)
+                            
+                            # 2. Mark Original as Replied
+                            # Access by index? Risky if list changed. 
+                            # Better to find by timestamp match or strictly use index if we lock.
+                            # Since we reload state in update_fn, indices might shift if new messages arrived?
+                            # No, append only adds to end.
+                            # But let's check basic integrity
+                            if real_idx < len(s["messages"]):
+                                # Double check timestamp to be sure we are hitting right message
+                                if s["messages"][real_idx].get("timestamp") == timestamp:
+                                    s["messages"][real_idx]["replied"] = True
+                            
+                            return "Réponse envoyée & Message marqué traité."
+                        
+                        res = state_store.update(send_reply)
+                        st.toast(res)
+                        st.rerun()
+            else:
+                 # Show what we replied? (Optional, maybe too complex for now)
+                 pass
+
     st.divider()
     
-    # 2. Reply Interface
-    # Check if User can speak? User can ALWAYs inject messages technically.
-    # But usually it's polite to wait for a message addressed to you.
+    # 3. God Mode Injector (Unhidden)
+    st.markdown("### 🛠️ Admin / God Mode (Broadcast)")
+    st.caption("Envoyer un message spontané sans répondre à une requête spécifique.")
     
-    st.markdown("### 📤 Reply")
-    
-    # Who to reply to?
-    # Usually replying to whoever spoke last to me?
-    # Let's give a dropdown of Active Agents
+    # Retrieve agents if not in scope (it was in data)
     agents = data.get("agents", {})
-    agent_names = sorted([k for k in agents.keys() if k != "User"])
     
-    with st.container(border=True):
-        c_dest, c_msg = st.columns([1, 4])
-        
-        dest = c_dest.selectbox("To Agent:", agent_names) if agent_names else None
-        user_msg = c_msg.text_input("Message:", key="direct_msg_input")
-        
-        if st.button("Send Reply", type="primary", disabled=not dest):
-            if user_msg and dest:
-                def send_reply(s):
-                    # 1. Post text
-                    msg = {
-                        "from": "User",
-                        "content": user_msg,
-                        "public": False,
-                        "target": dest,
-                        "audience": [],
-                        "timestamp": time.time()
-                    }
-                    s.setdefault("messages", []).append(msg)
-                    
-                    # 2. GIVE TURN to the target Agent
-                    # This unblocks them if they were waiting? 
-                    # Actually, if I sent to "User" in logic.py, I returned "You still have the turn". 
-                    # So the agent is technically still running.
-                    # BUT `wait_for_turn` in `talk` tool checks `turn["current"]`.
-                    # If logic.py didn't update turn, then `turn["current"]` is STILL the sending agent.
-                    # So the sending agent NEVER lost the turn.
-                    # So they are actively running.
-                    # IF they are actively running, they might have called `talk` again.
-                    # 
-                    # If the User replies, does it interrupt?
-                    # "Il vous répondra en temps voulu."
-                    # "En attendant, continuez votre travail".
-                    # This implies the agent is working in background.
-                    # The User message is just data.
-                    # WE DO NOT CHANGE TURN HERE if the agent has the turn????
-                    # Wait, if the agent passed turn to User, logic.py said "Turn remains with [Agent]".
-                    # So Agent has turn.
-                    # If Agent wants to read User reply, they need to check messages.
-                    # They will see the new message in their `wait_for_turn` or `talk` return?
-                    # No, `talk` returned immediately.
-                    # So they need to inspect history or wait for turn again?
-                    # If they call `talk` again, they get new messages.
-                    
-                    # So, inserting the message is enough. The agent will see it next time they act.
-                    # UNLESS the agent is waiting for "User" to do something?
-                    # But we said "Continuez votre travail".
-                    
-                    # However, if I want to "Activate" an agent who is waiting?
-                    # If `turn["current"]` is None or someone else?
-                    # Let's just injecting the message.
-                    # And maybe forcing turn if needed to debug.
-                    
-                    return "Message Sent (Inbox Updated)"
-                
-                res = state_store.update(send_reply)
-                st.toast(res)
-                st.rerun()
-
-    # 3. God Mode Injector (Keep hidden or here?)
-    # Helpful to keep standard injector for broadcasting etc.
-    with st.expander("🛠️ Admin / God Mode"):
-         c_in_gm, c_targ_gm = st.columns([4, 1])
-         all_agent_keys = sorted(agents.keys())
-         targets_gm = c_targ_gm.multiselect("To:", all_agent_keys, placeholder="Broadcast")
+    c_in_gm, c_targ_gm = st.columns([4, 1])
+    all_agent_keys = sorted([k for k in agents.keys() if k != "User"])
+    targets_gm = c_targ_gm.multiselect("Destinataires", all_agent_keys, placeholder="Tous (Broadcast)")
+    
+    gm_input = c_in_gm.text_input("Message God Mode", key="gm_input")
+    
+    if st.button("Injecter Message", type="secondary"):
+         def inject_gm(s):
+             msg = {
+                 "from": "User",
+                 "content": gm_input,
+                 "timestamp": time.time()
+             }
+             if not targets_gm:
+                 msg["public"] = True
+                 msg["target"] = "all"
+             else:
+                 msg["public"] = False
+                 msg["target"] = targets_gm[0]
+                 msg["audience"] = targets_gm[1:]
+                 # Force turn
+                 s["turn"]["current"] = targets_gm[0]
+                 s["turn"]["next"] = None
+                 
+             s.setdefault("messages", []).append(msg)
+             return "Message Injecté"
          
-         gm_input = c_in_gm.text_input("Inject Standard Message", key="gm_input")
-         if st.button("Inject"):
-             def inject_gm(s):
-                 msg = {
-                     "from": "User",
-                     "content": gm_input,
-                     "timestamp": time.time()
-                 }
-                 if not targets_gm:
-                     msg["public"] = True
-                     msg["target"] = "all"
-                 else:
-                     msg["public"] = False
-                     msg["target"] = targets_gm[0]
-                     msg["audience"] = targets_gm[1:]
-                     # Force turn
-                     s["turn"]["current"] = targets_gm[0]
-                     s["turn"]["next"] = None
-                     
-                 s.setdefault("messages", []).append(msg)
-                 return "Injected"
-             state_store.update(inject_gm)
-             st.rerun()
+         if gm_input:
+            state_store.update(inject_gm)
+            st.success("Message envoyé.")
+            st.rerun()

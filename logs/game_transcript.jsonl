@@ -421,3 +421,5 @@
 {"timestamp": 1768239612.1706588, "time_str": "2026-01-12 18:40:12", "type": "TURN_CHANGE", "agent": "System", "content": "Turn passed to Habitant #5", "metadata": {"from": "MaitreDuJeu", "to": "Habitant #5"}}
 {"timestamp": 1768239612.1872866, "time_str": "2026-01-12 18:40:12", "type": "SUCCESS", "agent": "System", "content": "Message posted: Message posted. Next speaker is Habitant #5.", "metadata": {}}
 {"timestamp": 1768239612.2188332, "time_str": "2026-01-12 18:40:12", "type": "TURN", "agent": "Habitant #5", "content": "It is my turn again.", "metadata": {}}
+{"timestamp": 1768244648.829364, "time_str": "2026-01-12 20:04:08", "type": "MEMORY", "agent": "Habitant #5", "content": "Updated memory note.", "metadata": {}}
+{"timestamp": 1768244870.3658142, "time_str": "2026-01-12 20:07:50", "type": "MEMORY", "agent": "Habitant #5", "content": "Updated memory note.", "metadata": {}}
