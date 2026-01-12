@@ -1,12 +1,17 @@
-from mcp.server.fastmcp import FastMCP, Context
-
+import sys
 import os
+from pathlib import Path
 from typing import List, Optional
-from jinja2 import Environment, FileSystemLoader
 import asyncio
 import time
+from jinja2 import Environment, FileSystemLoader
+from mcp.server.fastmcp import FastMCP, Context
 
-# Add src to path to allow imports if run directly
+# Add project root to sys.path to allow 'src' imports
+ROOT_DIR = Path(__file__).parent.parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 from src.core.logic import Engine
 from src.config import TEMPLATE_DIR, MEMORY_DIR
 

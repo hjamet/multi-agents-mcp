@@ -70,6 +70,7 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
 | **Script d'installation universel** | Haute | ✅ Terminé |
 | **Règles d'Auto-Configuration (.agent)** | Moyenne | 📅 Prévu |
 | **Intégration Graphviz dynamique** | Moyenne | ✅ Terminé |
+| **Refonte UI (Tabs & UX)** | Haute | ✅ Terminé |
 | **Support Multi-Room / Multi-Thread** | Basse | 📅 Futur |
 
 ## 🕹️ Simulation en cours
