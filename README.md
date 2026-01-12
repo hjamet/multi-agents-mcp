@@ -20,7 +20,7 @@ Installation rapide pour le développement :
 Ce projet fournit un serveur MCP qui expose des outils critiques (`agent`, `talk`, `note`, `sleep`, `wait_for_turn`) aux agents connectés. Il agit comme un chef d'orchestre, imposant une "State Machine" stricte où chaque agent doit attendre son tour et s'identifier formellement pour éviter les collisions de session.
 
 ### Flux de Travail
-1.  **Configuration** : L'humain définit les rôles (ex: "Loup-Garou", "Voyante") et le scénario dans l'interface Streamlit.
+1.  **Configuration** : L'humain définit les rôles (ex: "Loup-Garou", "Voyante") et le scénario dans l'interface Streamlit. Une gestion fine des connexions (Public/Privé) est possible via un éditeur tabulaire dynamique avec support du "Open Mode".
 2.  **Connexion** : Les agents (clients MCP) se connectent et reçoivent leur identité via `register_agent`. Le système gère le découplage entre les profils internes et les noms d'affichage publics.
 3.  **Simulation** : Les agents échangent des messages. Le mécanisme de **Smart Blocking** empêche les timeouts HTTP en maintenant les agents en attente active jusqu'à leur tour. Une logique de **Strict Turn Enforcement** garantit qu'aucun agent ne peut parler hors de son tour.
 

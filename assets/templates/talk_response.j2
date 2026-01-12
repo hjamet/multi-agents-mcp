@@ -55,9 +55,17 @@ Use this table to decide who to speak to.
 - `public=False, next_agent="Name"`: Private message to Next Agent. (Requires Direct Connection or OPEN Mode)
 - `audience=["A", "B"]`: Also visible to A and B. (Requires Direct Connection/OPEN Mode for each)
 
-| Agent Name | Public Role | Reachability | Notes / Context |
-| :--- | :--- | :--- | :--- |
+{% if is_open_mode %}
+| Authorized | Agent Name | Notes / Context |
+| :---: | :--- | :--- |
 {% for a in agent_directory %}
-| **{{ a.name }}** | {{ a.public_desc }} | {{ a.status }} | {{ a.note }} |
+| {% if a.authorized %}[x]{% else %}[ ]{% endif %} | **{{ a.name }}** | {{ a.public_desc }} {{ a.note }} |
 {% endfor %}
+{% else %}
+| Agent Name | Notes / Context |
+| :--- | :--- |
+{% for a in agent_directory %}
+| **{{ a.name }}** | {{ a.public_desc }} {{ a.note }} |
+{% endfor %}
+{% endif %}
 ------------------------------------------

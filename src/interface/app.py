@@ -83,7 +83,9 @@ def render_graph(profiles, current_editing=None):
         for conn in p.get("connections", []):
             target = conn.get("target")
             # Only draw if target exists
-            if any(prof["name"] == target for prof in profiles):
+            # Only draw if target exists AND is authorized
+            is_auth = conn.get("authorized", True)
+            if is_auth and any(prof["name"] == target for prof in profiles):
                 graph.edge(source, target, fontsize='8', color='gray', arrowsize='0.5')
 
     return graph
@@ -270,11 +272,14 @@ if st.session_state.page == "Editor":
             # Dynamic keys force refresh
             new_name = c1.text_input("Internal Profile Name", current_profile.get("name", ""), key=f"p_name_{k_suffix}", help="Used for Admin Logic and Connections (e.g. 'LoupGarou').")
             # Display Name
-            display_name = c2.text_input("Public Display Name", current_profile.get("display_name", current_profile.get("name", "")), key=f"p_disp_{k_suffix}", help="Base name shown in chat (e.g. 'Habitant').")
+            # Default to empty if not set, let placeholder show the fallback
+            d_val = current_profile.get("display_name", "")
+            display_name = c2.text_input("Public Display Name", d_val, placeholder=f"Par défaut: {new_name}", key=f"p_disp_{k_suffix}", help="Base name shown in chat (e.g. 'Habitant').")
 
             c3, c4 = st.columns(2)
             new_desc = c3.text_input("Admin Description (Internal)", current_profile.get("description", ""), key=f"p_desc_{k_suffix}", help="Note for you (e.g. 'The Bad Guy').")
-            public_desc = c4.text_input("Public Description (All)", current_profile.get("public_description", ""), key=f"p_pubdesc_{k_suffix}", help="Visible to other agents (e.g. 'Simple Villager').")
+            p_val = current_profile.get("public_description", "")
+            public_desc = c4.text_input("Public Description (All)", p_val, placeholder=f"Par défaut: {new_desc}", key=f"p_pubdesc_{k_suffix}", help="Visible to other agents (e.g. 'Simple Villager').")
             
             # System Prompt
             st.markdown("##### 🎭 System Prompt (Private Role)")
@@ -296,34 +301,73 @@ if st.session_state.page == "Editor":
             if has_audience: new_caps.append("audience")
             if has_open: new_caps.append("open")
             
-            # Connections Editor
-            st.markdown("##### 🔗 Connections")
-            connections = current_profile.get("connections", [])
+            # Connections Editor (Data Table)
+            st.markdown("##### 🔗 Connections & Strategy")
+            st.caption("Manage communication rules. Check 'Authorized' to allow standard communication.")
             
-            # Add New
-            with st.expander("➕ Add Connection Rule", expanded=not connections):
-                c_targ, c_ctx, c_add = st.columns([1, 2, 0.5])
-                # Allow connecting to User explicitly
-                target_options = [p["name"] for p in profiles if p["name"] != current_profile.get("name")]
-                target_options.append("User") # Add User option
+            # 1. Build Data for Table
+            # Targets: All other profiles + User + Public
+            potential_targets = [p["name"] for p in profiles if p["name"] != current_profile.get("name")]
+            potential_targets.append("User")
+            potential_targets.insert(0, "Public") # Top of list
+            
+            # Current Config Map
+            connections = current_profile.get("connections", [])
+            curr_map = {c["target"]: c for c in connections}
+            
+            table_data = []
+            for t in potential_targets:
+                existing = curr_map.get(t, {})
+                # Default authorized:
+                # If it exists in old config (which had no auth flag), it was authorized.
+                # If it's a new row (not in config), it's unauthorized by default.
+                is_auth = existing.get("authorized", True) if t in curr_map else False
+                ctx_text = existing.get("context", "")
                 
-                target = c_targ.selectbox("Target", target_options, key=f"new_conn_target_{k_suffix}") if target_options else None
-                context_rule = c_ctx.text_input("Context / Strategy", placeholder="e.g. 'Lie to them'", key=f"new_conn_ctx_{k_suffix}")
-                
-                if c_add.button("Add", key=f"add_conn_btn_{k_suffix}"):
-                    if target and context_rule:
-                        connections.append({"target": target, "context": context_rule})
-                        save_config(config) # Persist immediately
-                        st.rerun()
-
-            # List
-            for i, conn in enumerate(connections):
-                c_del, c_info = st.columns([0.2, 4])
-                if c_del.button("x", key=f"del_c_{i}_{k_suffix}"):
-                    connections.pop(i)
-                    save_config(config) # Persist immediately
-                    st.rerun()
-                c_info.success(f"**-> {conn.get('target')}**: {conn.get('context')}")
+                table_data.append({
+                    "Authorized": is_auth,
+                    "Target": t,
+                    "Context": ctx_text
+                })
+            
+            # 2. Render Editor
+            # We use a column config to make Target read-only
+            edited_data = st.data_editor(
+                table_data,
+                column_config={
+                    "Authorized": st.column_config.CheckboxColumn(
+                        "Authorized",
+                        help="Check to allow communication in Standard Mode.",
+                        default=False,
+                    ),
+                    "Target": st.column_config.TextColumn(
+                        "Target Agent",
+                        disabled=True
+                    ),
+                    "Context": st.column_config.TextColumn(
+                        "Strategy / Notes",
+                        help="Context provided to the agent about this relationship.",
+                        width="large"
+                    )
+                },
+                hide_index=True,
+                use_container_width=True,
+                key=f"conn_editor_{k_suffix}" # Unique key per profile to avoid state bleed
+            )
+            
+            # 3. Update Connections Object for Save
+            # We replace the 'connections' list with the state from the table.
+            # We save ALL rows (even unauthorized) to persist the Context/Check state.
+            new_connections = []
+            for row in edited_data:
+                new_connections.append({
+                    "target": row["Target"],
+                    "context": row["Context"],
+                    "authorized": row["Authorized"]
+                })
+            
+            # Assign back to variable used in Save
+            connections = new_connections
 
             # Safe Check: At least one capability
             if not new_caps:
@@ -500,7 +544,7 @@ elif st.session_state.page == "Cockpit":
                     pending_slots.append({
                         "profile_ref": p["name"],
                         "role": p.get("system_prompt", ""),
-                        "display_base": p.get("display_name", p["name"])
+                        "display_base": p.get("display_name") or p["name"]
                     })
             
             # 2. Shuffle

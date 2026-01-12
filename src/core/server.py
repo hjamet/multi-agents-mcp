@@ -81,11 +81,35 @@ def _build_agent_directory(state, my_name):
     my_caps = my_profile.get("capabilities", [])
     is_open_mode = "open" in my_caps
     
-    # My Connections (List of dicts {target, context})
+    # My Connections (List of dicts {target, context, authorized})
     my_connections = _get_agent_connections(state, my_name)
-    # Map target -> context
-    conn_map = {c["target"]: c["context"] for c in my_connections}
+    # Map target -> dict(context, authorized)
+    conn_map = {c["target"]: c for c in my_connections}
     
+    # 1. SPECIAL: Public Entity
+    # Check if we have a rule for compliance/strategy regarding Public speaking
+    # Even if we don't have "public" capability, we might have a note about it.
+    # But usually this table drives the decision process.
+    if "Public" in conn_map or is_open_mode:
+        c_data = conn_map.get("Public", {})
+        is_auth = c_data.get("authorized", True) # Default True if present in old config, buy usually new logic sets it
+        if "Public" not in conn_map: is_auth = False # If not in config, unauthorized by default unless open mode overrides? 
+        # Actually Open Mode makes *Agents* reachable. Does it make Public reachable? 
+        # Usually Public requires "public" capability.
+        # Let's rely on the row configuration.
+        # If Open Mode, we show it even if unchecked.
+        
+        should_show = is_open_mode or is_auth
+        if should_show:
+            directory.append({
+                "name": "📢 PUBLIC",
+                "public_desc": "All Agents",
+                "note": c_data.get("context", ""),
+                "authorized": is_auth, 
+                "status": "Authorized" if is_auth else "Restricted"
+            })
+
+    # 2. Real Agents
     all_agents = state.get("agents", {})
     
     for agent_id, info in all_agents.items():
@@ -98,66 +122,58 @@ def _build_agent_directory(state, my_name):
         
         # Public Data
         display_name = agent_id # ID is the display identifier usually
-        public_desc = p_data.get("public_description", "Unknown")
+        public_desc = p_data.get("public_description") or p_data.get("description") or "Unknown"
         
         # Connection Logic
-        has_connection = agent_id in conn_map
-        note = conn_map.get(agent_id, "")
+        c_data = conn_map.get(agent_id, {})
+        # If row exists, use its auth status. If not, False.
+        # Legacy compat: if c_data exists but no 'authorized' key, assume True.
+        is_auth = c_data.get("authorized", True) if agent_id in conn_map else False
+        note = c_data.get("context", "")
         
-        # Reachability Status calculating
-        reachable = False
-        methods = []
+        # Filtering Logic
+        # Open Mode: Show ALL.
+        # Closed Mode: Show ONLY Authorized.
         
         if is_open_mode:
-            reachable = True
-            methods.append("Open Mode")
-        
-        if has_connection:
-            reachable = True
-            methods.append("Direct")
+            # Show everyone
+            status_str = "Unknown"
+            if is_auth: status_str = "✅ Authorized"
+            else: status_str = "❌ Unauthorized"
             
-        if "public" in my_caps:
-            methods.append("Public")
-            # Public doesn't make it "Privately Reachable" but allows comms
+            directory.append({
+                "name": agent_id,
+                "public_desc": public_desc,
+                "note": note,
+                "authorized": is_auth,
+                "status": status_str
+            })
             
-        # Formatting the 'Status' string for the Prompt
-        status_str = ""
-        if is_open_mode:
-            status_str = "🔓 OPEN: Communication autorisée"
-        elif has_connection:
-            status_str = "✅ CONNECTED: Message privé autorisé"
-        else:
-            status_str = "📢 Public Only"
-            
-        # Final Context combining Note + Public Desc
-        final_context = f"({public_desc})"
-        if note:
-             final_context += f" NOTES: {note}"
-        elif is_open_mode:
-             # In open mode, if no note, just say available
-             final_context += " [Accessible via Open Mode]"
-             
-        directory.append({
-            "name": agent_id,
-            "public_desc": public_desc,
-            "note": final_context, # Enhanced context (Desc + Note + Mode)
-            "has_connection": has_connection,
-            "status": status_str,
-            "can_private": (is_open_mode or has_connection)
-        })
+        elif is_auth:
+            # Closed mode, but authorized
+            directory.append({
+                "name": agent_id,
+                "public_desc": public_desc,
+                "note": note,
+                "authorized": True,
+                "status": "✅ Authorized"
+            })
     
-    # Explicitly add "User" if connected (or if open mode?)
-    # User Request: "Il devrait être absent du tableau des autres agents, sauf si sa relation est précisée."
-    if "User" in conn_map:
-        note = conn_map.get("User", "")
-        directory.append({
-            "name": "User",
-            "public_desc": "L'Utilisateur (Humain)",
-            "note": f"({note})",
-            "has_connection": True,
-            "status": "✅ CONNECTED: Message privé autorisé",
-            "can_private": True
-        })
+    # 3. User
+    # Same logic as agents
+    if "User" in conn_map or is_open_mode:
+        c_data = conn_map.get("User", {})
+        is_auth = c_data.get("authorized", True) if "User" in conn_map else False
+        note = c_data.get("context", "")
+        
+        if is_open_mode or is_auth:
+            directory.append({
+                "name": "User",
+                "public_desc": "Human Operator",
+                "note": note,
+                "authorized": is_auth,
+                "status": "Authorized" if is_auth else "Restricted"
+            })
         
     return directory
 
@@ -227,13 +243,21 @@ async def agent(ctx: Context) -> str:
     except:
         visible_messages = []
 
+    # Calculate Open Mode
+    my_info = engine.state.load()['agents'].get(name, {})
+    prof_ref = my_info.get("profile_ref")
+    profiles = engine.state.load()['config']['profiles']
+    my_prof = next((p for p in profiles if p["name"] == prof_ref), {})
+    is_open_mode = "open" in my_prof.get("capabilities", [])
+
     return template.render(
         name=name,
         role=result["role"],
         context=result["context"],
         agent_directory=agent_dir,
-        connections=[d for d in agent_dir if d['has_connection']],
-        messages=visible_messages
+        connections=[d for d in agent_dir if d.get('authorized')],
+        messages=visible_messages,
+        is_open_mode=is_open_mode
     )
 
 @mcp.tool()
@@ -403,15 +427,23 @@ async def talk(
         # User defined message:
         user_feedback_msg = "Message bien envoyé à l'utilisateur, il vous répondra en temps voulu. En attendant, continuez votre travail d'agent en appelant un agent suivant."
         
+        # Calculate Open Mode
+        my_info = data['agents'].get(sender, {})
+        prof_ref = my_info.get("profile_ref")
+        profiles = data['config']['profiles']
+        my_prof = next((p for p in profiles if p["name"] == prof_ref), {})
+        is_open_mode = "open" in my_prof.get("capabilities", [])
+
         rendered = template.render(
             name=sender,
             role_snippet=role_snippet,
             context=global_context,
             agent_directory=agent_directory,
-            connections=[d for d in agent_directory if d['has_connection']],
+            connections=[d for d in agent_directory if d.get('authorized')],
             messages=[],
             instruction=f"✅ {user_feedback_msg}", # Override instruction
-            memory=_get_memory_content(sender)  # <--- INJECT MEMORY
+            memory=_get_memory_content(sender),  # <--- INJECT MEMORY
+            is_open_mode=is_open_mode
         )
         return rendered
 
@@ -459,16 +491,27 @@ async def talk(
         pass
 
     template = jinja_env.get_template("talk_response.j2")
+    # Calculate Open Mode
+    is_open_mode = False
+    try:
+        my_info = data['agents'].get(sender, {})
+        prof_ref = my_info.get("profile_ref")
+        profiles = data['config']['profiles']
+        my_prof = next((p for p in profiles if p["name"] == prof_ref), {})
+        is_open_mode = "open" in my_prof.get("capabilities", [])
+    except: pass
+    
     return template.render(
         name=sender,
         role_snippet=role_snippet,
         context=global_context,
         agent_directory=agent_directory,
         # Legacy
-        connections=[d for d in agent_directory if d['has_connection']],
+        connections=[d for d in agent_directory if d.get('authorized')],
         messages=result["messages"],
         instruction=result["instruction"],
-        memory=_get_memory_content(sender)  # <--- INJECT MEMORY
+        memory=_get_memory_content(sender),  # <--- INJECT MEMORY
+        is_open_mode=is_open_mode
     )
 
 @mcp.tool()
