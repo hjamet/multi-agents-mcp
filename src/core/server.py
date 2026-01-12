@@ -257,6 +257,25 @@ async def talk(
     else:
         print(f"[{sender}] talking -> Next: {next_agent}", file=sys.stderr)
     
+    # 0.5. BLOCKING GUARD
+    # Ensure it is actually my turn before posting.
+    # This prevents race conditions where a client retries 'talk' while still waiting,
+    # or attempts to speak out of turn.
+    print(f"[{sender}] Verifying turn ownership before posting...", file=sys.stderr)
+    while True:
+        # Check if it is my turn
+        turn_status = await engine.wait_for_turn_async(sender, timeout_seconds=5)
+        
+        if turn_status["status"] == "success":
+            # I have the turn. Proceed.
+            break
+        elif turn_status["status"] == "reset":
+             return f"⚠️ SYSTEM ALERT: {turn_status['instruction']}"
+        
+        # Otherwise, wait loop.
+        if logger: logger.log("WAIT", sender, "Blocking action until turn is acquired...")
+        # Continue loop
+        
     # 1. Post Message
     post_result = engine.post_message(sender, message, public, next_agent, audience)
     

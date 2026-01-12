@@ -10,6 +10,13 @@ from src.core.state import StateStore
 def setup_werewolf_anonymized():
     store = StateStore()
     
+    # Reset Logger
+    try:
+        from src.utils.logger import get_logger
+        get_logger().reset()
+    except ImportError:
+        pass
+    
     def update_logic(state):
         # 1. Clear State
         state["conversation_id"] = str(uuid.uuid4())

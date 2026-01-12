@@ -192,12 +192,38 @@ if st.session_state.page == "Editor":
     profile_names.append("➕ Create New")
     
     col_sel, col_del = st.columns([3, 1])
-    selected_name = col_sel.selectbox("Select Agent Profile", profile_names, label_visibility="collapsed")
+    # Sync Logic for External Navigation (e.g. from Cockpit)
+    # If 'editing_agent_name' (Intent) differs from 'agent_editor_selector' (Widget), 
+    # and the Intent is valid, we force-update the Widget.
+    intent = st.session_state.get("editing_agent_name")
+    
+    # Map internal "New Agent" state to UI "Create New" option
+    if intent == "New Agent" and "New Agent" not in profile_names:
+        intent = "➕ Create New"
+
+    if intent and intent in profile_names:
+        if st.session_state.get("agent_editor_selector") != intent:
+            st.session_state["agent_editor_selector"] = intent
+
+    def on_selector_change():
+        val = st.session_state.agent_editor_selector
+        if val == "➕ Create New":
+            st.session_state.editing_agent_name = "New Agent"
+        else:
+            st.session_state.editing_agent_name = val
+
+    selected_name = col_sel.selectbox(
+        "Select Agent Profile", 
+        profile_names, 
+        key="agent_editor_selector", 
+        on_change=on_selector_change,
+        label_visibility="collapsed"
+    )
     
     if selected_name == "➕ Create New":
         current_profile = {"name": "New Agent", "description": "", "system_prompt": "", "connections": [], "count": 1, "capabilities": ["public", "private", "audience"]}
         new_mode = True
-        st.session_state.editing_agent_name = "New Agent"
+        st.session_state.editing_agent_name = "New Agent" # Redundant but safe
         k_suffix = "new"
     else:
         current_profile = next((p for p in profiles if p["name"] == selected_name), None)

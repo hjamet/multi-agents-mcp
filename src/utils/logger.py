@@ -25,6 +25,12 @@ class GameLogger:
         self.log_path = os.path.join(self.log_dir, log_file)
         self.file_lock = Lock()
 
+    def reset(self):
+        """Clear the log file content."""
+        with self.file_lock:
+            with open(self.log_path, "w", encoding="utf-8") as f:
+                f.write("") # Truncate
+
     def log(self, event_type: str, agent: str, content: str, metadata: dict = None):
         """
         Log an event to the JSONL file.
