@@ -144,21 +144,50 @@ with st.sidebar:
         save_config(config)
         st.rerun()
 
-    # 2. System Status
-    st.markdown("### 📡 System Status")
-    connected_count = sum(1 for a in agents.values() if a.get("status") == "connected")
-    total_required = get_total_agents(profiles)
-    
-    if connected_count >= total_required and total_required > 0:
-        connection_text = "🟢 ONLINE"
-    elif connected_count > 0:
-        connection_text = "🟡 CONNECTING"
-    else:
-        connection_text = "🔴 OFFLINE"
+    st.divider()
 
-    m1, m2 = st.columns(2)
-    m1.metric("Status", connection_text)
-    m2.metric("Agents", f"{connected_count}/{total_required}")
+    # 2. PERMANENT ROSTER (v2.0)
+    st.markdown("### 👥 Agents Actifs")
+    
+    active_agents = []
+    inactive_agents = []
+    
+    for name, d in agents.items():
+        if name == "User": continue
+        if d.get("status") == "connected":
+            active_agents.append(name)
+        else:
+            inactive_agents.append(name)
+    
+    active_agents.sort()
+    inactive_agents.sort()
+    
+    roster_list = active_agents + inactive_agents
+    
+    if not roster_list:
+        st.caption("Aucun agent détecté.")
+    else:
+        for name in roster_list:
+            info = agents[name]
+            status = info.get("status", "pending")
+            emoji = info.get("emoji", "🤖")
+            
+            if status == "connected":
+                status_dot = "🟢"
+                style = "font-weight:bold; color: black;"
+                bg = "#e3f2fd"
+            else:
+                status_dot = "🔴"
+                style = "color: grey;"
+                bg = "transparent"
+            
+            st.markdown(f"""
+            <div style="background-color: {bg}; border-radius: 5px; padding: 4px; margin-bottom: 4px;">
+                {status_dot} {emoji} <span style="{style}">{name}</span>
+            </div>
+            """, unsafe_allow_html=True)
+            
+    st.divider()
     
     st.metric("Turn", turn.get("current", "None"))
     st.metric("Next", turn.get("next", "Wait..."))
@@ -204,197 +233,110 @@ with st.sidebar:
 # PAGE: COMMUNICATION (Chat)
 # ==========================================
 if st.session_state.page == "Communication":
-    st.header("💬 Communication Console")
+    st.header("💬 Flux Neural")
     
-    # Auto-Refresh ONLY on Chat Page
     st_autorefresh(interval=3000, key="comms_refresh")
 
     # 1. Reply Context State
     if "reply_to" not in st.session_state:
         st.session_state.reply_to = None
 
-    # LAYOUT SPLIT: Main Chat | Roster
-    c_main, c_roster = st.columns([5, 1])
+    # --- FLUX NEURAL (FULL WIDTH) ---
+    
+    # Toggle Focus Urgences (Top Filter)
+    col_toggle, col_spacer = st.columns([2, 5])
+    is_urgent_focus = col_toggle.toggle("🔍 Focus Urgences", help="Affiche uniquement les messages non-répondus")
 
-    with c_main:
-        # 2 TABS ONLY (Refactor 1.5)
-        tab_stream, tab_public = st.tabs(["📥 Flux Neural", "📢 Fréquence Publique"])
+    # Helper for rendering messages and reply buttons
+    def render_reply_button(sender, content, idx):
+        if st.button("↩️", key=f"btn_reply_set_{idx}", help=f"Reply to {sender}", type="tertiary"):
+            st.session_state.reply_to = {
+                "sender": sender,
+                "id": idx,
+                "preview": content[:50] + "..." if len(content) > 50 else content
+            }
+            st.rerun()
 
-        # Helper for rendering messages and reply buttons
-        def render_reply_button(sender, content, idx):
-            # UI Minimaliste (Type Tertiary)
-            if st.button("↩️", key=f"btn_reply_set_{idx}", help=f"Reply to {sender}", type="tertiary"):
-                st.session_state.reply_to = {
-                    "sender": sender,
-                    "id": idx,
-                    "preview": content[:50] + "..." if len(content) > 50 else content
-                }
-                st.rerun()
-
-        # --- TAB 1: FLUX NEURAL (MERGED) ---
-        with tab_stream:
-            # Toggle Focus Urgences (Top Filter)
-            col_title, col_toggle = st.columns([3, 1])
-            col_title.caption("Timeline Unifiée : Publique + Privée")
-            is_urgent_focus = col_toggle.toggle("🔍 Focus Urgences", help="Affiche uniquement les messages non-répondus")
-
-            stream_msgs = []
-            for i, m in enumerate(messages):
-                is_relevant = m.get("public", False) or m.get("target") == "User" or m.get("from") == "User"
-                if is_relevant:
-                    # FILTER LOGIC
-                    if is_urgent_focus:
-                        target = m.get("target")
-                        is_replied = m.get("replied", False)
-                        # Show only if directed to User AND not replied
-                        if target != "User" or is_replied:
-                            continue
-                    stream_msgs.append((i, m))
-            
-            # Pagination
-            if "stream_limit" not in st.session_state: st.session_state.stream_limit = 15
-            total_stream = len(stream_msgs)
-            limit_stream = st.session_state.stream_limit
-            if total_stream > limit_stream:
-                 # UI Minimaliste (Tertiary)
-                 if st.button(f"🔃 Historique ({total_stream - limit_stream})", key="load_more_stream", type="tertiary"):
-                     st.session_state.stream_limit += 15
-                     st.rerun()
-            
-            visible_stream = stream_msgs[max(0, total_stream - limit_stream):]
-            
-            if not visible_stream:
-                st.info("Aucune activité détectée sur les bandes neurales.")
-                
-            for real_idx, m in visible_stream:
-                sender = m.get("from", "?")
-                target = m.get("target", "?")
-                content = m.get("content", "")
-                is_public = m.get("public", False)
-                timestamp = m.get("timestamp", 0)
+    stream_msgs = []
+    for i, m in enumerate(messages):
+        is_relevant = m.get("public", False) or m.get("target") == "User" or m.get("from") == "User"
+        if is_relevant:
+            # FILTER LOGIC
+            if is_urgent_focus:
+                target = m.get("target")
                 is_replied = m.get("replied", False)
-                
-                # FORMAT MENTIONS
-                content_visual = format_mentions(content)
-                
-                agent_info = agents.get(sender, {})
-                sender_emoji = agent_info.get("emoji", "🤖") if sender != "System" else "💾"
-                if sender == "User": sender_emoji = "👤"
-                
-                context_tag = ""
-                if is_public:
-                    context_tag = "📢 PUBLIC"
-                    bg_color = "transparent"
+                # Show only if directed to User AND not replied
+                if target != "User" or is_replied:
+                    continue
+            stream_msgs.append((i, m))
+    
+    # Pagination
+    if "stream_limit" not in st.session_state: st.session_state.stream_limit = 15
+    total_stream = len(stream_msgs)
+    limit_stream = st.session_state.stream_limit
+    if total_stream > limit_stream:
+            # UI Minimaliste (Tertiary)
+            if st.button(f"🔃 Historique ({total_stream - limit_stream})", key="load_more_stream", type="tertiary"):
+                st.session_state.stream_limit += 15
+                st.rerun()
+    
+    visible_stream = stream_msgs[max(0, total_stream - limit_stream):]
+    
+    if not visible_stream:
+        st.info("Aucune activité détectée sur les bandes neurales.")
+        
+    for real_idx, m in visible_stream:
+        sender = m.get("from", "?")
+        target = m.get("target", "?")
+        content = m.get("content", "")
+        is_public = m.get("public", False)
+        timestamp = m.get("timestamp", 0)
+        is_replied = m.get("replied", False)
+        
+        # FORMAT MENTIONS
+        content_visual = format_mentions(content)
+        
+        agent_info = agents.get(sender, {})
+        sender_emoji = agent_info.get("emoji", "🤖") if sender != "System" else "💾"
+        if sender == "User": sender_emoji = "👤"
+        
+        context_tag = ""
+        if is_public:
+            context_tag = "📢 PUBLIC"
+            bg_color = "transparent"
+            border_style = "none"
+        else:
+            if target == "User":
+                context_tag = "🔒 DIRECT"
+                bg_color = "#fff3cd" if not is_replied else "#e3f2fd"
+                border_style = "2px solid #ffecb5" if not is_replied else "1px solid #dee2e6"
+            elif sender == "User":
+                    context_tag = f"📤 SENT to {target}"
+                    bg_color = "#f8f9fa"
+                    border_style = "1px solid #eee"
+            else:
+                    context_tag = f"🔒 DIRECT {sender}->{target}"
+                    bg_color = "#f1f1f1"
                     border_style = "none"
-                else:
-                    if target == "User":
-                        context_tag = "🔒 DIRECT"
-                        bg_color = "#fff3cd" if not is_replied else "#e3f2fd"
-                        border_style = "2px solid #ffecb5" if not is_replied else "1px solid #dee2e6"
-                    elif sender == "User":
-                         context_tag = f"📤 SENT to {target}"
-                         bg_color = "#f8f9fa"
-                         border_style = "1px solid #eee"
-                    else:
-                         context_tag = f"🔒 DIRECT {sender}->{target}"
-                         bg_color = "#f1f1f1"
-                         border_style = "none"
 
-                with st.chat_message(sender, avatar=sender_emoji):
-                    c_h, c_a = st.columns([19, 1]) # Adjusted ratio for minimal button
-                    c_h.caption(f"{context_tag} | {time.ctime(timestamp)}")
-                    
-                    with c_a:
-                        render_reply_button(sender, content, real_idx)
-
-                    st.markdown(f"""
-                    <div style="background-color: {bg_color}; border: {border_style}; padding: 12px; border-radius: 8px; margin-bottom: 5px;">
-                        {content_visual}
-                    </div>
-                    """, unsafe_allow_html=True)
-
-
-        # --- TAB 2: PUBLIC FREQUENCY ---
-        with tab_public:
-            with st.expander("🕸️ Network", expanded=False):
-                st.graphviz_chart(render_graph(profiles), use_container_width=True)
-
-            st.markdown("### 📜 Log Public")
+        with st.chat_message(sender, avatar=sender_emoji):
+            c_h, c_a = st.columns([19, 1]) 
+            c_h.caption(f"{context_tag} | {time.ctime(timestamp)}")
             
-            if "live_chat_limit" not in st.session_state: st.session_state.live_chat_limit = 10
-            total_live = len(messages)
-            if total_live > st.session_state.live_chat_limit:
-                if st.button(f"🔃 Historique", key="load_more_live", type="tertiary"):
-                    st.session_state.live_chat_limit += 10
-                    st.rerun()
-                    
-            visible_live = messages[max(0, total_live - st.session_state.live_chat_limit):]
-            start_i = max(0, total_live - st.session_state.live_chat_limit)
-            
-            for idx, m in enumerate(visible_live):
-                real_idx = start_i + idx
-                sender = m.get("from", "?")
-                content = m.get("content", "")
-                content_visual = format_mentions(content)
-                
-                agent_info = agents.get(sender, {})
-                sender_emoji = agent_info.get("emoji", "🤖") if sender != "System" else "💾"
-                
-                with st.chat_message(sender, avatar=sender_emoji):
-                    c_head, c_act = st.columns([19, 1])
-                    c_head.caption(f"📢 PUBLIC | **{sender}**")
-                    with c_act:
-                        render_reply_button(sender, content, real_idx)
-                    st.markdown(content_visual, unsafe_allow_html=True)
+            with c_a:
+                render_reply_button(sender, content, real_idx)
 
-
-    # --- ROSTER (RIGHT PANEL) ---
-    with c_roster:
-        st.caption("👥 Agents Actifs")
-        
-        # STICKY ROSTER CONTAINER
-        st.markdown('<div style="height: 70vh; overflow-y: auto; padding-right: 5px;">', unsafe_allow_html=True)
-        
-        active_agents = []
-        inactive_agents = []
-        
-        for name, data in agents.items():
-            if name == "User": continue
-            if data.get("status") == "connected":
-                active_agents.append(name)
-            else:
-                inactive_agents.append(name)
-        
-        active_agents.sort()
-        inactive_agents.sort()
-        
-        for name in active_agents + inactive_agents:
-            info = agents[name]
-            status = info.get("status", "pending")
-            emoji = info.get("emoji", "🤖")
-            
-            if status == "connected":
-                status_dot = "🟢"
-                style = "font-weight:bold; color: black;"
-                bg = "#e3f2fd"
-            else:
-                status_dot = "🔴"
-                style = "color: grey;"
-                bg = "transparent"
-            
             st.markdown(f"""
-            <div style="background-color: {bg}; border-radius: 5px; padding: 4px; margin-bottom: 4px;">
-                {status_dot} {emoji} <span style="{style}">{name}</span>
+            <div style="background-color: {bg_color}; border: {border_style}; padding: 12px; border-radius: 8px; margin-bottom: 5px;">
+                {content_visual}
             </div>
             """, unsafe_allow_html=True)
-        
-        st.markdown('</div>', unsafe_allow_html=True)
 
 
     # --- OMNI-CHANNEL INPUT ---
     st.divider()
 
-    # 1. Reply Banner
+    # 1. Reply Context Banner
     if st.session_state.reply_to:
         ctx = st.session_state.reply_to
         with st.container():
@@ -404,30 +346,50 @@ if st.session_state.page == "Communication":
                 st.session_state.reply_to = None
                 st.rerun()
 
-    # 2. Helper Targets (Visual Aid)
-    connected_agents = [name for name, d in agents.items() if d.get("status") == "connected" and name != "User"]
-    target_list = ", ".join([f"@{n}" for n in connected_agents])
-    if target_list:
-        st.caption(f"🎯 Cibles Disponibles : {target_list} (ou Broadcast)")
+    # 2. Target Selector (Helper v2.0)
+    connected_agents = sorted([name for name, d in agents.items() if d.get("status") == "connected" and name != "User"])
+    
+    target_options = ["📢 Tous (Broadcast)"] + connected_agents
+    
+    # Use selectbox for explicit targeting
+    target_sel = st.selectbox("🎯 Destinataire", target_options, label_visibility="visible")
 
     # 3. Main Input
-    if prompt := st.chat_input("Broadcast ou @Cible..."):
+    if prompt := st.chat_input("Message..."):
         def send_omni_msg(s):
             target = None
             public = True
             reply_ref_id = None
             
-            if st.session_state.reply_to:
-                target = st.session_state.reply_to["sender"]
-                reply_ref_id = st.session_state.reply_to["id"]
-                public = False
+            # Logic v2.0
             
+            # 1. Context Reply (Strongest implicit) 
+            # Tech Lead said: "1. Si @Mention -> Priority. 2. Sinon si target_sel != Tous -> Target."
+            # Actually Context Reply usually overrides Selector visually, but Mention overrides all?
+            # Let's follow instruction:
+            # 1. Mention check
+            # 2. Selector check
+            # 3. Public
+            
+            found_mention = False
             known_agents = sorted(list(agents.keys()), key=len, reverse=True)
             for name in known_agents:
                 if f"@{name}" in prompt:
                     target = name
                     public = False
+                    found_mention = True
                     break
+            
+            if not found_mention:
+                if st.session_state.reply_to:
+                     # Reply Context overrides Selector? Tech Lead didn't mention Context in v2.0 logic.
+                     # But it exists in UI. Usually Reply Context implies Target.
+                     target = st.session_state.reply_to["sender"]
+                     reply_ref_id = st.session_state.reply_to["id"]
+                     public = False
+                elif target_sel != "📢 Tous (Broadcast)":
+                    target = target_sel
+                    public = False
             
             msg = {
                 "from": "User",
@@ -443,6 +405,7 @@ if st.session_state.page == "Communication":
                 
             s.setdefault("messages", []).append(msg)
             
+            # Context Cleanup
             if reply_ref_id is not None:
                 if reply_ref_id < len(s["messages"]):
                      s["messages"][reply_ref_id]["replied"] = True
