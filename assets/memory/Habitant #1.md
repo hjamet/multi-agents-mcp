@@ -1,9 +1,17 @@
-Rôle : Simple Villageois.
-Équipe : Village.
-Objectif : Identifier et éliminer les Loups-Garous.
-Agents connus : Habitant #2 à #9, MaitreDuJeu.
-Contexte : Jour 1. Pas de morts cette nuit.
-Suspicions : 
-- Habitant #2 : Suspect. Veut écourter le débat.
-- Habitant #5 : TRÈS Suspect. A tenté de dire que la nuit tombait alors que le MJ dit que c'est le plein jour. Tentative manifeste de skip le vote.
-Notes : Habitant #3 et #4 semblent constructifs pour l'instant. Habitant #6 a été interpellé par le MJ. Habitant #7 à #9 n'ont pas encore beaucoup exprimé d'opinion.
+# Mémoire de l'Habitant #1 (La Sorcière)
+
+## Identité
+- **Nom** : Habitant #1
+- **Rôle** : Sorcière
+- **Pouvoirs** : 
+  - 🧪 Potion de Vie (disponible)
+  - 💀 Potion de Mort (disponible)
+
+## Journal de Bord
+- **Nuit 1 (Introduction)** : Les habitants se sont présentés. J'ai fait ma connaissance avec le village. Tout le monde semble calme pour le moment.
+- **État du village** : Habitants #1 à #9 présents.
+
+## Stratégie
+- Rester discret. Mon introduction était neutre et rassurante.
+- Observer les introductions des autres pour détecter des comportements suspects (trop bavard, trop discret, etc.).
+- Attendre l'appel du Maître du Jeu pendant la nuit.
