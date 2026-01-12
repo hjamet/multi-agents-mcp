@@ -8,7 +8,9 @@ import os
 import time
 
 # Add src to path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+# Add src to path to allow imports if run directly
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from src.core.state import StateStore
 
 st.set_page_config(page_title="Agent Orchestra", page_icon="🤖", layout="wide")
@@ -1033,13 +1035,29 @@ elif st.session_state.page == "Direct":
     # Retrieve agents if not in scope (it was in data)
     agents = data.get("agents", {})
     
-    c_in_gm, c_targ_gm = st.columns([4, 1])
+    c_in_gm, c_targ_gm = st.columns([3, 1])
     all_agent_keys = sorted([k for k in agents.keys() if k != "User"])
-    targets_gm = c_targ_gm.multiselect("Destinataires", all_agent_keys, placeholder="Tous (Broadcast)")
     
-    gm_input = c_in_gm.text_input("Message God Mode", key="gm_input")
+    # 1. Targets (Persisted via key)
+    targets_gm = c_targ_gm.multiselect(
+        "Destinataires", 
+        all_agent_keys, 
+        placeholder="Tous (Broadcast)",
+        key="gm_targets"  # FIX: Persist selection
+    )
     
-    if st.button("Injecter Message", type="secondary"):
+    # 2. Input (Managed State for clearing)
+    if "gm_content" not in st.session_state:
+        st.session_state.gm_content = ""
+        
+    gm_input = c_in_gm.text_area(
+        "Message God Mode", 
+        key="gm_content",
+        height=100
+    )
+    
+    # 3. Submit
+    if st.button("Injecter Message", type="secondary", use_container_width=True):
          def inject_gm(s):
              msg = {
                  "from": "User",
@@ -1063,4 +1081,8 @@ elif st.session_state.page == "Direct":
          if gm_input:
             state_store.update(inject_gm)
             st.success("Message envoyé.")
+            # FIX: Clear input explicitly
+            st.session_state.gm_content = "" 
             st.rerun()
+         else:
+            st.warning("Message vide.")

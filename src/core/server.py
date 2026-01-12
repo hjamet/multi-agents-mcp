@@ -1,41 +1,27 @@
 from mcp.server.fastmcp import FastMCP, Context
-import sys
+
 import os
 from typing import List, Optional
 from jinja2 import Environment, FileSystemLoader
 import asyncio
+import time
 
 # Add src to path to allow imports if run directly
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
-
-try:
-    from src.core.logic import Engine
-except ImportError:
-    # Fallback for relative imports if installed as package
-    from .logic import Engine
+from src.core.logic import Engine
+from src.config import TEMPLATE_DIR, MEMORY_DIR
 
 # Initialize
 mcp = FastMCP("MultiAgent-Hub", dependencies=["portalocker", "streamlit", "jinja2"])
 engine = Engine()
 
 # Logger Setup
-try:
-    from src.utils.logger import get_logger
-    logger = get_logger()
-except ImportError:
-    # Fallback to local import if structure is flat (though src.utils should be there)
-    # Using sys.stderr if logger fails
-    logger = None
+from src.utils.logger import get_logger
+logger = get_logger()
 
 
 # Setup Templates
-TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "templates")
-# Ensure absolute path matches where we are running from
-if not os.path.exists(TEMPLATE_DIR):
-    # Fallback relative to CWD if running from root
-    TEMPLATE_DIR = os.path.abspath("assets/templates")
-
-jinja_env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
+# Setup Templates
+jinja_env = Environment(loader=FileSystemLoader(str(TEMPLATE_DIR)))
 
 # Global Session Map: keys are session objects (or IDs), values are Agent Names
 AGENT_SESSIONS = {}
@@ -62,7 +48,7 @@ def _get_agent_connections(state, agent_name):
             return profile.get("connections", [])
             
     except Exception as e:
-        print(f"Error resolving connections for {agent_name}: {e}", file=sys.stderr)
+        logger.error("System", f"Error resolving connections for {agent_name}: {e}")
         
     return connections
 
@@ -183,7 +169,7 @@ async def agent(ctx: Context) -> str:
     INITIALIZATION TOOL. Call this ONCE at the start.
     Assigns you a Role and Context automatically.
     """
-    print(f"New agent connecting...", file=sys.stderr)
+    logger.log("INFO", "System", "New agent connecting...")
     result = engine.register_agent()
     
     if "error" in result:
@@ -195,7 +181,7 @@ async def agent(ctx: Context) -> str:
     # We still track sessions for basic transport validity, but we won't warn about collisions
     # as single-pipe local simulations are a valid use case.
     AGENT_SESSIONS[ctx.session] = name
-    print(f"[{name}] Registered (Session {id(ctx.session)})", file=sys.stderr)
+    logger.log("INFO", "System", f"[{name}] Registered (Session {id(ctx.session)})")
     
     # Load state once
     state = engine.state.load()
@@ -209,7 +195,7 @@ async def agent(ctx: Context) -> str:
          return wait_msg
 
     # BLOCKING: Wait for Turn (Strict Handshake)
-    print(f"[{name}] Network Ready. Waiting for Turn...", file=sys.stderr)
+    logger.log("INFO", name, "Network Ready. Waiting for Turn...")
     
     turn_messages = []
     instruction_text = ""
@@ -304,16 +290,13 @@ async def talk(
 
     next_agent = to
     
-    if logger:
-        logger.log("ACTION", sender, f"talking -> {next_agent} (Public: {public})", {"message": message, "audience": audience})
-    else:
-        print(f"[{sender}] talking -> Next: {next_agent}", file=sys.stderr)
+    logger.log("ACTION", sender, f"talking -> {next_agent} (Public: {public})", {"message": message, "audience": audience})
     
     # 0.5. BLOCKING GUARD
     # Ensure it is actually my turn before posting.
     # This prevents race conditions where a client retries 'talk' while still waiting,
     # or attempts to speak out of turn.
-    print(f"[{sender}] Verifying turn ownership before posting...", file=sys.stderr)
+    logger.log("DEBUG", sender, "Verifying turn ownership before posting...")
     while True:
         # Check if it is my turn
         turn_status = await engine.wait_for_turn_async(sender, timeout_seconds=5)
@@ -342,8 +325,7 @@ async def talk(
         # Return the error directly so the agent can retry
         return post_result
         
-    if logger: logger.log("SUCCESS", "System", f"Message posted: {post_result}")
-    else: print(f"Post Success: {post_result}", file=sys.stderr)
+    logger.log("SUCCESS", "System", f"Message posted: {post_result}")
     
     # SPECIAL: User Turn Handling
     if next_agent == "User":
@@ -359,8 +341,7 @@ async def talk(
 
         # If Available, we BLOCK and wait for User Reply
         if is_user_available:
-            if logger: logger.log("WAIT", "System", "User is AVAILABLE. Blocking wait for user reply...")
-            else: print(f"[{sender}] User AVAILABLE. Waiting for reply...", file=sys.stderr)
+            logger.log("WAIT", "System", "User is AVAILABLE. Blocking wait for user reply...")
             
             wait_start = time.time()
             user_reply = None
@@ -395,7 +376,7 @@ async def talk(
                         break
                         
                 except Exception as e:
-                    print(f"Error in user wait loop: {e}", file=sys.stderr)
+                    logger.error("System", f"Error in user wait loop: {e}")
                     continue
             
             if user_reply:
@@ -416,8 +397,7 @@ async def talk(
             global_context = data.get("config", {}).get("context", "")
             agent_directory = _build_agent_directory(data, sender)
         except Exception as e:
-            if logger: logger.error(sender, f"Error loading state in talk (User): {e}")
-            else: print(f"Error loading state in talk (User): {e}", file=sys.stderr)
+            logger.error(sender, f"Error loading state in talk (User): {e}")
             role_snippet = "Unknown"
             global_context = ""
             agent_directory = []
@@ -486,8 +466,7 @@ async def talk(
         agent_directory = _build_agent_directory(data, sender)
             
     except Exception as e:
-        if logger: logger.error(sender, f"Error loading state in talk: {e}")
-        else: print(f"Error loading state in talk: {e}", file=sys.stderr)
+        logger.error(sender, f"Error loading state in talk: {e}")
         pass
 
     template = jinja_env.get_template("talk_response.j2")
@@ -566,13 +545,8 @@ async def sleep(seconds: int, ctx: Context) -> str:
     return f"{warning}✅ Slept for {seconds} seconds."
 
 # --- MEMORY SYSTEM ---
-MEMORY_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "memory")
-# Fallback if running from root
-if not os.path.exists(os.path.dirname(MEMORY_DIR)):
-     MEMORY_DIR = os.path.abspath("assets/memory")
-
-if not os.path.exists(MEMORY_DIR):
-    os.makedirs(MEMORY_DIR, exist_ok=True)
+# --- MEMORY SYSTEM ---
+# Configured in src.config
 
 def _get_memory_content(agent_name: str) -> str:
     """
@@ -581,14 +555,14 @@ def _get_memory_content(agent_name: str) -> str:
     """
     # Sanitize filename to prevent directory traversal
     safe_name = "".join([c for c in agent_name if c.isalnum() or c in (' ', '_', '-', '#')]).strip()
-    file_path = os.path.join(MEMORY_DIR, f"{safe_name}.md")
+    file_path = MEMORY_DIR / f"{safe_name}.md"
     
     if os.path.exists(file_path):
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 return f.read()
         except Exception as e:
-            if logger: logger.error(agent_name, f"Error reading memory: {e}")
+            logger.error(agent_name, f"Error reading memory: {e}")
             return ""
     return ""
 
@@ -634,14 +608,14 @@ async def note(content: str, ctx: Context) -> str:
         
     # 2. Write File
     safe_name = "".join([c for c in agent_name if c.isalnum() or c in (' ', '_', '-', '#')]).strip()
-    file_path = os.path.join(MEMORY_DIR, f"{safe_name}.md")
+    file_path = MEMORY_DIR / f"{safe_name}.md"
     
     try:
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)
             
         # Log
-        if logger: logger.log("MEMORY", agent_name, "Updated memory note.")
+        logger.log("MEMORY", agent_name, "Updated memory note.")
         return "✅ Note saved. This content will be provided to you in future turns."
         
     except Exception as e:

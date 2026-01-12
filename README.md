@@ -74,7 +74,7 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
 
 ## 🕹️ Simulation en cours
 - **Date** : 12 Janvier 2026
-- **Scénario** : Loup-Garou de Thiercelieux
-- **Configuration** : 9 Habitants + 1 Maître du Jeu
-- **État** : Jour 1 - Le village se réveille sans aucune victime. Discussion en cours.
-- **Agent Antigravity** : Connecté sous l'identité **Habitant #3**.
+- **Scénario** : Équipe de Développement Logiciel
+- **Configuration** : Product Owner, Tech Lead, Devs, QA
+- **État** : 🟢 **RUNNING**. Phase 1: Requirements Gathering.
+- **Agent Antigravity** : Connecté en tant que **Product Owner**.

@@ -4,21 +4,27 @@ import portalocker
 import uuid
 import time
 import random
-import sys
+from src.utils.logger import get_logger
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
 
-# Resolve absolute path to state.json to ensure all processes (Streamlit, MCP Server)
-# view the same file regardless of their Current Working Directory.
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-STATE_FILE = os.path.join(PROJECT_ROOT, "state.json")
+# Resolve absolute path -> Now handled in src.config
+from src.config import PROJECT_ROOT, STATE_FILE
+
+# Type alias or check if we need to convert to str
+# Usually Path objects are fine in open(), but for safety/typing we use them directly
+
+logger = get_logger()
+
+from src.core.models import GlobalState
+from pydantic import ValidationError
 
 @dataclass
 class StateStore:
     """
     Manages access to the shared state.json file with locking.
     """
-    file_path: str = STATE_FILE
+    file_path: str = str(STATE_FILE) # Ensure str type for portalocker compatibility
     
     def __post_init__(self):
         # Allow override via env var for testing
@@ -52,9 +58,16 @@ class StateStore:
                 with portalocker.Lock(self.file_path, 'r', flags=flags) as f:
                     content = f.read()
                     if not content: return {}
-                    return json.loads(content)
+                    data = json.loads(content)
+                    
+                    # Validation
+                    try:
+                        GlobalState.model_validate(data)
+                    except ValidationError as e:
+                        logger.error("StateStore", f"State Validation Failed: {e}")
+                    
+                    return data
             except (portalocker.LockException, BlockingIOError, OSError):
-                # Using explicit backoff
                 time.sleep(random.uniform(0.05, 0.2))
                 continue
             except json.JSONDecodeError:
@@ -113,7 +126,7 @@ class StateStore:
                 time.sleep(sleep_time)
                 continue
             except Exception as e:
-                print(f"[StateStore] Update Error: {e}", file=sys.stderr)
+                logger.error("StateStore", f"Update Error: {e}")
                 raise e
         
         raise Exception("Failed to acquire state lock after multiple retries.")
