@@ -1,4 +1,4 @@
-from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp import FastMCP, Context
 import sys
 import os
 from typing import List, Optional
@@ -37,9 +37,8 @@ if not os.path.exists(TEMPLATE_DIR):
 
 jinja_env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
 
-# Global state for this process (Stdio session)
-# Used as fallback if sending_agent is not provided in talk
-SESSION_AGENT_NAME = None
+# Global Session Map: keys are session objects (or IDs), values are Agent Names
+AGENT_SESSIONS = {}
 
 def _get_agent_connections(state, agent_name):
     """
@@ -163,13 +162,11 @@ def _build_agent_directory(state, my_name):
     return directory
 
 @mcp.tool()
-async def agent() -> str:
+async def agent(ctx: Context) -> str:
     """
     INITIALIZATION TOOL. Call this ONCE at the start.
     Assigns you a Role and Context automatically.
     """
-    global SESSION_AGENT_NAME
-    
     print(f"New agent connecting...", file=sys.stderr)
     result = engine.register_agent()
     
@@ -177,7 +174,23 @@ async def agent() -> str:
         return f"ERROR: {result['error']}"
         
     name = result["name"]
-    SESSION_AGENT_NAME = name
+    
+    # Session Binding (The Fix)
+    try:
+        session_id = ctx.session
+        existing_agent = AGENT_SESSIONS.get(session_id)
+        
+        if existing_agent and existing_agent != name:
+             # COLLISION DETECTED
+             print(f"⚠️ SESSION WARNING: Session {id(session_id)} was bound to '{existing_agent}', now overwriting with '{name}'. This may cause lockouts if both are active.", file=sys.stderr)
+             if logger: logger.log("WARNING", "System", f"Session collision: {existing_agent} -> {name}")
+
+        AGENT_SESSIONS[session_id] = name
+        print(f"[{name}] Bound to Session {id(session_id)}", file=sys.stderr)
+    except Exception as e:
+        print(f"CRITICAL ERROR Binding Session: {e}", file=sys.stderr)
+        # Should we fail? Yes, consistency is key.
+        # But for robustness, let's proceed. If talk fails later, it fails.
     
     # Load state once
     state = engine.state.load()
@@ -213,13 +226,28 @@ async def agent() -> str:
         continue
 
     template = jinja_env.get_template("agent_response.j2")
+    
+    # Get History for Context
+    history_messages = engine.get_public_context_messages() # New method needed or use direct state access?
+    # Actually engine has get_public_context which returns string. We want list.
+    # Let's access state directly or add helper. 
+    # Direct access logic from here:
+    try:
+        data = engine.state.load()
+        full_messages = data.get("messages", [])
+        # Simple filter: Public + targeted to me
+        # For a new agent, maybe just Public messages?
+        visible_messages = [m for m in full_messages if m.get("public") or m.get("target") == name or name in m.get("audience", [])]
+    except:
+        visible_messages = []
+
     return template.render(
         name=name,
         role=result["role"],
         context=result["context"],
         agent_directory=agent_dir,
-        # Legacy support if template uses 'connections'
-        connections=[d for d in agent_dir if d['has_connection']]
+        connections=[d for d in agent_dir if d['has_connection']],
+        messages=visible_messages
     )
 
 @mcp.tool()
@@ -227,6 +255,7 @@ async def talk(
     message: str,
     public: bool,
     to: str,
+    ctx: Context,
     audience: List[str] = []
 ) -> str:
     """
@@ -241,14 +270,14 @@ async def talk(
         to: The name of the agent who should speak next. (The message is always visible to them).
         audience: (Optional) List of other agents who can see a Private message.
     """
-    # 0. Resolve Sender Identity using Session
-    global SESSION_AGENT_NAME
-    sender = SESSION_AGENT_NAME
-    
+    # 0. Resolve Sender Identity using Context
+    try:
+        sender = AGENT_SESSIONS.get(ctx.session)
+    except Exception:
+        sender = None
+        
     if not sender:
-         error_msg = "CRITICAL ERROR: 'SESSION_AGENT_NAME' is not set. You must call the 'agent()' tool FIRST to register your identity before speaking."
-         if logger: logger.error("SYSTEM", error_msg, "talk_tool_check")
-         return error_msg
+         return "🚫 ERROR: Session not recognized. You must call 'agent()' first to register your identity."
 
     next_agent = to
     
@@ -273,7 +302,11 @@ async def talk(
              return f"⚠️ SYSTEM ALERT: {turn_status['instruction']}"
         
         # Otherwise, wait loop.
-        if logger: logger.log("WAIT", sender, "Blocking action until turn is acquired...")
+        if logger: 
+            # Log only periodically to avoid noise
+            import time
+            if int(time.time()) % 10 == 0:
+                 logger.log("WAIT", sender, "Blocking action until turn is acquired...")
         # Continue loop
         
     # 1. Post Message
@@ -377,7 +410,8 @@ async def talk(
             agent_directory=agent_directory,
             connections=[d for d in agent_directory if d['has_connection']],
             messages=[],
-            instruction=f"✅ {user_feedback_msg}" # Override instruction
+            instruction=f"✅ {user_feedback_msg}", # Override instruction
+            memory=_get_memory_content(sender)  # <--- INJECT MEMORY
         )
         return rendered
 
@@ -433,7 +467,8 @@ async def talk(
         # Legacy
         connections=[d for d in agent_directory if d['has_connection']],
         messages=result["messages"],
-        instruction=result["instruction"]
+        instruction=result["instruction"],
+        memory=_get_memory_content(sender)  # <--- INJECT MEMORY
     )
 
 @mcp.tool()
@@ -452,6 +487,82 @@ async def sleep(seconds: int) -> str:
         
     await asyncio.sleep(seconds)
     return f"{warning}✅ Slept for {seconds} seconds."
+
+# --- MEMORY SYSTEM ---
+MEMORY_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "memory")
+# Fallback if running from root
+if not os.path.exists(os.path.dirname(MEMORY_DIR)):
+     MEMORY_DIR = os.path.abspath("assets/memory")
+
+if not os.path.exists(MEMORY_DIR):
+    os.makedirs(MEMORY_DIR, exist_ok=True)
+
+def _get_memory_content(agent_name: str) -> str:
+    """
+    Reads the memory file for the agent.
+    Returns empty string if no memory exists.
+    """
+    # Sanitize filename to prevent directory traversal
+    safe_name = "".join([c for c in agent_name if c.isalnum() or c in (' ', '_', '-', '#')]).strip()
+    file_path = os.path.join(MEMORY_DIR, f"{safe_name}.md")
+    
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                return f.read()
+        except Exception as e:
+            if logger: logger.error(agent_name, f"Error reading memory: {e}")
+            return ""
+    return ""
+
+@mcp.tool()
+async def note(content: str, ctx: Context) -> str:
+    """
+    Manage your persistent memory.
+    This tool OVERWRITES your existing memory file with the new content provided.
+    
+    USE THIS TO:
+    - Maintain a roadmap or to-do list.
+    - Synthesize observations and results.
+    - Prepare for future turns.
+    
+    IMPORTANT:
+    - The content of this note is re-injected into your context at the start of every turn (via 'talk').
+    - You must synthesize previous memories with new ones; do not just append blindly if you want to stay organized.
+    - Maximum size: 5000 characters.
+    
+    Args:
+        content: The text content to save.
+    """
+    MAX_CHARS = 5000
+    
+    # 0. Identify Agent via Context
+    try:
+        agent_name = AGENT_SESSIONS.get(ctx.session)
+    except Exception:
+        agent_name = None
+    
+    if not agent_name:
+         return "🚫 ERROR: Session not recognized. You must call 'agent()' first to register your identity."
+         
+    # 1. Validate Length
+    if len(content) > MAX_CHARS:
+        return f"🚫 ERROR: Note content too long ({len(content)} chars). Limit is {MAX_CHARS}. Please summarize and retry."
+        
+    # 2. Write File
+    safe_name = "".join([c for c in agent_name if c.isalnum() or c in (' ', '_', '-', '#')]).strip()
+    file_path = os.path.join(MEMORY_DIR, f"{safe_name}.md")
+    
+    try:
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(content)
+            
+        # Log
+        if logger: logger.log("MEMORY", agent_name, "Updated memory note.")
+        return "✅ Note saved. This content will be provided to you in future turns."
+        
+    except Exception as e:
+        return f"🚫 SYSTEM ERROR writing note: {e}"
 
 if __name__ == "__main__":
     mcp.run()

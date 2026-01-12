@@ -1,0 +1,38 @@
+{
+  "messages": [
+    {
+      "from": "System",
+      "content": "\ud83d\udd35 **Agent1** has joined the simulation.",
+      "public": true,
+      "target": "all",
+      "audience": [],
+      "timestamp": 1768234915.8435795
+    },
+    {
+      "from": "System",
+      "content": "\ud83d\udd35 **Agent2** has joined the simulation.",
+      "public": true,
+      "target": "all",
+      "audience": [],
+      "timestamp": 1768234915.8616836
+    }
+  ],
+  "conversation_id": "test-uuid-multi",
+  "turn": {
+    "current": "Agent1",
+    "next": null
+  },
+  "agents": {
+    "Agent1": {
+      "status": "connected",
+      "role": "Test Role 1"
+    },
+    "Agent2": {
+      "status": "connected",
+      "role": "Test Role 2"
+    }
+  },
+  "config": {
+    "total_agents": 2
+  }
+}

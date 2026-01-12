@@ -17,7 +17,7 @@ Installation rapide pour le développement :
 # Description détaillée
 
 ### Cœur du Système : Le Hub MCP
-Ce projet fournit un serveur MCP qui expose des outils critiques (`agent`, `talk`, `sleep`, `wait_for_turn`) aux agents connectés. Il agit comme un chef d'orchestre, imposant une "State Machine" stricte où chaque agent doit attendre son tour avant de parler.
+Ce projet fournit un serveur MCP qui expose des outils critiques (`agent`, `talk`, `note`, `sleep`, `wait_for_turn`) aux agents connectés. Il agit comme un chef d'orchestre, imposant une "State Machine" stricte où chaque agent doit attendre son tour avant de parler.
 
 ### Flux de Travail
 1.  **Configuration** : L'humain définit les rôles (ex: "Loup-Garou", "Voyante") et le scénario dans l'interface Streamlit.

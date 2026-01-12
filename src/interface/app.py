@@ -168,7 +168,30 @@ with st.sidebar:
                 version = res.stdout.strip().split(" ")[1]
                 st.caption(f"uv version: {version}")
             except:
-                pass    
+                pass        # --- MEMORY MANAGEMENT ---
+    with st.expander("🧠 Memory Management"):
+        st.caption("Manage agent persistent memories.")
+        if st.button("🗑️ Delete All Memories"):
+            try:
+                mem_dir = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "memory")
+                if os.path.exists(mem_dir):
+                    import shutil
+                    # Iterate files to keep directory
+                    for filename in os.listdir(mem_dir):
+                        file_path = os.path.join(mem_dir, filename)
+                        try:
+                            if os.path.isfile(file_path) or os.path.islink(file_path):
+                                os.unlink(file_path)
+                            elif os.path.isdir(file_path):
+                                shutil.rmtree(file_path)
+                        except Exception as e:
+                            print(f'Failed to delete {file_path}. Reason: {e}')
+                    st.success("All memories cleared.")
+                else:
+                    st.info("No memory directory found.")
+            except Exception as e:
+                st.error(f"Error: {e}")
+
     st.divider()
     st.caption(f"Current Mode: **{st.session_state.page}**")
 
@@ -444,10 +467,24 @@ elif st.session_state.page == "Cockpit":
     
     # 0.5 Starter Selection
     profile_names = [p["name"] for p in profiles]
-    starter_role = st.selectbox("🏁 Entry Point (First Turn)", profile_names) if profile_names else None
+    col_start, col_opt = st.columns([2, 1])
+    starter_role = col_start.selectbox("🏁 Entry Point (First Turn)", profile_names) if profile_names else None
+    clear_memories = col_opt.checkbox("Clear Agent Memories?", value=False, help="If checked, deletes all agent note files.")
 
     if st.button("🚀 INITIALIZE / RESET SIMULATION", type="primary", use_container_width=True):
         def reset_logic(s):
+            # 0. Memory Cleanup
+            if clear_memories:
+                 try:
+                    mem_dir = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "memory")
+                    if os.path.exists(mem_dir):
+                        for filename in os.listdir(mem_dir):
+                            file_path = os.path.join(mem_dir, filename)
+                            if os.path.isfile(file_path):
+                                os.unlink(file_path)
+                 except Exception as e:
+                     print(f"Memory Cleanup Error: {e}")
+
             s["conversation_id"] = str(uuid.uuid4())
             s["messages"] = []
             s["turn"] = {"current": None, "next": None}

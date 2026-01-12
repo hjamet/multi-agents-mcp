@@ -1,0 +1,1 @@
+{"messages": [], "conversation_id": "test-uuid", "turn": {"current": "Agent1", "next": null}, "agents": {"Agent1": {"status": "pending_connection", "role": "Test Role 1"}, "Agent2": {"status": "pending_connection", "role": "Test Role 2"}}, "config": {"total_agents": 2}}
