@@ -107,6 +107,10 @@ with st.sidebar:
     if st.button("💬 Live Chat", use_container_width=True):
         st.session_state.page = "Chat"
         st.rerun()
+    # NEW PAGE
+    if st.button("📱 Direct Chat", use_container_width=True):
+        st.session_state.page = "Direct"
+        st.rerun()
     
     st.divider()
     st.caption(f"Current Mode: **{st.session_state.page}**")
@@ -193,7 +197,9 @@ if st.session_state.page == "Editor":
             # Add New
             with st.expander("➕ Add Connection Rule", expanded=not connections):
                 c_targ, c_ctx, c_add = st.columns([1, 2, 0.5])
+                # Allow connecting to User explicitly
                 target_options = [p["name"] for p in profiles if p["name"] != current_profile.get("name")]
+                target_options.append("User") # Add User option
                 
                 target = c_targ.selectbox("Target", target_options, key=f"new_conn_target_{k_suffix}") if target_options else None
                 context_rule = c_ctx.text_input("Context / Strategy", placeholder="e.g. 'Lie to them'", key=f"new_conn_ctx_{k_suffix}")
@@ -449,12 +455,12 @@ elif st.session_state.page == "Cockpit":
         st.rerun()
 
 
-# --- PAGE 3: LIVE CHAT ---
+# --- PAGE 3: LIVE CHAT (OBSERVER) ---
 elif st.session_state.page == "Chat":
     # 1. Header & Controls
     col_head, col_act = st.columns([4, 1])
     with col_head:
-        st.header("💬 Neural Link")
+        st.header("💬 Neural Link (Observer)")
     with col_act:
         if st.button("🔄 Force Refresh"):
             st.rerun()
@@ -471,63 +477,57 @@ elif st.session_state.page == "Chat":
         st.graphviz_chart(viz, use_container_width=True)
 
     # 3. Load Live Data
-    # Important: Re-instantiate or explicitly load to bypass any object caching, though 'load' reads file.
     data = state_store.load()
     messages = data.get("messages", [])
     turn = data.get("turn", {})
     agents = data.get("agents", {})
     
-
-
-    # 5. Chat Stream (Moved Up)
+    # 5. Chat Stream
     st.markdown("### 📜 Communication Log")
     
     for m in messages:
         sender = m.get("from", "?")
         content = m.get("content", "")
         
+        # Determine Visual Style
+        # Public: Transparent/Default
+        # Private: Blue tint
+        is_public = m.get('public', False)
+        
+        style_css = ""
+        if not is_public and sender != "System":
+             style_css = "background-color: #e3f2fd; border-radius: 10px; padding: 10px; border-left: 5px solid #2196f3;"
+        
         if sender == "System":
              st.info(f"💾 **SYSTEM**: {content}")
         else:
-            with st.chat_message(sender):
-                st.write(content)
-                
-                # Metadata
-                # Metadata Construction
+            with st.container():
+                # Sender Visuals
                 sender_node = agents.get(sender, {})
-                real_role = sender_node.get("profile_ref", "")
+                profile_ref = sender_node.get("profile_ref", "Unknown")
                 
-                # 1. Sender Identity: "Display Name (RealRole)"
-                sender_label = f"**{sender}**"
-                if real_role and real_role not in sender:
-                    sender_label += f" ({real_role})"
-                
-                # 2. Target & Visibility
+                # Metadata Line
                 target = m.get('target', '?')
-                is_public = m.get('public', False)
-                
-                if is_public:
-                    visibility_icon = "📢 Public"
-                else:
-                    visibility_icon = "🔒 Private"
-                
-                meta_parts = [f"{visibility_icon}"]
-                if target:
-                    meta_parts.append(f"Next: **{target}**")
-                
-                # 3. Audience
                 audiences = m.get("audience", [])
-                if audiences:
-                    aud_str = ", ".join(audiences)
-                    meta_parts.append(f"Audience: {aud_str}")
                 
-                # NO DUPLICATE RENDER: st.write(content) above handles the main text.
-                # We just add a caption for metadata.
-                st.caption(" | ".join(meta_parts))
+                meta_info = f"From: **{sender}** ({profile_ref})"
+                if is_public:
+                    meta_info += " | 📢 **PUBLIC**"
+                else:
+                    meta_info += f" | 🔒 **PRIVATE** to **{target}**"
+                    if audiences:
+                         meta_info += f" (cc: {', '.join(audiences)})"
+                
+                st.markdown(f"""
+                <div style="{style_css} margin-bottom: 10px;">
+                    <div style="font-size: 0.8em; color: gray; margin-bottom:4px;">{meta_info}</div>
+                    <div style="font-size: 1.0em;">{content}</div>
+                </div>
+                """, unsafe_allow_html=True)
 
     st.divider()
 
-    # 4. Mission Dashboard (Moved Down)
+    # 4. Mission Dashboard
     connection_status = "🔴 OFFLINE"
     connected_count = sum(1 for a in agents.values() if a.get("status") == "connected")
     total_required = data.get('config', {}).get('total_agents', 0)
@@ -548,16 +548,15 @@ elif st.session_state.page == "Chat":
     
     st.markdown("---")
 
-    # 6. Active Roles (Moved Down)
+    # 6. Active Roles
     st.markdown("### 🎭 Active Roles & Stats")
 
     if not agents:
         st.info("No agents configured. Go to Cockpit to start.")
     else:
         # Sort agents
-        agent_names = sorted(agents.keys())
+        agent_names = sorted([k for k in agents.keys() if k != "User"]) # Exclude User from this list
         
-        # We use a container to ensure this redraws cleanly
         with st.container():
             cols = st.columns(4)
             for i, name in enumerate(agent_names):
@@ -566,20 +565,15 @@ elif st.session_state.page == "Chat":
                 info = agents[name]
                 status = info.get("status", "pending_connection")
                 role_text = info.get("role", "No Role Assigned")
-                # Truncate role for UI
                 role_excerpt = (role_text[:75] + '..') if len(role_text) > 75 else role_text
                 
-                # Visual Logic
                 is_turn = (turn.get("current") == name)
                 
-                # Secret Identity Logic
                 profile_ref = info.get("profile_ref", "")
                 display_html = name
                 if profile_ref and profile_ref not in name:
                      display_html += f"<br><span style='font-size:0.8em; font-weight:normal; color:#666'>({profile_ref})</span>"
                 
-                # CSS Variables
-                # Default: Grey (Pending)
                 bg_color = "#f8f9fa"
                 border_color = "#dee2e6"
                 status_icon = "💤" 
@@ -591,7 +585,6 @@ elif st.session_state.page == "Chat":
                 if status == "connected":
                     opacity = "1.0"
                     if is_turn:
-                        # Yellow/Gold (Thinking)
                         bg_color = "#fff3cd"
                         border_color = "#ffecb5"
                         status_icon = "🗣️"
@@ -599,7 +592,6 @@ elif st.session_state.page == "Chat":
                         text_color = "#856404"
                         box_shadow = "0 4px 6px rgba(0,0,0,0.1)"
                     else:
-                        # Green (Ready)
                         bg_color = "#d1e7dd"
                         border_color = "#badbcc"
                         status_icon = "✅"
@@ -630,52 +622,159 @@ elif st.session_state.page == "Chat":
                     </div>
                     """, unsafe_allow_html=True)
 
-    # 7. User Input (God Mode)
+# --- PAGE 4: DIRECT CHAT ---
+elif st.session_state.page == "Direct":
+    st.header("📱 Direct Chat (User Terminal)")
+    
+    st_autorefresh(interval=3000, key="directchatrefresh")
+    
+    state, config = load_config()
+    
+    # Load Live Data
+    data = state_store.load()
+    messages = data.get("messages", [])
+    turn = data.get("turn", {})
+    profiles = config.get("profiles", [])
+    
+    # 1. Sidebar: Select who I am chatting with?
+    # Actually, User chats with the system. We should filter messages relevant to User.
+    # Relevant = Public OR Private to "User" OR From "User"
+    
+    # Render Chat Log
+    st.markdown("### 📥 Inbox")
+    
+    for m in messages:
+        sender = m.get("from", "?")
+        target = m.get("target", "?")
+        content = m.get("content", "")
+        audience = m.get("audience", [])
+        is_public = m.get("public", False)
+        
+        # Filter: Show only User related
+        # Show public? Maybe not in "Direct Chat", stick to relevant.
+        # Let's show:
+        # 1. Private messages TO User
+        # 2. Private messages FROM User
+        # 3. Public messages? Maybe too noisy. User asked for "Direct Chat".
+        
+        is_relevant = (target == "User") or (sender == "User") or ("User" in audience)
+        
+        if is_relevant:
+            align = "left"
+            color = "#f1f0f0"
+            if sender == "User":
+                align = "right"
+                color = "#dcf8c6" # Whatsapp greenish
+                
+            st.markdown(f"""
+            <div style="display: flex; justify-content: {align}; width: 100%;">
+                <div style="background-color: {color}; padding: 10px; border-radius: 10px; max-width: 70%; margin-bottom: 5px; box-shadow: 0 1px 1px rgba(0,0,0,0.1);">
+                    <div style="font-size: 0.75em; color: #555; margin-bottom: 2px;"><b>{sender}</b> &rarr; {target}</div>
+                    <div>{content}</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
     st.divider()
     
-    with st.container():
-        c_in, c_targ = st.columns([4, 1])
+    # 2. Reply Interface
+    # Check if User can speak? User can ALWAYs inject messages technically.
+    # But usually it's polite to wait for a message addressed to you.
+    
+    st.markdown("### 📤 Reply")
+    
+    # Who to reply to?
+    # Usually replying to whoever spoke last to me?
+    # Let's give a dropdown of Active Agents
+    agents = data.get("agents", {})
+    agent_names = sorted([k for k in agents.keys() if k != "User"])
+    
+    with st.container(border=True):
+        c_dest, c_msg = st.columns([1, 4])
         
-        # Determine valid targets
-        all_agent_keys = sorted(agents.keys())
-        targets = c_targ.multiselect("To:", all_agent_keys, placeholder="Broadcast (All)")
+        dest = c_dest.selectbox("To Agent:", agent_names) if agent_names else None
+        user_msg = c_msg.text_input("Message:", key="direct_msg_input")
         
-        user_input = c_in.chat_input("Inject message as USER...")
-        
-        if user_input:
-            def inject_msg(s):
-                targets_captured = targets # Close over variable
-                
-                msg = {
-                    "from": "USER",
-                    "content": user_input,
-                    "timestamp": time.time()
-                }
-                
-                status_msg = ""
-                
-                if not targets_captured:
-                    # Broadcast, No Turn Change
-                    msg["public"] = True
-                    msg["target"] = "all"
-                    msg["audience"] = []
-                    status_msg = "Broadcast sent."
-                else:
-                    # Targeted
-                    msg["public"] = False
-                    msg["target"] = targets_captured[0]
-                    msg["audience"] = targets_captured[1:]
+        if st.button("Send Reply", type="primary", disabled=not dest):
+            if user_msg and dest:
+                def send_reply(s):
+                    # 1. Post text
+                    msg = {
+                        "from": "User",
+                        "content": user_msg,
+                        "public": False,
+                        "target": dest,
+                        "audience": [],
+                        "timestamp": time.time()
+                    }
+                    s.setdefault("messages", []).append(msg)
                     
-                    # TRIGGER TURN
-                    # The user explicitly selected agents, so we hand control to the first one
-                    s["turn"]["current"] = targets_captured[0]
-                    s["turn"]["next"] = None
-                    status_msg = f"Message sent. Turn handed to {targets_captured[0]}."
+                    # 2. GIVE TURN to the target Agent
+                    # This unblocks them if they were waiting? 
+                    # Actually, if I sent to "User" in logic.py, I returned "You still have the turn". 
+                    # So the agent is technically still running.
+                    # BUT `wait_for_turn` in `talk` tool checks `turn["current"]`.
+                    # If logic.py didn't update turn, then `turn["current"]` is STILL the sending agent.
+                    # So the sending agent NEVER lost the turn.
+                    # So they are actively running.
+                    # IF they are actively running, they might have called `talk` again.
+                    # 
+                    # If the User replies, does it interrupt?
+                    # "Il vous répondra en temps voulu."
+                    # "En attendant, continuez votre travail".
+                    # This implies the agent is working in background.
+                    # The User message is just data.
+                    # WE DO NOT CHANGE TURN HERE if the agent has the turn????
+                    # Wait, if the agent passed turn to User, logic.py said "Turn remains with [Agent]".
+                    # So Agent has turn.
+                    # If Agent wants to read User reply, they need to check messages.
+                    # They will see the new message in their `wait_for_turn` or `talk` return?
+                    # No, `talk` returned immediately.
+                    # So they need to inspect history or wait for turn again?
+                    # If they call `talk` again, they get new messages.
+                    
+                    # So, inserting the message is enough. The agent will see it next time they act.
+                    # UNLESS the agent is waiting for "User" to do something?
+                    # But we said "Continuez votre travail".
+                    
+                    # However, if I want to "Activate" an agent who is waiting?
+                    # If `turn["current"]` is None or someone else?
+                    # Let's just injecting the message.
+                    # And maybe forcing turn if needed to debug.
+                    
+                    return "Message Sent (Inbox Updated)"
+                
+                res = state_store.update(send_reply)
+                st.toast(res)
+                st.rerun()
 
-                s.setdefault("messages", []).append(msg)
-                return status_msg
-            
-            res = state_store.update(inject_msg)
-            st.toast(res)
-            time.sleep(0.5)
-            st.rerun()
+    # 3. God Mode Injector (Keep hidden or here?)
+    # Helpful to keep standard injector for broadcasting etc.
+    with st.expander("🛠️ Admin / God Mode"):
+         c_in_gm, c_targ_gm = st.columns([4, 1])
+         all_agent_keys = sorted(agents.keys())
+         targets_gm = c_targ_gm.multiselect("To:", all_agent_keys, placeholder="Broadcast")
+         
+         gm_input = c_in_gm.text_input("Inject Standard Message", key="gm_input")
+         if st.button("Inject"):
+             def inject_gm(s):
+                 msg = {
+                     "from": "User",
+                     "content": gm_input,
+                     "timestamp": time.time()
+                 }
+                 if not targets_gm:
+                     msg["public"] = True
+                     msg["target"] = "all"
+                 else:
+                     msg["public"] = False
+                     msg["target"] = targets_gm[0]
+                     msg["audience"] = targets_gm[1:]
+                     # Force turn
+                     s["turn"]["current"] = targets_gm[0]
+                     s["turn"]["next"] = None
+                     
+                 s.setdefault("messages", []).append(msg)
+                 return "Injected"
+             state_store.update(inject_gm)
+             st.rerun()

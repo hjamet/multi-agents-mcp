@@ -135,6 +135,19 @@ def _build_agent_directory(state, my_name):
             "status": status_str,
             "can_private": (is_open_mode or has_connection)
         })
+    
+    # Explicitly add "User" if connected (or if open mode?)
+    # User Request: "Il devrait être absent du tableau des autres agents, sauf si sa relation est précisée."
+    if "User" in conn_map:
+        note = conn_map.get("User", "")
+        directory.append({
+            "name": "User",
+            "public_desc": "L'Utilisateur (Humain)",
+            "note": f"({note})",
+            "has_connection": True,
+            "status": "✅ CONNECTED: Message privé autorisé",
+            "can_private": True
+        })
         
     return directory
 
@@ -202,25 +215,25 @@ async def agent() -> str:
 async def talk(
     message: str,
     public: bool,
-    next_agent: str,
+    to: str,
     my_name: str,
     audience: List[str] = []
 ) -> str:
     """
     MAIN COMMUNICATION TOOL.
     1. Posts your message.
-    2. Passes the turn to 'next_agent'.
+    2. Passes the turn to 'to'.
     3. BLOCKS/SLEEPS until it is your turn again.
-    4. Returns the new messages and your role reminder.
     
     Args:
         message: The content to speak.
-        public: true for everyone to see, false for private.
-        next_agent: The name of the agent who should speak next. (From your connections)
+        public: If true, everyone sees the message. If false, only 'to' and 'audience' see it.
+        to: The name of the agent who should speak next. (The message is always visible to them).
         my_name: YOUR exact name (e.g. "MaitreDuJeu"). REQUIRED for identity verification.
-        audience: (Optional) List of other agents who can see a private message.
+        audience: (Optional) List of other agents who can see a Private message.
     """
     sender = my_name
+    next_agent = to
     
     if not sender:
         return "ERROR: Unknown sender. You MUST provide 'my_name' argument."
@@ -237,9 +250,48 @@ async def talk(
         
     print(f"Post Success: {post_result}", file=sys.stderr)
     
+    # SPECIAL: User Turn Handling
+    if next_agent == "User":
+        # Do NOT block. Return special message immediately.
+        # Construct the response using the template but with a specific instruction.
+        
+        try:
+            data = engine.state.load()
+            role_snippet = data["agents"][sender]["role"]
+            global_context = data.get("config", {}).get("context", "")
+            agent_directory = _build_agent_directory(data, sender)
+        except Exception as e:
+            print(f"Error loading state in talk (User): {e}", file=sys.stderr)
+            role_snippet = "Unknown"
+            global_context = ""
+            agent_directory = []
+
+        template = jinja_env.get_template("talk_response.j2")
+        
+        # User defined message:
+        user_feedback_msg = "Message bien envoyé à l'utilisateur, il vous répondra en temps voulu. En attendant, continuez votre travail d'agent en appelant un agent suivant."
+        
+        # We append a fake message to the list just for valid rendering, or pass empty?
+        # The template iterates `messages`. If we pass empty, it shows "Aucun nouveau message".
+        # We want to show the feedback? No, return string is tool output.
+        # But the tool output IS the prompt for next step.
+        
+        # We prepend the user feedback to the rendered template?
+        # Or we pass it as 'instruction' in the template?
+        
+        rendered = template.render(
+            name=sender,
+            role_snippet=role_snippet,
+            context=global_context,
+            agent_directory=agent_directory,
+            connections=[d for d in agent_directory if d['has_connection']],
+            messages=[], # No NEW messages from others since we didn't wait
+            instruction=f"✅ {user_feedback_msg}" # Override instruction
+        )
+        return rendered
+
     # 2. Smart Block (Wait for Turn)
     # The turn has passed to next_agent. We now wait until it comes back to 'sender'.
-    # User Request: NEVER return until it is our turn.
     
     result = None
     while True:
@@ -272,6 +324,8 @@ async def talk(
         # Context
         global_context = data.get("config", {}).get("context", "")
         # Directory
+        agent_directory = _build_agent_directory(state, sender) # Re-using state from load() would be better but `state.load()` called inside try
+        # Actually logic is robust
         agent_directory = _build_agent_directory(data, sender)
             
     except Exception as e:

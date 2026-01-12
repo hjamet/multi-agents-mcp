@@ -220,6 +220,10 @@ class Engine:
             
             if from_agent in audience:
                  return "🚫 ACTION DENIED: You cannot include yourself in the audience."
+            
+            # Prevent including Next Agent in Audience (Redundant/Confusing)
+            if next_agent and next_agent in audience:
+                return f"🚫 ACTION DENIED: '{next_agent}' is already the main recipient (next turn). Do not include them in the 'audience' list."
 
             if public and "public" not in caps and not is_open:
                 return f"🚫 ACTION DENIED: You do not have the 'public' capability. You must send a Private message to a specific target."
@@ -230,10 +234,23 @@ class Engine:
             if audience and "audience" not in caps and not is_open:
                  return f"🚫 ACTION DENIED: You do not have the 'audience' capability. You cannot cc additional agents."
             
-            # B. Connection Checks (Skip if OPEN)
+            # B. Connection Checks (Skip if OPEN or sending to USER)
+            # Special bypass for "User" if checking connections? 
+            # Actually, we might want to enforce having a connection to "User" if we want to be strict.
+            # But the user request says: "Il devrait être absent du tableau des autres agents, sauf si sa relation est précisée."
+            # So implies connection is needed in profile to talk to User.
+            
             if "open" not in caps:
                 # Helper to check one target
                 def check_target(t_name):
+                    # Handle "User" special case
+                    if t_name == "User":
+                        # Must have a connection to "User" (profile or instance)
+                        # We check allowed_targets below
+                        if "User" in allowed_targets:
+                            return None
+                        return "No established connection to 'User'"
+
                     # target instance name (e.g. Wolf_1) -> profile (Wolf)
                     t_info = agents.get(t_name)
                     if not t_info:
@@ -278,14 +295,23 @@ class Engine:
             state.setdefault("messages", []).append(msg)
             
             # 2. Update Turn
-            old_turn = state["turn"].get("current")
-            state["turn"]["current"] = next_agent
-            state["turn"]["next"] = None # Consumed
+            # Special Case: If sending to 'User', we do NOT pass the turn. The agent keeps it.
+            # "Message bien envoyé à l'utilisateur... En attendant, continuez votre travail"
             
-            import sys
-            print(f"[Logic] TURN CHANGE: {old_turn} -> {next_agent} (Sender: {from_agent})", file=sys.stderr)
-            
-            return f"Message posted. Next speaker is {next_agent}."
+            if next_agent == "User":
+                # Do not change turn
+                import sys
+                print(f"[Logic] USER MESSAGE: {from_agent} -> User. Turn remains with {from_agent}.", file=sys.stderr)
+                return "Message sent to User. You still have the turn."
+            else:
+                old_turn = state["turn"].get("current")
+                state["turn"]["current"] = next_agent
+                state["turn"]["next"] = None # Consumed
+                
+                import sys
+                print(f"[Logic] TURN CHANGE: {old_turn} -> {next_agent} (Sender: {from_agent})", file=sys.stderr)
+                
+                return f"Message posted. Next speaker is {next_agent}."
         
         return self.state.update(_post)
 
