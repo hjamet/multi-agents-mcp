@@ -724,6 +724,28 @@ elif st.session_state.page == "Direct":
     turn = data.get("turn", {})
     profiles = config.get("profiles", [])
     
+    # 0. Sidebar Control: Availability
+    with st.sidebar:
+        st.divider()
+        st.markdown("### 🚦 Status Utilisateur")
+        
+        # Load current status or default
+        current_status = config.get("user_availability", "busy") # default busy to be safe/non-blocking
+        is_avail = (current_status == "available")
+        
+        # Toggle
+        new_avail = st.toggle("Disponible pour discuter ?", value=is_avail, help="Si activé, les agents attendront votre réponse avant de continuer.")
+        
+        status_label = "🟢 DISPONIBLE" if new_avail else "🔴 OCCUPÉ"
+        st.caption(f"Statut: **{status_label}**")
+        
+        # Save if changed
+        new_status_str = "available" if new_avail else "busy"
+        if new_status_str != current_status:
+            config["user_availability"] = new_status_str
+            save_config(config)
+            st.rerun()
+
     # 1. Sidebar: Select who I am chatting with?
     # Actually, User chats with the system. We should filter messages relevant to User.
     # Relevant = Public OR Private to "User" OR From "User"

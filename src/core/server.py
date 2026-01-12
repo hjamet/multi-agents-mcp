@@ -290,7 +290,66 @@ async def talk(
     
     # SPECIAL: User Turn Handling
     if next_agent == "User":
-        if logger: logger.log("TURN", "System", "Turn passed to USER. Agent retains control for feedback.")
+        is_user_available = False
+        try:
+            # Check availability config
+            data = engine.state.load()
+            config = data.get("config", {})
+            # Default to 'busy' if not set, to be non-blocking by default
+            is_user_available = (config.get("user_availability") == "available")
+        except:
+            pass
+
+        # If Available, we BLOCK and wait for User Reply
+        if is_user_available:
+            if logger: logger.log("WAIT", "System", "User is AVAILABLE. Blocking wait for user reply...")
+            else: print(f"[{sender}] User AVAILABLE. Waiting for reply...", file=sys.stderr)
+            
+            wait_start = time.time()
+            user_reply = None
+            
+            while True:
+                await asyncio.sleep(2)
+                
+                # Reload State
+                try:
+                    data = engine.state.load()
+                    messages = data.get("messages", [])
+                    config = data.get("config", {})
+                    
+                    # 1. Critical Check: Did user switch to BUSY?
+                    curr_avail = (config.get("user_availability") == "available")
+                    if not curr_avail:
+                        if logger: logger.log("WAIT_ABORT", "System", "User switched to BUSY. Aborting wait.")
+                        break # Fallback to standard non-blocking response
+                        
+                    # 2. Check for Reset
+                    new_cid = data.get("conversation_id")
+                    # (Assuming capturing cid logic is similar to wait_for_turn, simplified here)
+                    
+                    # 3. Check for User Message
+                    # Look for message FROM User where timestamp > wait_start
+                    for m in reversed(messages):
+                        if m.get("from") == "User" and m.get("timestamp", 0) > wait_start:
+                            user_reply = m.get("content", "")
+                            break
+                    
+                    if user_reply:
+                        break
+                        
+                except Exception as e:
+                    print(f"Error in user wait loop: {e}", file=sys.stderr)
+                    continue
+            
+            if user_reply:
+                 # Turn Management: User replied. 
+                 # Technically, if User replies, they *took* their turn and passed it back?
+                 # Or did they just inject?
+                 # For now, let's say the Agent gets the result and keeps the turn.
+                 return f"User Replied: \"{user_reply}\""
+
+        # Fallback (Busy or Aborted Wait) -> Standard Template Response
+        if logger: logger.log("TURN", "System", "Turn passed to USER (Non-Blocking / Busy). Agent retains control.")
         # Do NOT block. Return special message immediately.
         # Construct the response using the template but with a specific instruction.
         
