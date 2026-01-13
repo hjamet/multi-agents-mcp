@@ -673,7 +673,7 @@ with st.sidebar:
     current_turn = turn.get("current")
     
     for name, d in agents.items():
-        if name == "User": continue
+        # if name == "User": continue # SHOW USER IN ROSTER
         if d.get("status") == "connected":
             active_agents.append(name)
         else:
@@ -683,12 +683,23 @@ with st.sidebar:
     inactive_agents.sort()
     
     roster_list = active_agents + inactive_agents
+    # Explicitly add User to the top
+    roster_list.insert(0, "User")
     
     if not roster_list:
         st.caption("Aucun agent détecté.")
     else:
         for name in roster_list:
-            info = agents[name]
+            # Handle User specifically since they are not in 'agents' dict
+            if name == "User":
+                u_avail = config.get("user_availability", "busy")
+                # Map 'available' -> 'connected' (Green), 'busy' -> 'working' (Blue/Busy look)
+                info = {
+                    "status": "connected" if u_avail == "available" else "working",
+                    "emoji": "👤"
+                }
+            else:
+                info = agents[name]
             status = info.get("status", "pending")
             emoji = info.get("emoji", "🤖")
             is_turn = (name == current_turn)
@@ -776,6 +787,21 @@ if st.session_state.page == "Communication":
     with c_status:
         current_turn = turn.get("current", "?")
         if current_turn == "User":
+            # FOCUS MODE STYLES
+            st.markdown("""
+            <style>
+            /* Gray out previous messages to focus on input */
+            .stChatMessage { opacity: 0.5; filter: grayscale(0.6); transition: all 0.3s; }
+            /* Highlight Input Area */
+            div[data-testid="stChatInput"] { 
+                border: 2px solid #ff3d00 !important; 
+                border-radius: 12px;
+                box-shadow: 0 0 15px rgba(255, 61, 0, 0.4) !important;
+                background-color: #fff8f5 !important;
+            }
+            </style>
+            """, unsafe_allow_html=True)
+            
             st.markdown("""<div style="background-color: #fff3cd; border: 2px solid #ff3d00; padding: 15px; border-radius: 8px; text-align: center; animation: pulse 2s infinite; margin-bottom: 10px;"><span style="color: #bf360c; font-weight: 900; font-size: 1.4em; text-transform: uppercase; letter-spacing: 1px;">⚡ À VOUS DE JOUER ⚡</span><br><span style="font-size: 0.9em; color: #a00;">Le système attend votre réponse.</span></div><style>@keyframes pulse {0% { box-shadow: 0 0 0 0 rgba(255, 61, 0, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(255, 61, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 61, 0, 0); }}</style>""", unsafe_allow_html=True)
             st.toast("⚡ C'EST À VOUS DE JOUER !", icon="⚡")
         else:
@@ -1332,3 +1358,9 @@ elif st.session_state.page == "Editor":
             save_config(config)
             st.toast("Saved!")
             st.rerun()
+
+# --- GLOBAL INJECTION (Fixed by Anais) ---
+if st.session_state.page == "Communication":
+    # Ensure mentions are injected even if logic flow was broken
+    active_names = sorted([name for name, d in agents.items() if d.get("status") == "connected" and name != "User"])
+    inject_mention_system(["everyone"] + active_names)

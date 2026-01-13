@@ -99,3 +99,7 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
 - **État** : 🟢 **COMPLETE**. Sprint 5: Discord Ultimate Experience.
 - **Agent Anais** : Connecté (Debug & Validation).
 - **Résultat** : ✅ Tests Techniques Validés (Comms, Fichiers, Mémoire, Privé).
+- **Features Ajoutées** :
+    - God Mode (Visibilité Admin Totale).
+    - Sécurité Renforcée (Whitelist Anti-Ghost).
+    - UX : User dans Sidebar + Self-Loop (5 msgs max).

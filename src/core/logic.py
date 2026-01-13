@@ -315,11 +315,10 @@ class Engine:
             # Special Case: If sending to 'User', we do NOT pass the turn. The agent keeps it.
             # "Message bien envoyé à l'utilisateur... En attendant, continuez votre travail"
             
-            if next_agent == "User":
-                # Do not change turn
-                import sys
-                print(f"[Logic] USER MESSAGE: {from_agent} -> User. Turn remains with {from_agent}.", file=sys.stderr)
-                return "Message sent to User. You still have the turn."
+            # FIXED: Allow passing turn to User so UI Indicator works
+            # if next_agent == "User": ... (REMOVED)
+            if False: # Disabled explicit block
+                pass
             else:
                 old_turn = state["turn"].get("current")
                 state["turn"]["current"] = next_agent

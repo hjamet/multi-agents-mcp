@@ -275,7 +275,36 @@ async def talk(
     if not sender:
          return "🚫 ERROR: Session not recognized. You must call 'agent()' first to register your identity."
 
+    # --- SECURITY: WHITELIST CHECK ---
+    # Prevent "Ghost" agents from talking
+    valid_agents = list(engine.state.load().get("agents", {}).keys())
+    # User is always valid (if they manage to call this, which is rare via tool, but possible)
+    if sender != "User" and sender not in valid_agents:
+        return f"🚫 SECURITY ALERT: '{sender}' is not a registered agent and cannot speak."
+
     next_agent = to
+
+    # --- FEATURE: SELF-LOOP & ANTI-SPAM ---
+    if next_agent == sender:
+        # Check history for spam (Max 5 consecutive messages)
+        data = engine.state.load()
+        messages = data.get("messages", [])
+        consecutive_count = 0
+        for m in reversed(messages):
+            if m.get("from") == sender:
+                consecutive_count += 1
+            else:
+                break
+        
+        if consecutive_count >= 5:
+            # Construct a helper directory for the error context (optional, but good for keeping context)
+            try:
+                 agent_directory = _build_agent_directory(data, sender)
+                 connections_list = [d for d in agent_directory if d.get('authorized')]
+            except:
+                 connections_list = []
+                 
+            return f"🚫 ANTI-SPAM: You have reached the limit of 5 consecutive messages. You MUST yield the floor to another agent or the User.\n\nAvailable Connections: {', '.join([c['name'] for c in connections_list])}"
     
     logger.log("ACTION", sender, f"talking -> {next_agent} (Public: {public})", {"message": message, "audience": audience})
     
