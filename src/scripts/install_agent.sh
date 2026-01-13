@@ -25,15 +25,17 @@ export PATH="$HOME/.cargo/bin:$PATH"
 
 # 2. Determine Installation Directory
 INSTALL_DIR="$HOME/.multi-agent-mcp"
-
-echo -e "${BLUE}📂 Target Directory: ${INSTALL_DIR}${NC}"
-
 if [ ! -d "$INSTALL_DIR" ]; then
     echo "Cloning repository..."
-    git clone https://github.com/Starttoaster/multi-agents-mcp.git "$INSTALL_DIR"
+    git clone https://github.com/hjamet/multi-agents-mcp.git "$INSTALL_DIR"
 else
     echo "Directory exists. Pulling latest changes..."
-    cd "$INSTALL_DIR" && git pull && cd - > /dev/null
+    # If it's a git repo, pull. Otherwise, user might be testing locally.
+    if [ -d "$INSTALL_DIR/.git" ]; then
+        cd "$INSTALL_DIR" && git pull && cd - > /dev/null
+    else
+        echo "Not a git repository, skipping pull."
+    fi
 fi
 
 # 3. Install Dependencies
@@ -63,8 +65,10 @@ mkdir -p "\$CWD/.multi-agent-mcp/presets"
 mkdir -p "\$CWD/.multi-agent-mcp/logs"
 
 # 3. Launch Streamlit from the global installation
+# Unset VIRTUAL_ENV to avoid inheriting from the calling shell's env
+unset VIRTUAL_ENV
 cd "\$INSTALL_DIR"
-uv run streamlit run src/interface/app.py
+uv run --project "\$INSTALL_DIR" streamlit run src/interface/app.py
 EOF
 
 chmod +x "$MAMCP_PATH"

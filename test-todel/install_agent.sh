@@ -34,7 +34,7 @@ echo -e "${BLUE}📂 Target Directory: ${INSTALL_DIR}${NC}"
 if [ ! -d "$INSTALL_DIR" ]; then
     echo "Cloning repository..."
     mkdir -p .agent
-    git clone https://github.com/Starttoaster/multi-agents-mcp.git "$INSTALL_DIR"
+    git clone https://github.com/hjamet/multi-agents-mcp.git "$INSTALL_DIR"
 else
     echo "Directory exists. Pulling latest changes..."
     cd "$INSTALL_DIR" && git pull && cd - > /dev/null

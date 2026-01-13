@@ -7,7 +7,7 @@
 Installation rapide (Global & MCP) :
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/Starttoaster/multi-agents-mcp/main/src/scripts/install_agent.sh | bash
+curl -sSL https://raw.githubusercontent.com/hjamet/multi-agents-mcp/main/src/scripts/install_agent.sh | bash
 ```
 
 Une fois installé, utilisez la commande `mamcp` dans n'importe quel dossier pour démarrer l'interface :
