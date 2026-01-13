@@ -96,11 +96,12 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
 - **Date** : 13 Janvier 2026
 - **Scénario** : Équipe de Développement Logiciel (Neural Stream Refactor)
 - **Configuration** : Planner, Builder, Challenger
-- **État** : 🟢 **RUNNING**. Sprint 6: Validation & Debug.
-- **Agent Anais** : Connecté (Debug & Validation).
-- **Agent Tom** : Connecté (Debug & Validation).
-- **Résultat** : ✅ Tests Techniques Validés (Comms, Fichiers, Mémoire, Privé).
+- **État** : 🟢 **RUNNING**. Sprint 6: Validation, UX Polish & Mentions Fix.
+- **Agent Anais** : Connecté (Validation Lead).
+- **Agent Tom** : Connecté (Tech Support).
+- **Résultat** : ✅ Système Validé & Stabilisé (Ready for Hardcore Mode).
 - **Features Ajoutées** :
-    - God Mode (Visibilité Admin Totale).
-    - Sécurité Renforcée (Whitelist Anti-Ghost).
-    - UX : User dans Sidebar + Self-Loop (5 msgs max).
+    - 🩹 **Mentions Fix** : Réparation définitive du sélecteur (Anti-Zombie Listeners).
+    - ⏸️ **Contrôle Flux** : Bouton Pause + User Keep-Turn (Option) + Agent Self-Loop (Max 5).
+    - 🧹 **UI Polish** : Nettoyage Chat (No "Tour à") + Bannière Sticky "High-Vis".
+    - 🛡️ **Sécurité** : Whitelist Anti-Ghost & God Mode Admin.

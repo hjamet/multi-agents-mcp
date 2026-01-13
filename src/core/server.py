@@ -263,14 +263,12 @@ async def talk(
         sender = None
         
     # --- SMART INFERENCE (Turn-Based Identity) ---
-    # In single-pipe simulations, the Session ID is shared and ambiguous.
-    # However, since agents act sequentially, the caller is implied to be the Current Turn Holder.
-    # We prioritize this inference to resolve collisions transparently.
-    
-    current_turn = engine.state.load().get("turn", {}).get("current")
-    if current_turn and (not sender or sender != current_turn):
-         # Implicitly trust: If it's your turn, and you are calling talk(), you are the turn holder.
-         sender = current_turn
+    # Disabled to prevent impersonation bugs. Agents are identified by Session.
+    # Turn enforcement is handled by wait_for_turn_async.
+    # current_turn = engine.state.load().get("turn", {}).get("current")
+    # if current_turn and (not sender or sender != current_turn):
+    #      # Implicitly trust: If it's your turn, and you are calling talk(), you are the turn holder.
+    #      sender = current_turn
              
     if not sender:
          return "🚫 ERROR: Session not recognized. You must call 'agent()' first to register your identity."
@@ -646,7 +644,8 @@ async def note(content: str, ctx: Context) -> str:
     
     IMPORTANT:
     - The content of this note is re-injected into your context at the start of every turn (via 'talk').
-    - You must synthesize previous memories with new ones; do not just append blindly if you want to stay organized.
+    - You must synthesize previous memories with new ones using a SUMMARY PRINCIPLE to integrate new memories while losing as little info as possible.
+    - Do not just append blindly if you want to stay organized.
     - Maximum size: 5000 characters.
     
     Args:
