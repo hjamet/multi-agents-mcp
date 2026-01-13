@@ -130,9 +130,9 @@ def _build_agent_directory(state, my_name):
             })
     
     # 3. User
-    if "user" in conn_map or is_open_mode:
-        c_data = conn_map.get("user", {})
-        is_auth = c_data.get("authorized", True) if "user" in conn_map else False
+    if "User" in conn_map or is_open_mode:
+        c_data = conn_map.get("User", {})
+        is_auth = c_data.get("authorized", True) if "User" in conn_map else False
         note = c_data.get("context", "")
         
         if is_open_mode or is_auth:
