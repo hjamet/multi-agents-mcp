@@ -101,6 +101,42 @@ st.markdown("""
         border: none;
         box-shadow: none;
     }
+    /* Agent Card Styling */
+    .agent-config-card {
+        background-color: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        transition: transform 0.2s;
+    }
+    .agent-config-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+    }
+    .agent-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+    }
+    .agent-name {
+        font-weight: 700;
+        font-size: 1.1em;
+        color: #1f1f1f;
+    }
+    .agent-desc {
+        font-size: 0.85em;
+        color: #666;
+        margin-bottom: 12px;
+        min-height: 3em;
+    }
+    .reset-button-container {
+        display: flex;
+        justify-content: center;
+        padding: 20px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -449,102 +485,144 @@ if st.session_state.page == "Communication":
 elif st.session_state.page == "Cockpit":
     st.header("🎛️ Cockpit de Supervision")
     
+    # --- 0. GRAPHVIZ VIEW (TOP) ---
+    with st.expander("🕸️ Topologie de la Flotte (Graphviz)", expanded=False):
+        try:
+            g = render_graph(profiles)
+            st.graphviz_chart(g, use_container_width=True)
+        except Exception as e:
+            st.error(f"Erreur de rendu du graphe : {e}")
+
     preset_dir = os.path.join("assets", "presets")
     if not os.path.exists(preset_dir):
         os.makedirs(preset_dir, exist_ok=True)
     
-    # Standard Layout
+    # Standard Layout for Scenarios and Global Context
     c1, c2 = st.columns([1, 1])
     
     with c1:
         st.subheader("💾 Scénarios")
-        save_name = st.text_input("Nom de Sauvegarde", placeholder="scenaro_1")
-        if st.button("Sauvegarder", use_container_width=True):
-            if save_name:
-                path = os.path.join(preset_dir, f"{save_name}.json")
-                with open(path, "w") as f:
-                    json.dump(config, f, indent=2)
-                st.success(f"Sauvegardé: {path}")
-        
-        presets = [f for f in os.listdir(preset_dir) if f.endswith(".json")]
-        selected_preset = st.selectbox("Charger Preset", presets) if presets else None
-        if st.button("Charger", use_container_width=True):
-            if selected_preset:
-                path = os.path.join(preset_dir, selected_preset)
-                with open(path, "r") as f:
-                    new_conf = json.load(f)
-                save_config(new_conf)
-                st.rerun()
+        with st.container(border=True):
+            save_name = st.text_input("Nom de Sauvegarde", placeholder="scenaro_1")
+            if st.button("Sauvegarder", use_container_width=True):
+                if save_name:
+                    path = os.path.join(preset_dir, f"{save_name}.json")
+                    with open(path, "w") as f:
+                        json.dump(config, f, indent=2)
+                    st.success(f"Sauvegardé : {path}")
+            
+            st.divider()
+            
+            presets = [f for f in os.listdir(preset_dir) if f.endswith(".json")]
+            selected_preset = st.selectbox("Charger Preset", presets) if presets else None
+            if st.button("Charger la Configuration", use_container_width=True, type="secondary"):
+                if selected_preset:
+                    path = os.path.join(preset_dir, selected_preset)
+                    with open(path, "r") as f:
+                        new_conf = json.load(f)
+                    save_config(new_conf)
+                    st.rerun()
 
     with c2:
-        st.subheader("👥 Crew Management")
-        for i, p in enumerate(profiles):
-            cl, cc = st.columns([3, 2])
-            cl.write(f"**{p['name']}**")
-            count = int(p.get("count", 0))
-            if cc.button("➖", key=f"d_{i}"):
-                p["count"] = max(0, count - 1)
-                save_config(config)
-                st.rerun()
-            cc.write(f"Count: {count}")
-            if cc.button("➕", key=f"i_{i}"):
-                p["count"] = count + 1
-                save_config(config)
-                st.rerun()
+        st.subheader("🌍 Contexte Global")
+        with st.container(border=True):
+            global_context = st.text_area("Narratif / Contexte Partagé", config.get("context", ""), height=215)
+            if global_context != config.get("context", ""):
+                if st.button("Mettre à jour le Contexte", use_container_width=True):
+                    config["context"] = global_context
+                    save_config(config)
+                    st.success("Contexte mis à jour")
+
+    st.divider()
+    
+    # --- 2. CREW MANAGEMENT (MODERN CARDS) ---
+    st.subheader("👥 Crew Management")
+    
+    # Display cards in a grid
+    cols_per_row = 3
+    for i in range(0, len(profiles), cols_per_row):
+        cols = st.columns(cols_per_row)
+        for j in range(cols_per_row):
+            if i + j < len(profiles):
+                p = profiles[i + j]
+                with cols[j]:
+                    count = int(p.get("count", 0))
+                    emoji = p.get("emoji", "🤖")
+                    description = p.get("description", "Aucune description.")
+                    
+                    st.markdown(f"""
+                        <div class="agent-config-card">
+                            <div class="agent-header">
+                                <span style="font-size: 1.5em;">{emoji}</span>
+                                <span class="agent-name">{p['name']}</span>
+                            </div>
+                            <div class="agent-desc">{description}</div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Controls inside the column but outside the HTML for functionality
+                    ctrl_c1, ctrl_c2, ctrl_c3 = st.columns([1, 2, 1])
+                    if ctrl_c1.button("➖", key=f"d_{i+j}", use_container_width=True):
+                        p["count"] = max(0, count - 1)
+                        save_config(config)
+                        st.rerun()
+                    
+                    ctrl_c2.markdown(f"<h3 style='text-align: center; margin: 0;'>{count}</h3>", unsafe_allow_html=True)
+                    
+                    if ctrl_c3.button("➕", key=f"i_{i+j}", use_container_width=True):
+                        p["count"] = count + 1
+                        save_config(config)
+                        st.rerun()
+                    st.markdown("<br>", unsafe_allow_html=True)
 
     st.markdown("---")
-    st.subheader("🌍 Contexte Global")
-    global_context = st.text_area("Narratif / Contexte", config.get("context", ""), height=200)
-    if global_context != config.get("context", ""):
-        if st.button("Mettre à jour Contexte"):
-            config["context"] = global_context
-            save_config(config)
-            st.success("Updated")
-
-    st.markdown("---")
-    if st.button("🚀 RÉSÉT SIMULATION", type="primary"):
-        def reset_logic(s):
-            s["conversation_id"] = str(uuid.uuid4())
-            s["messages"] = []
-            s["turn"] = {"current": None, "next": None}
-            s["config"]["context"] = global_context
-            
-            pending_slots = []
-            import random
-            for p in profiles:
-                for _ in range(int(p.get("count", 0))):
-                    pending_slots.append({
-                        "profile_ref": p["name"],
-                        "role": p.get("system_prompt", ""),
-                        "display_base": p.get("display_name") or p["name"],
-                        "emoji": p.get("emoji", "🤖")
+    
+    # --- 3. RESET BUTTON (MODERN) ---
+    col_r1, col_r2, col_r3 = st.columns([1, 2, 1])
+    with col_r2:
+        if st.button("🚀 INITIALISER LA SIMULATION", type="primary", use_container_width=True, help="Réinitialise tous les agents et la conversation"):
+            def reset_logic(s):
+                s["conversation_id"] = str(uuid.uuid4())
+                s["messages"] = []
+                s["turn"] = {"current": None, "next": None}
+                s["config"]["context"] = global_context
+                
+                pending_slots = []
+                import random
+                for p in profiles:
+                    for _ in range(int(p.get("count", 0))):
+                        pending_slots.append({
+                            "profile_ref": p["name"],
+                            "role": p.get("system_prompt", ""),
+                            "display_base": p.get("display_name") or p["name"],
+                            "emoji": p.get("emoji", "🤖")
+                        })
+                random.shuffle(pending_slots)
+                
+                new_agents = {}
+                counters = {}
+                for slot in pending_slots:
+                    base = slot["display_base"]
+                    counters.setdefault(base, 0)
+                    counters[base] += 1
+                    agent_id = f"{base} #{counters[base]}" if sum(1 for sl in pending_slots if sl["display_base"] == base) > 1 else base
+                    new_agents[agent_id] = {
+                        "role": slot["role"], "status": "pending_connection",
+                        "profile_ref": slot["profile_ref"], "emoji": slot["emoji"]
+                    }
+                s["agents"] = new_agents
+                if new_agents:
+                    first = list(new_agents.keys())[0]
+                    s["turn"]["current"] = first
+                    s.setdefault("messages", []).append({
+                        "from": "System", "content": f"🟢 SIMULATION RESET. First Turn: {first}", "public": True, "timestamp": time.time()
                     })
-            random.shuffle(pending_slots)
-            
-            new_agents = {}
-            counters = {}
-            for slot in pending_slots:
-                base = slot["display_base"]
-                counters.setdefault(base, 0)
-                counters[base] += 1
-                agent_id = f"{base} #{counters[base]}" if sum(1 for sl in pending_slots if sl["display_base"] == base) > 1 else base
-                new_agents[agent_id] = {
-                    "role": slot["role"], "status": "pending_connection",
-                    "profile_ref": slot["profile_ref"], "emoji": slot["emoji"]
-                }
-            s["agents"] = new_agents
-            if new_agents:
-                first = list(new_agents.keys())[0]
-                s["turn"]["current"] = first
-                s.setdefault("messages", []).append({
-                    "from": "System", "content": f"🟢 SIMULATION RESET. First Turn: {first}", "public": True, "timestamp": time.time()
-                })
-            return "Reset Complete"
-        msg = state_store.update(reset_logic)
-        st.toast(msg)
-        time.sleep(1)
-        st.session_state.page = "Communication"
-        st.rerun()
+                return "Réinitialisation terminée"
+            msg = state_store.update(reset_logic)
+            st.toast(msg)
+            time.sleep(0.5)
+            st.session_state.page = "Communication"
+            st.rerun()
 
 
 # ==========================================
