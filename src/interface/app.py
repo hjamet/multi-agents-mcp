@@ -267,7 +267,7 @@ with st.sidebar:
                         </div>
                     </div>
                 </div>
-                {f'<span style="font-size: 1.2em;" title="C\'est son tour !">✨</span>' if is_turn else ''}
+                {'<span style="font-size: 1.2em;" title="C&rsquo;est son tour !">✨</span>' if is_turn else ''}
             </div>
             """, unsafe_allow_html=True)
             
@@ -695,6 +695,38 @@ elif st.session_state.page == "Editor":
         if has_priv: new_caps.append("private")
         if has_aud: new_caps.append("audience")
         if has_open: new_caps.append("open")
+
+        st.subheader("Connexions")
+        st.info("Définissez qui cet agent peut contacter et dans quel but (contexte stratégique).")
+        
+        other_profile_names = [p["name"] for p in profiles if p["name"] != current_profile.get("name")]
+        targets = ["public", "user"] + other_profile_names
+        
+        new_connections = []
+        
+        # Header
+        h1, h2, h3 = st.columns([2, 5, 1])
+        h1.markdown("**Cible**")
+        h2.markdown("**Condition / Contexte**")
+        h3.markdown("**Active**")
+        
+        for target in targets:
+            # Find existing connection
+            existing_conn = next((c for c in current_profile.get("connections", []) if c["target"] == target), None)
+            
+            c1, c2, c3 = st.columns([2, 5, 1])
+            c1.markdown(f"**{target}**")
+            
+            default_ctx = existing_conn.get("context", "") if existing_conn else ""
+            default_auth = existing_conn.get("authorized", False) if existing_conn else False
+            
+            # Unique key is important to avoid collision between agents
+            # Use current_profile name as part of the key to ensure stability
+            ctx = c2.text_input(f"Condition for {target}", default_ctx, key=f"conn_ctx_{selected_name}_{target}", label_visibility="collapsed")
+            auth = c3.checkbox(f"Active for {target}", default_auth, key=f"conn_auth_{selected_name}_{target}", label_visibility="collapsed")
+            
+            if auth or ctx:
+                new_connections.append({"target": target, "context": ctx, "authorized": auth})
         
         if st.button("💾 Enregistrer Modifications", type="primary"):
             current_profile["name"] = new_name
@@ -702,6 +734,7 @@ elif st.session_state.page == "Editor":
             current_profile["description"] = new_desc
             current_profile["system_prompt"] = new_prompt
             current_profile["capabilities"] = new_caps
+            current_profile["connections"] = new_connections
             
             if new_mode:
                 profiles.append(current_profile)

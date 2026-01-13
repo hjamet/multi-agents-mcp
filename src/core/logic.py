@@ -207,13 +207,14 @@ class Engine:
 
             caps = sender_profile.get("capabilities", [])
             connections = sender_profile.get("connections", [])
-            allowed_targets = {c["target"]: c["context"] for c in connections} # Profile Names
+            allowed_targets = {c["target"]: c["context"] for c in connections if c.get("authorized", True)} # Profile Names
             
             # DEBUG
             import sys
             print(f"[Logic DEBUG] From: {from_agent}", file=sys.stderr)
             print(f"[Logic DEBUG] Profile: {sender_profile.get('name')} | Ref: {sender_profile_name}", file=sys.stderr)
             print(f"[Logic DEBUG] Caps: {caps}", file=sys.stderr) 
+            print(f"[Logic DEBUG] Allowed Targets: {list(allowed_targets.keys())}", file=sys.stderr)
             
             # MERGE INSTANCE CONNECTIONS (Priority)
             # This is critical for agents like MJ who get dynamic connections injected at setup
@@ -221,7 +222,8 @@ class Engine:
             for c in instance_connections:
                 # Instance connections target Agent IDs (e.g. "Habitant #1"), not Profile Names
                 # We add them to allowed_targets so check_target passes
-                allowed_targets[c["target"]] = c["context"]
+                if c.get("authorized", True):
+                    allowed_targets[c["target"]] = c["context"]
             
             # A. Capability Checks
             is_open = "open" in caps
@@ -236,11 +238,13 @@ class Engine:
             if next_agent and next_agent in audience:
                 return f"🚫 ACTION DENIED: '{next_agent}' is already the main recipient (next turn). Do not include them in the 'audience' list."
 
-            if public and "public" not in caps and not is_open:
-                return f"🚫 ACTION DENIED: You do not have the 'public' capability. You must send a Private message to a specific target."
+            if public and not is_open and "public" not in caps and "public" not in allowed_targets:
+                return f"🚫 ACTION DENIED: You do not have the 'public' capability or authorized connection to 'public'. You must send a Private message to a specific target."
             
             if not public and "private" not in caps and not is_open:
-                 return f"🚫 ACTION DENIED: You do not have the 'private' capability. You must speak Publicly."
+                 # Check if next_agent is an authorized connection
+                 # Handled by B. Connection Checks, but here we check capability
+                 pass 
             
             if audience and "audience" not in caps and not is_open:
                  return f"🚫 ACTION DENIED: You do not have the 'audience' capability. You cannot cc additional agents."

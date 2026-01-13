@@ -79,16 +79,9 @@ def _build_agent_directory(state, my_name):
     
     # 1. SPECIAL: Public Entity
     # Check if we have a rule for compliance/strategy regarding Public speaking
-    # Even if we don't have "public" capability, we might have a note about it.
-    # But usually this table drives the decision process.
-    if "Public" in conn_map or is_open_mode:
-        c_data = conn_map.get("Public", {})
-        is_auth = c_data.get("authorized", True) # Default True if present in old config, buy usually new logic sets it
-        if "Public" not in conn_map: is_auth = False # If not in config, unauthorized by default unless open mode overrides? 
-        # Actually Open Mode makes *Agents* reachable. Does it make Public reachable? 
-        # Usually Public requires "public" capability.
-        # Let's rely on the row configuration.
-        # If Open Mode, we show it even if unchecked.
+    if "public" in conn_map or is_open_mode:
+        c_data = conn_map.get("public", {})
+        is_auth = c_data.get("authorized", True) if "public" in conn_map else False
         
         should_show = is_open_mode or is_auth
         if should_show:
@@ -116,22 +109,14 @@ def _build_agent_directory(state, my_name):
         public_desc = p_data.get("public_description") or p_data.get("description") or "Unknown"
         
         # Connection Logic
-        c_data = conn_map.get(agent_id, {})
-        # If row exists, use its auth status. If not, False.
-        # Legacy compat: if c_data exists but no 'authorized' key, assume True.
-        is_auth = c_data.get("authorized", True) if agent_id in conn_map else False
+        # Priority: Check specific agent_id, then check profile p_ref
+        c_data = conn_map.get(agent_id) or conn_map.get(p_ref, {})
+        is_auth = c_data.get("authorized", True) if (agent_id in conn_map or p_ref in conn_map) else False
         note = c_data.get("context", "")
         
         # Filtering Logic
-        # Open Mode: Show ALL.
-        # Closed Mode: Show ONLY Authorized.
-        
         if is_open_mode:
-            # Show everyone
-            status_str = "Unknown"
-            if is_auth: status_str = "✅ Authorized"
-            else: status_str = "❌ Unauthorized"
-            
+            status_str = "✅ Authorized" if is_auth else "❌ Unauthorized"
             directory.append({
                 "name": agent_id,
                 "public_desc": public_desc,
@@ -139,9 +124,7 @@ def _build_agent_directory(state, my_name):
                 "authorized": is_auth,
                 "status": status_str
             })
-            
         elif is_auth:
-            # Closed mode, but authorized
             directory.append({
                 "name": agent_id,
                 "public_desc": public_desc,
@@ -151,10 +134,9 @@ def _build_agent_directory(state, my_name):
             })
     
     # 3. User
-    # Same logic as agents
-    if "User" in conn_map or is_open_mode:
-        c_data = conn_map.get("User", {})
-        is_auth = c_data.get("authorized", True) if "User" in conn_map else False
+    if "user" in conn_map or is_open_mode:
+        c_data = conn_map.get("user", {})
+        is_auth = c_data.get("authorized", True) if "user" in conn_map else False
         note = c_data.get("context", "")
         
         if is_open_mode or is_auth:
