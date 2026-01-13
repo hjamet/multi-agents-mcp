@@ -4,15 +4,21 @@
 
 # Installation
 
-Installation rapide pour le développement :
+Installation rapide (Global & MCP) :
 
 ```bash
-./src/scripts/install_dev.sh
+curl -sSL https://raw.githubusercontent.com/Starttoaster/multi-agents-mcp/main/src/scripts/install_agent.sh | bash
+```
+
+Une fois installé, utilisez la commande `mamcp` dans n'importe quel dossier pour démarrer l'interface :
+
+```bash
+mamcp
 ```
 
 **Pré-requis** :
 - Python 3.10+
-- `uv` (recommandé) ou `pip`
+- `uv` (installé automatiquement si absent)
 
 # Description détaillée
 
@@ -52,8 +58,8 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
 
 | Script/Commande | Description détaillée | Usage |
 | :--- | :--- | :--- |
-| `streamlit run src/interface/app.py` | Lance l'interface unifiée "Neural Stream" (Chat + Admin Sidebar). | `streamlit run ...` |
-| `./src/scripts/install_dev.sh` | Installe l'environnement, les dépendances et génère la config. | `./src/scripts/install_dev.sh` |
+| `mamcp` | Lance l'interface unifiée "Neural Stream" (Chat + Admin Sidebar) dans le dossier courant. | `mamcp` |
+| `install_agent.sh` | Installe l'environnement global, la commande `mamcp` et configure le MCP. | `curl ... | bash` |
 
 # Scripts exécutables secondaires & Utilitaires
 

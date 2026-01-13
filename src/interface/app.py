@@ -11,7 +11,15 @@ import re
 from pathlib import Path
 
 # Add src to path to allow imports if run directly
-sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
+from pathlib import Path
+import sys
+import os
+
+CODE_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(CODE_ROOT) not in sys.path:
+    sys.path.append(str(CODE_ROOT))
+
+from src.config import STATE_FILE, MEMORY_DIR, TEMPLATE_DIR, LOCAL_DATA_DIR, CODE_ROOT as CONFIG_CODE_ROOT
 from src.core.state import StateStore
 
 st.set_page_config(page_title="Agent Orchestra", page_icon="🤖", layout="wide")
@@ -490,7 +498,7 @@ with st.sidebar:
                 if os.path.exists(config_path):
                     with open(config_path, "r") as f:
                         json_data = json.load(f)
-                    current_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+                    current_dir = str(CONFIG_CODE_ROOT)
                     server_script = os.path.join(current_dir, "src", "core", "server.py")
                     command_str = f"cd {current_dir} && uv run python {server_script}"
                     if "mcpServers" not in json_data:
@@ -508,11 +516,11 @@ with st.sidebar:
 
         if st.button("Delete Memories"):
             try:
-                mem_dir = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "memory")
+                mem_dir = str(MEMORY_DIR)
                 if os.path.exists(mem_dir):
                     import shutil
                     shutil.rmtree(mem_dir)
-                    os.makedirs(mem_dir)
+                    os.makedirs(mem_dir, exist_ok=True)
                     st.success("Memories Cleared")
             except Exception as e:
                 st.error(str(e))
@@ -725,9 +733,9 @@ elif st.session_state.page == "Cockpit":
         except Exception as e:
             st.error(f"Erreur de rendu du graphe : {e}")
 
-    preset_dir = os.path.join("assets", "presets")
-    if not os.path.exists(preset_dir):
-        os.makedirs(preset_dir, exist_ok=True)
+    preset_dir = LOCAL_DATA_DIR / "presets"
+    if not preset_dir.exists():
+        preset_dir.mkdir(parents=True, exist_ok=True)
     
     # Scenarios (Moved here under Topology)
     with st.expander("💾 Scénarios", expanded=False):
@@ -735,7 +743,7 @@ elif st.session_state.page == "Cockpit":
             save_name = st.text_input("Nom de Sauvegarde", placeholder="scenaro_1")
             if st.button("Sauvegarder", use_container_width=True):
                 if save_name:
-                    path = os.path.join(preset_dir, f"{save_name}.json")
+                    path = preset_dir / f"{save_name}.json"
                     with open(path, "w") as f:
                         json.dump(config, f, indent=2)
                     st.success(f"Sauvegardé : {path}")
@@ -746,7 +754,7 @@ elif st.session_state.page == "Cockpit":
             selected_preset = st.selectbox("Charger Preset", presets) if presets else None
             if st.button("Charger la Configuration", use_container_width=True, type="secondary"):
                 if selected_preset:
-                    path = os.path.join(preset_dir, selected_preset)
+                    path = preset_dir / selected_preset
                     with open(path, "r") as f:
                         new_conf = json.load(f)
                     save_config(new_conf)

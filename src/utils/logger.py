@@ -16,9 +16,9 @@ class GameLogger:
             return cls._instance
 
     def _init(self, log_file):
-        # Determine log path: relative to CWD if possible
-        # Default to a 'logs' directory
-        self.log_dir = "logs"
+        # Use LOGS_DIR from config
+        from src.config import LOGS_DIR
+        self.log_dir = str(LOGS_DIR)
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir, exist_ok=True)
             

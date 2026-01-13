@@ -8,7 +8,7 @@ YELLOW='\033[0;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}🚀 Starting Multi-Agents MCP Installation...${NC}"
+echo -e "${BLUE}🚀 Starting Multi-Agents MCP Global Installation...${NC}"
 
 # 1. Install/Upgrade uv
 echo -e "${BLUE}📦 Checking uv installation...${NC}"
@@ -24,16 +24,12 @@ fi
 export PATH="$HOME/.cargo/bin:$PATH"
 
 # 2. Determine Installation Directory
-# Goal: .agent/multi-agents-mcp in the current directory (or one level up if inside .agent?)
-# Simpler: Always install to .agent/multi-agents-mcp relative to where script is run.
-INSTALL_DIR=".agent/multi-agents-mcp"
-WORKFLOW_DIR=".agent/workflows"
+INSTALL_DIR="$HOME/.multi-agent-mcp"
 
 echo -e "${BLUE}📂 Target Directory: ${INSTALL_DIR}${NC}"
 
 if [ ! -d "$INSTALL_DIR" ]; then
     echo "Cloning repository..."
-    mkdir -p .agent
     git clone https://github.com/Starttoaster/multi-agents-mcp.git "$INSTALL_DIR"
 else
     echo "Directory exists. Pulling latest changes..."
@@ -46,25 +42,33 @@ cd "$INSTALL_DIR"
 uv sync
 cd - > /dev/null
 
-# 4. Setup Workflows
-echo -e "${BLUE}⚙️ Configuring Workflows...${NC}"
-mkdir -p "$WORKFLOW_DIR"
+# 4. Install 'mamcp' command
+echo -e "${BLUE}⚙️ Installing 'mamcp' command...${NC}"
+BIN_DIR="$HOME/.local/bin"
+mkdir -p "$BIN_DIR"
+MAMCP_PATH="$BIN_DIR/mamcp"
 
-START_PROMPT_SRC="$INSTALL_DIR/assets/start_prompt.md"
-START_PROMPT_DEST="$WORKFLOW_DIR/start_prompt.md"
+cat <<EOF > "$MAMCP_PATH"
+#!/bin/bash
+INSTALL_DIR="$INSTALL_DIR"
+CWD=\$(pwd)
 
-if [ -f "$START_PROMPT_SRC" ]; then
-    echo "Installing start_prompt.md to workflows..."
-    # Add Frontmatter as requested
-    cat <<EOF > "$START_PROMPT_DEST"
----
-description: "Start Prompt for Multi-Agent System"
----
+# 1. Update the current working directory info
+mkdir -p "\$INSTALL_DIR"
+echo "{\"cwd\": \"\$CWD\"}" > "\$INSTALL_DIR/current_working_dir.json"
+
+# 2. Ensure local data directory exists
+mkdir -p "\$CWD/.multi-agent-mcp/memory"
+mkdir -p "\$CWD/.multi-agent-mcp/presets"
+mkdir -p "\$CWD/.multi-agent-mcp/logs"
+
+# 3. Launch Streamlit from the global installation
+cd "\$INSTALL_DIR"
+uv run streamlit run src/interface/app.py
 EOF
-    cat "$START_PROMPT_SRC" >> "$START_PROMPT_DEST"
-else
-    echo -e "${RED}⚠️  Warning: start_prompt.md not found in source.${NC}"
-fi
+
+chmod +x "$MAMCP_PATH"
+echo -e "${GREEN}✅ 'mamcp' command installed to $MAMCP_PATH${NC}"
 
 # 5. Connect to MCP using Python script for JSON safety
 echo -e "${BLUE}🔌 Configuring MCP Server ID...${NC}"
@@ -86,22 +90,19 @@ try:
         with open(config_path, 'r') as f:
             data = json.load(f)
     else:
+        # Check if parent dir exists
+        if not os.path.exists(os.path.dirname(config_path)):
+            os.makedirs(os.path.dirname(config_path), exist_ok=True)
         data = {'mcpServers': {}}
 
     # Define the new server config with shell wrapper for compatibility
-    # This avoids dependency on uv version supporting --directory
-    command_str = f"cd {repo_path} && uv run python {server_script}"
+    command_str = f'cd {repo_path} && uv run python {server_script}'
     
     new_server = {
-        "command": "sh",
-        "args": ["-c", command_str],
-        "env": {}
+        'command': 'sh',
+        'args': ['-c', command_str],
+        'env': {}
     }
-
-    # Verify write permission
-    if not os.access(os.path.dirname(config_path), os.W_OK):
-         print(f'Error: No write access to {os.path.dirname(config_path)}')
-         sys.exit(1)
 
     data.setdefault('mcpServers', {})
     data['mcpServers']['multi-agents-mcp'] = new_server
@@ -117,4 +118,5 @@ except Exception as e:
 "
 
 echo -e "${GREEN}✅ Installation Complete!${NC}"
-echo -e "You can now verify the server by reloading your agent or checking the config."
+echo -e "Make sure $BIN_DIR is in your PATH."
+echo -e "You can now run 'mamcp' in any project folder."
