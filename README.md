@@ -96,13 +96,14 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
 - **Date** : 13 Janvier 2026
 - **Scénario** : Équipe de Développement Logiciel (Neural Stream Refactor)
 - **Configuration** : Planner, Builder, Challenger
-- **État** : 🟢 **RUNNING**. Sprint 6: Validation, UX Polish & Mentions Fix.
+- **État** : 🟢 **READY**. Sprint 6 (Validation Complète). Transition vers Architecture V2.
 - **Agent Anais** : Connecté (Validation Lead).
 - **Agent Tom** : Connecté (Tech Support).
 - **Résultat** : ✅ Système Validé & Stabilisé (Ready for Hardcore Mode).
 - **Features Ajoutées** :
     - 🩹 **Mentions Fix** : Réparation définitive du sélecteur (Anti-Zombie Listeners).
-    - ⏸️ **Contrôle Flux** : Bouton Pause + User Keep-Turn (Option) + Agent Self-Loop (Max 5).
+    - 🚑 **Reachability Fix** : Correction critique de l'accès User (typo Case Sensitive) dans `server.py`.
+    - ⏸️ **Contrôle Flux** : Bouton Pause + Agent Self-Loop (Max 5).
     - 🧹 **UI Polish** : Nettoyage Chat (No "Tour à") + Bannière Sticky "High-Vis".
-    - 🛡️ **Sécurité** : Whitelist Anti-Ghost (Race Condition Fix) & God Mode Admin.
+    - 🛡️ **Sécurité** : Whitelist Anti-Ghost (Race Condition Fix).
     - 🏗️ **Hardcore Preset** : Restauration du fichier `hardcore.json` (Protocole v2.3.0).
