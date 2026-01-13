@@ -1,26 +1,44 @@
 from pathlib import Path
 import os
+import json
 
-# Base Paths
-# This file is in src/config.py
-# PROJECT_ROOT is 2 levels up if config is in src/
-# Wait, src/config.py -> parent is src -> parent is root. So 2 levels.
-# But previously I said 3 levels: config.py (src) -> src (parent) -> root (parent of src)?
-# File: /path/to/project/src/config.py
-# .parent -> /path/to/project/src
-# .parent.parent -> /path/to/project
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+# Global Configuration Directory (Permanent install)
+GLOBAL_DIR = Path.home() / ".multi-agent-mcp"
+CWD_INFO_FILE = GLOBAL_DIR / "current_working_dir.json"
 
-# Assets
-ASSETS_DIR = PROJECT_ROOT / "assets"
+# Root of the code (where the python files are)
+CODE_ROOT = Path(__file__).resolve().parent.parent
+
+def get_current_working_dir() -> Path:
+    """
+    Returns the path where the user last ran 'mamcp'.
+    Defaults to the current process directory if not specified.
+    """
+    if CWD_INFO_FILE.exists():
+        try:
+            with open(CWD_INFO_FILE, "r") as f:
+                data = json.load(f)
+                return Path(data.get("cwd", os.getcwd())).resolve()
+        except (json.JSONDecodeError, OSError):
+            pass
+    return Path(os.getcwd()).resolve()
+
+# Project-Specific Data Directory (Local to the execution path)
+EXECUTION_DIR = get_current_working_dir()
+LOCAL_DATA_DIR = EXECUTION_DIR / ".multi-agent-mcp"
+
+# Assets (Always bundled with the code)
+ASSETS_DIR = CODE_ROOT / "assets"
 TEMPLATE_DIR = ASSETS_DIR / "templates"
-MEMORY_DIR = ASSETS_DIR / "memory"
-LOGS_DIR = PROJECT_ROOT / "logs"
 
-# Ensure directories exist
+# Project-Specific Assets (State and Memory)
+# They are stored in the local .multi-agent-mcp folder
+STATE_FILE = LOCAL_DATA_DIR / "state.json"
+MEMORY_DIR = LOCAL_DATA_DIR / "memory"
+LOGS_DIR = LOCAL_DATA_DIR / "logs"
+
+# Ensure essential directories exist
 TEMPLATE_DIR.mkdir(parents=True, exist_ok=True)
+LOCAL_DATA_DIR.mkdir(parents=True, exist_ok=True)
 MEMORY_DIR.mkdir(parents=True, exist_ok=True)
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
-
-# State
-STATE_FILE = PROJECT_ROOT / "state.json"
