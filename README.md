@@ -104,4 +104,5 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
     - 🩹 **Mentions Fix** : Réparation définitive du sélecteur (Anti-Zombie Listeners).
     - ⏸️ **Contrôle Flux** : Bouton Pause + User Keep-Turn (Option) + Agent Self-Loop (Max 5).
     - 🧹 **UI Polish** : Nettoyage Chat (No "Tour à") + Bannière Sticky "High-Vis".
-    - 🛡️ **Sécurité** : Whitelist Anti-Ghost & God Mode Admin.
+    - 🛡️ **Sécurité** : Whitelist Anti-Ghost (Race Condition Fix) & God Mode Admin.
+    - 🏗️ **Hardcore Preset** : Restauration du fichier `hardcore.json` (Protocole v2.3.0).

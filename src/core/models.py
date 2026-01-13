@@ -29,6 +29,7 @@ class Config(BaseSchema):
 class AgentState(BaseSchema):
     role: str = ""
     status: str = "connected"
+    status_detail: Optional[str] = None
     profile_ref: str
     emoji: str = "🤖"
     connections: Optional[List[Connection]] = None
@@ -37,6 +38,9 @@ class Turn(BaseSchema):
     current: Optional[str] = None
     next: Optional[str] = None
     first_agent: Optional[str] = None
+    consecutive_count: int = 0
+    turn_start_time: float = 0.0
+    last_user_message_time: float = 0.0
 
 class Message(BaseSchema):
     from_: str = Field(..., alias="from")

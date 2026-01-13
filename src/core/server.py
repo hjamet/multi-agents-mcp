@@ -25,11 +25,7 @@ logger = get_logger()
 
 
 # Setup Templates
-# Setup Templates
 jinja_env = Environment(loader=FileSystemLoader(str(TEMPLATE_DIR)))
-
-# Global Session Map: keys are session objects (or IDs), values are Agent Names
-AGENT_SESSIONS = {}
 
 def _get_agent_connections(state, agent_name):
     """
@@ -164,11 +160,8 @@ async def agent(ctx: Context) -> str:
         
     name = result["name"]
     
-    # Session Binding (Simplified for User Preference)
-    # We still track sessions for basic transport validity, but we won't warn about collisions
-    # as single-pipe local simulations are a valid use case.
-    AGENT_SESSIONS[ctx.session] = name
-    logger.log("INFO", "System", f"[{name}] Registered (Session {id(ctx.session)})")
+    # Note: AGENT_SESSIONS is no longer used for identification to support multi-agent sessions (Cursor)
+    # logger.log("INFO", "System", f"[{name}] Registered (Session {id(ctx.session)})")
     
     # Load state once
     state = engine.state.load()
@@ -253,32 +246,21 @@ async def talk(
         to: The name of the agent who should speak next. (The message is always visible to them).
         audience: (Optional) List of other agents who can see a Private message.
     """
-    # 0. Resolve Sender Identity
-    sender = None
-    
-    # Session Lookup
-    try:
-        sender = AGENT_SESSIONS.get(ctx.session)
-    except Exception:
-        sender = None
-        
-    # --- SMART INFERENCE (Turn-Based Identity) ---
-    # Disabled to prevent impersonation bugs. Agents are identified by Session.
-    # Turn enforcement is handled by wait_for_turn_async.
-    # current_turn = engine.state.load().get("turn", {}).get("current")
-    # if current_turn and (not sender or sender != current_turn):
-    #      # Implicitly trust: If it's your turn, and you are calling talk(), you are the turn holder.
-    #      sender = current_turn
-             
-    if not sender:
-         return "🚫 ERROR: Session not recognized. You must call 'agent()' first to register your identity."
+    # --- TURN-BASED IDENTITY ---
+    # We strictly use the current turn holder as the sender.
+    # We wait until it's an agent turn (not User).
+    while True:
+        state = engine.state.load()
+        sender = state.get("turn", {}).get("current")
+        if sender and sender != "User":
+            break
+        await asyncio.sleep(1)
 
     # --- SECURITY: WHITELIST CHECK ---
     # Prevent "Ghost" agents from talking
-    valid_agents = list(engine.state.load().get("agents", {}).keys())
-    # User is always valid (if they manage to call this, which is rare via tool, but possible)
-    if sender != "User" and sender not in valid_agents:
-        return f"🚫 SECURITY ALERT: '{sender}' is not a registered agent and cannot speak."
+    valid_agents = list(state.get("agents", {}).keys())
+    if sender not in valid_agents:
+        return f"🚫 SECURITY ALERT: '{sender}' is not a registered agent."
 
     next_agent = to
 
@@ -572,16 +554,13 @@ async def sleep(seconds: int, ctx: Context) -> str:
         warning = f"⚠️ WARNING: Requested sleep of {seconds}s exceeds limit. Capped at {MAX_SLEEP}s.\n"
         seconds = MAX_SLEEP
     
-    # 0. Identify Agent (Trust Turn)
-    try:
-        agent_name = AGENT_SESSIONS.get(ctx.session)
-    except Exception:
-        agent_name = None
-        
-    current_turn = engine.state.load().get("turn", {}).get("current")
-    if current_turn and (not agent_name or agent_name != current_turn):
-         # Inference
-         agent_name = current_turn
+    # --- TURN-BASED IDENTITY ---
+    while True:
+        state = engine.state.load()
+        agent_name = state.get("turn", {}).get("current")
+        if agent_name and agent_name != "User":
+            break
+        await asyncio.sleep(1)
          
     # 1. Update Status to Sleeping
     if agent_name:
@@ -653,21 +632,14 @@ async def note(content: str, ctx: Context) -> str:
     """
     MAX_CHARS = 5000
     
-    # 0. Identify Agent
-    try:
-        agent_name = AGENT_SESSIONS.get(ctx.session)
-    except Exception:
-        agent_name = None
-    
-    # --- SMART INFERENCE (Turn-Based Identity) ---
-    current_turn = engine.state.load().get("turn", {}).get("current")
-    if current_turn and (not agent_name or agent_name != current_turn):
-         # Blindly trust the turn holder for notes as well
-         agent_name = current_turn
+    # --- TURN-BASED IDENTITY ---
+    while True:
+        state = engine.state.load()
+        agent_name = state.get("turn", {}).get("current")
+        if agent_name and agent_name != "User":
+            break
+        await asyncio.sleep(1)
 
-    if not agent_name:
-         return "🚫 ERROR: Session not recognized. You must call 'agent()' first to register your identity."
-         
     # 1. Validate Length
     if len(content) > MAX_CHARS:
         return f"🚫 ERROR: Note content too long ({len(content)} chars). Limit is {MAX_CHARS}. Please summarize and retry."

@@ -232,6 +232,19 @@ class Engine:
                 if c.get("authorized", True):
                     allowed_targets[c["target"]] = c["context"]
             
+            # Anti-Ghost Check (Sprint 6)
+            if from_agent != "User":
+                turn_data = state.get("turn", {})
+                turn_start = turn_data.get("turn_start_time", 0.0)
+                last_user = turn_data.get("last_user_message_time", 0.0)
+                
+                # If User spoke AFTER turn started
+                if last_user > turn_start:
+                     # We allow a small epsilon? No, strict.
+                     import sys
+                     print(f"[Anti-Ghost] BLOCK: Action rejected. User Msg Time {last_user} > Turn Start {turn_start}", file=sys.stderr)
+                     return "🚫 INTERACTION REJECTED: User posted new messages while you were thinking. Please read the conversation history again and respond to the new context."
+
             # A. Capability Checks
             is_open = "open" in caps
 
@@ -343,8 +356,18 @@ class Engine:
                 pass
             else:
                 old_turn = state["turn"].get("current")
+                
+                # Update Logic timestamps
+                current_time = time.time()
+                if from_agent == "User":
+                    state["turn"]["last_user_message_time"] = current_time
+                
                 state["turn"]["current"] = next_agent
                 state["turn"]["next"] = None # Consumed
+
+                # Reset Turn Timer if Turn Changed
+                if next_agent != old_turn:
+                    state["turn"]["turn_start_time"] = current_time
                 
                 # UPDATE CONSECUTIVE COUNT
                 if next_agent == old_turn:
