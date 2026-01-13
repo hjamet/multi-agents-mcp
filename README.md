@@ -97,4 +97,5 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
 - **Scénario** : Équipe de Développement Logiciel (Neural Stream Refactor)
 - **Configuration** : Planner, Builder, Challenger
 - **État** : 🟢 **COMPLETE**. Sprint 5: Discord Ultimate Experience.
-- **Agent Antigravity** : Connecté en tant que **Planner**.
+- **Agent Anais** : Connecté (Debug & Validation).
+- **Résultat** : ✅ Tests Techniques Validés (Comms, Fichiers, Mémoire, Privé).

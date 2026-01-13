@@ -97,14 +97,43 @@ def inject_custom_css():
         box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
 
-    #urgent-toggle-wrapper {
-        background: #f8f9fa;
-        padding: 2px 12px;
-        border-radius: 20px;
-        border: 1px solid #eee;
-        display: inline-flex;
-        align-items: center;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    /* Premium Toggle Styling (Targeting the specific widget) */
+    div[data-testid="stToggle"] {
+        background: #ffffff;
+        padding: 10px 24px !important;
+        border-radius: 50px !important;
+        border: 1px solid #ff4b4b22 !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.06) !important;
+        transition: all 0.3s ease !important;
+        width: fit-content !important;
+        margin: 10px auto !important;
+    }
+    
+    div[data-testid="stToggle"]:hover {
+        border-color: #ff4b4b !important;
+        box-shadow: 0 6px 20px rgba(255,75,75,0.12) !important;
+        transform: translateY(-1px);
+    }
+
+    /* Target only the main content area toggles to avoid breaking sidebar */
+    .stMain div[data-testid="stToggle"] {
+        display: flex;
+        justify-content: center;
+    }
+
+    div[data-testid="stToggle"] label {
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        margin: 0 !important;
+    }
+
+    div[data-testid="stToggle"] label p {
+        font-weight: 700 !important;
+        font-size: 0.95em !important;
+        color: #1a1a1a !important;
+        margin: 0 !important;
+        letter-spacing: -0.2px !important;
     }
     
     .target-badge {
@@ -134,16 +163,23 @@ def inject_custom_css():
     .typing-container {
         display: flex;
         align-items: center;
-        padding: 2px 0;
+        justify-content: center;
+        padding: 6px 16px;
         color: #666;
-        font-size: 0.8em;
+        font-size: 0.85em;
         font-style: italic;
+        background: rgba(0,0,0,0.03);
+        border-radius: 20px;
+        margin: 10px auto;
+        width: fit-content;
+        border: 1px solid rgba(0,0,0,0.05);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     }
     .typing-dots {
-        display: flex; gap: 3px; margin-left: 6px;
+        display: flex; gap: 4px; margin-left: 8px;
     }
     .typing-dot {
-        width: 4px; height: 4px; background: #999; border-radius: 50%;
+        width: 5px; height: 5px; background: #999; border-radius: 50%;
         animation: typing-bounce 1.4s infinite ease-in-out;
     }
     .typing-dot:nth-child(1) { animation-delay: -0.32s; }
@@ -227,6 +263,11 @@ def load_scenario_dialog():
             path = path_map[selected_label]
             with open(path, "r") as f:
                 new_conf = json.load(f)
+            
+            # Recalculate total_agents for consistency
+            if "profiles" in new_conf:
+                new_conf["total_agents"] = get_total_agents(new_conf["profiles"])
+                
             save_config(new_conf)
             st.success(f"Configuration '{selected_label}' chargée !")
             time.sleep(1)
@@ -735,7 +776,8 @@ if st.session_state.page == "Communication":
     with c_status:
         current_turn = turn.get("current", "?")
         if current_turn == "User":
-            st.markdown("""<div style="background-color: #fff3cd; border: 1px solid #ffeeba; padding: 10px; border-radius: 8px; text-align: center; animation: pulse 2s infinite;"><span style="color: #856404; font-weight: bold; font-size: 1.1em;">⚡ À VOUS DE JOUER</span></div><style>@keyframes pulse {0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }}</style>""", unsafe_allow_html=True)
+            st.markdown("""<div style="background-color: #fff3cd; border: 2px solid #ff3d00; padding: 15px; border-radius: 8px; text-align: center; animation: pulse 2s infinite; margin-bottom: 10px;"><span style="color: #bf360c; font-weight: 900; font-size: 1.4em; text-transform: uppercase; letter-spacing: 1px;">⚡ À VOUS DE JOUER ⚡</span><br><span style="font-size: 0.9em; color: #a00;">Le système attend votre réponse.</span></div><style>@keyframes pulse {0% { box-shadow: 0 0 0 0 rgba(255, 61, 0, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(255, 61, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 61, 0, 0); }}</style>""", unsafe_allow_html=True)
+            st.toast("⚡ C'EST À VOUS DE JOUER !", icon="⚡")
         else:
             st.markdown(f"""<div style="background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; border-radius: 8px; text-align: center;"><span style="color: #6c757d; font-size: 0.9em;">En attente de :</span><br><span style="color: #1f1f1f; font-weight: bold; font-size: 1.1em;">🤖 {current_turn}</span></div>""", unsafe_allow_html=True)
     
@@ -759,7 +801,9 @@ if st.session_state.page == "Communication":
 
     stream_msgs = []
     for i, m in enumerate(messages):
-        is_relevant = m.get("public", False) or m.get("target") == "User" or m.get("from") == "User"
+        # GOD MODE: Always True to allow Admin (User) to see everything
+        is_relevant = True 
+        # is_relevant = m.get("public", False) or m.get("target") == "User" or m.get("from") == "User"
         if is_relevant:
             # FILTER LOGIC
             if is_urgent_focus:
@@ -819,8 +863,8 @@ if st.session_state.page == "Communication":
                 tag_html = f'<span class="status-tag">📤 Outgoing to {target}</span>'
                 bubble_style = "background-color: #ffffff; border-left: 4px solid #94a3b8;"
             else:
-                tag_html = f'<span class="status-tag direct-tag">🔒 Private {sender} → {target}</span>'
-                bubble_style = "background-color: #f8fafc; border-left: 4px solid #64748b;"
+                tag_html = f'<span class="status-tag direct-tag" style="background: #ffebee; color: #c62828;">🔒 Private {sender} → {target}</span>'
+                bubble_style = "background-color: #fff8f8; border: 2px dashed #ff4b4b;"
 
         with st.chat_message(sender, avatar=sender_emoji):
             # Header with sender, target and status tags
@@ -849,37 +893,37 @@ if st.session_state.page == "Communication":
                 st.rerun()
 
     # 2. Status & Focus Row
-    col_typ, col_foc = st.columns([1, 1])
+    # (No extra spacer here to avoid empty divs)
     
-    with col_typ:
-        typing_agents = []
-        current_turn_name = turn.get("current")
-        for name, info in agents.items():
-            if name == "User": continue
-            if info.get("status") == "working" or (name == current_turn_name and info.get("status") == "connected"):
-                typing_agents.append(name)
-        
-        if typing_agents:
-            agent_names = ", ".join(typing_agents)
-            plural = "sont" if len(typing_agents) > 1 else "est"
-            st.markdown(f'<div class="typing-container">{agent_names} {plural}...<div class="typing-dots"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>', unsafe_allow_html=True)
+    # 2a. Typing Indicator (Centered)
+    typing_agents = []
+    current_turn_name = turn.get("current")
+    for name, info in agents.items():
+        if name == "User": continue
+        if info.get("status") == "working" or (name == current_turn_name and info.get("status") == "connected"):
+            typing_agents.append(name)
     
-    with col_foc:
-        col_spacer, col_toggle = st.columns([1, 1])
-        with col_toggle:
-            st.markdown('<div id="urgent-toggle-wrapper">', unsafe_allow_html=True)
-            new_urgent_focus = st.toggle("🔍 Focus Urgences", value=is_urgent_focus, help="Affiche uniquement les messages non-répondus", key="urgent_toggle_v6")
-            st.markdown('</div>', unsafe_allow_html=True)
-            if new_urgent_focus != is_urgent_focus:
-                st.session_state.is_urgent_focus = new_urgent_focus
-                st.rerun()
+    if typing_agents:
+        agent_names = ", ".join(typing_agents)
+        plural = "sont" if len(typing_agents) > 1 else "est"
+        st.markdown(f'<div class="typing-container">{agent_names} {plural} en train d\'écrire...<div class="typing-dots"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>', unsafe_allow_html=True)
+    
+    # 2b. Focus Toggle (Centered & Premium)
+    c1, c2, c3 = st.columns([1, 1, 1])
+    with c2:
+        new_urgent_focus = st.toggle("🔍 Focus Urgences", value=is_urgent_focus, key="urgent_toggle_v6")
+    
+    if new_urgent_focus != is_urgent_focus:
+        st.session_state.is_urgent_focus = new_urgent_focus
+        st.rerun()
 
     # --- OMNI-CHANNEL INPUT ---
     # Target Selector (REPLACED BY MENTIONS)
     connected_agents = sorted([name for name, d in agents.items() if d.get("status") == "connected" and name != "User"])
     
     # We still need this for the mention system to know the list, adding everyone
-    inject_mention_system(["everyone"] + connected_agents)
+    # FIXED: Moved injection to bottom to ensure DOM readiness
+    # inject_mention_system(["everyone"] + connected_agents)
 
     # Main Input
     if prompt := st.chat_input("Message..."):
@@ -972,6 +1016,9 @@ if st.session_state.page == "Communication":
         st.session_state.reply_to = None
         st.toast(res)
         st.rerun()
+
+    # MENTIONS INJECTION (Moved to bottom)
+    inject_mention_system(["everyone"] + connected_agents)
 
 # ==========================================
 # PAGE: COCKPIT (Admin)
@@ -1092,9 +1139,16 @@ elif st.session_state.page == "Cockpit":
                 s["turn"] = {"current": "User", "next": None, "first_agent": first_speaker_choice}
                 s["config"]["context"] = global_context
                 
+                # Use profiles from the state s for absolute consistency
+                current_profiles = s["config"].get("profiles", [])
+                
+                # Update total agents count
+                total_count = get_total_agents(current_profiles)
+                s["config"]["total_agents"] = total_count
+                
                 pending_slots = []
                 import random
-                for p in profiles:
+                for p in current_profiles:
                     for _ in range(int(p.get("count", 0))):
                         pending_slots.append({
                             "profile_ref": p["name"],

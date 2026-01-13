@@ -2,6 +2,13 @@
 
 Toutes les modifications notables de ce projet seront documentées dans ce fichier.
 
+## [1.3.1] - 2026-01-13
+
+### 🐛 Bug Fixes
+- **Robustesse du démarrage** : Correction d'un bug majeur où les agents restaient bloqués dans l'attente du réseau ("Network Ready") en raison d'un décompte `total_agents` incohérent.
+    - `logic.py` utilise désormais le nombre réel d'agents enregistrés (`len(agents)`) au lieu d'une valeur de configuration potentiellement erronée.
+    - `app.py` recalcule systématiquement le nombre d'agents lors du chargement de presets ou du reset de la simulation.
+
 ## [1.3.0] - 2026-01-12
 
 ### ✨ Fonctionnalités Majeures (Discord-Native Upgrade)

@@ -93,7 +93,9 @@ class Engine:
         agents = state.get("agents", {})
         config = state.get("config", {})
         
-        total = config.get("total_agents", 0)
+        # Robustness: use the actual number of agents defined in the state
+        # rather than a potentially out-of-sync config value.
+        total = len(agents) if agents else config.get("total_agents", 0)
         connected = sum(1 for a in agents.values() if a.get("status") == "connected")
         
         other_agents = [n for n, d in agents.items() if d.get("status") == "connected" and n != agent_name]
