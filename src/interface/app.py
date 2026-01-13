@@ -945,10 +945,15 @@ if st.session_state.page == "Communication":
                 if target and target != "all" and target in s.get("agents", {}):
                     next_speaker = target
                 else:
-                    # Pass to the first connected agent if no specific target
-                    connected = [n for n, d in s.get("agents", {}).items() if d.get("status") == "connected"]
-                    if connected:
-                        next_speaker = connected[0]
+                    # Priority 1: first_agent defined during reset
+                    first_pref = s.get("turn", {}).get("first_agent")
+                    if first_pref and first_pref in s.get("agents", {}):
+                        next_speaker = first_pref
+                    else:
+                        # Fallback to the first connected agent
+                        connected = [n for n, d in s.get("agents", {}).items() if d.get("status") == "connected"]
+                        if connected:
+                            next_speaker = connected[0]
                 
                 if next_speaker:
                     s["turn"]["current"] = next_speaker
@@ -1044,7 +1049,7 @@ elif st.session_state.page == "Cockpit":
 
     # --- 2.5 FIRST SPEAKER SELECTOR ---
     st.subheader("🎯 Séquence de Départ")
-    potential_agents = ["User"]
+    potential_agents = []
     
     # Calculate potential agent IDs the same way reset_logic does
     temp_slots = []
@@ -1062,15 +1067,15 @@ elif st.session_state.page == "Cockpit":
 
     # Use session state to persist choice
     if "first_speaker" not in st.session_state:
-        st.session_state.first_speaker = "User"
+        st.session_state.first_speaker = potential_agents[0] if potential_agents else ""
 
     # Check if current choice is still valid (profiles might have changed)
     if st.session_state.first_speaker not in potential_agents:
-        st.session_state.first_speaker = "User"
+        st.session_state.first_speaker = potential_agents[0] if potential_agents else ""
 
-    selected_first = st.selectbox("Qui doit parler en premier ?", potential_agents,
-                                 index=potential_agents.index(st.session_state.first_speaker),
-                                 help="L'agent ou l'utilisateur qui aura le premier tour lors de l'initialisation.")
+    selected_first = st.selectbox("Qui répondra en premier à l'utilisateur ?", potential_agents,
+                                 index=potential_agents.index(st.session_state.first_speaker) if st.session_state.first_speaker in potential_agents else 0,
+                                 help="L'agent qui aura le premier tour pour répondre au premier message de l'utilisateur.")
     st.session_state.first_speaker = selected_first
 
     st.markdown("<br>", unsafe_allow_html=True)
@@ -1084,7 +1089,7 @@ elif st.session_state.page == "Cockpit":
             def reset_logic(s):
                 s["conversation_id"] = str(uuid.uuid4())
                 s["messages"] = []
-                s["turn"] = {"current": None, "next": None}
+                s["turn"] = {"current": "User", "next": None, "first_agent": first_speaker_choice}
                 s["config"]["context"] = global_context
                 
                 pending_slots = []
@@ -1112,21 +1117,9 @@ elif st.session_state.page == "Cockpit":
                     }
                 s["agents"] = new_agents
                 
-                # Turn Management
-                first = None
-                if first_speaker_choice == "User":
-                    first = "User"
-                elif first_speaker_choice in new_agents:
-                    first = first_speaker_choice
-                elif new_agents:
-                    # Fallback to first available agent if choice is invalid for some reason
-                    first = list(new_agents.keys())[0]
-                
-                if first:
-                    s["turn"]["current"] = first
-                    s.setdefault("messages", []).append({
-                        "from": "System", "content": f"🟢 SIMULATION RESET. First Turn: {first}", "public": True, "timestamp": time.time()
-                    })
+                s.setdefault("messages", []).append({
+                    "from": "System", "content": f"🟢 SIMULATION RESET. En attente de l'utilisateur. (Premier répondant : {first_speaker_choice})", "public": True, "timestamp": time.time()
+                })
                 return "Réinitialisation terminée"
             msg = state_store.update(reset_logic)
             st.toast(msg)

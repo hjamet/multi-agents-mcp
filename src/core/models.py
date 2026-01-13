@@ -36,6 +36,7 @@ class AgentState(BaseSchema):
 class Turn(BaseSchema):
     current: Optional[str] = None
     next: Optional[str] = None
+    first_agent: Optional[str] = None
 
 class Message(BaseSchema):
     from_: str = Field(..., alias="from")
