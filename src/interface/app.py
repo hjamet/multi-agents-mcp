@@ -102,16 +102,14 @@ st.markdown("""
         box-shadow: none;
     }
     /* Agent Card Styling */
-    .agent-config-card {
+    [data-testid="stVerticalBlockBorderWrapper"] {
         background-color: white;
-        border: 1px solid #e0e0e0;
-        border-radius: 12px;
-        padding: 16px;
-        margin-bottom: 12px;
+        border-radius: 12px !important;
+        border: 1px solid #e0e0e0 !important;
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        transition: transform 0.2s;
+        transition: transform 0.2s, box-shadow 0.2s;
     }
-    .agent-config-card:hover {
+    [data-testid="stVerticalBlockBorderWrapper"]:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 12px rgba(0,0,0,0.1);
     }
@@ -130,12 +128,32 @@ st.markdown("""
         font-size: 0.85em;
         color: #666;
         margin-bottom: 12px;
-        min-height: 3em;
+        min-height: 4em;
+        line-height: 1.4;
+    }
+    .agent-controls {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
     }
     .reset-button-container {
         display: flex;
         justify-content: center;
         padding: 20px;
+    }
+    @keyframes pulse-gold {
+        0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+    }
+    .active-turn {
+        animation: pulse-gold 2s infinite;
+        background-color: #fffde7 !important;
+        border: 2px solid #ffd700 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -183,9 +201,11 @@ with st.sidebar:
     st.divider()
 
     # 2. PERMANENT ROSTER (v2.0)
-    st.markdown("""
-        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-            <h3 style="margin: 0;">👥 Agents Actifs</h3>
+    connected_count = len([n for n, d in agents.items() if n != "User" and d.get("status") == "connected"])
+    st.markdown(f"""
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+            <h3 style="margin: 0; font-size: 1.2em;">👥 Agents Actifs</h3>
+            <span style="background: #e0e0e0; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; font-weight: bold;">{connected_count}</span>
         </div>
     """, unsafe_allow_html=True)
     
@@ -215,40 +235,39 @@ with st.sidebar:
             emoji = info.get("emoji", "🤖")
             is_turn = (name == current_turn)
             
+            card_class = "active-turn" if is_turn else ""
+            
             if status == "connected":
                 status_color = "#4CAF50" # Green
-                status_label = "Actif"
-                bg = "rgba(76, 175, 80, 0.1)"
-                border = "1px solid rgba(76, 175, 80, 0.2)"
+                status_label = "En ligne"
+                bg = "rgba(76, 175, 80, 0.05)"
+                border_color = "rgba(76, 175, 80, 0.2)"
             elif status == "pending_connection":
                 status_color = "#FF9800" # Orange
-                status_label = "Connexion..."
-                bg = "rgba(255, 152, 0, 0.1)"
-                border = "1px solid rgba(255, 152, 0, 0.2)"
+                status_label = "Initialisation..."
+                bg = "rgba(255, 152, 0, 0.05)"
+                border_color = "rgba(255, 152, 0, 0.2)"
             else:
                 status_color = "#9E9E9E" # Grey
-                status_label = "Inactif"
+                status_label = "Hors-ligne"
                 bg = "transparent"
-                border = "1px solid #eee"
+                border_color = "#eee"
             
-            # Highlight if it's their turn
-            if is_turn:
-                bg = "#fff9c4" # Light yellow
-                border = "2px solid #fbc02d"
-                animation = "animation: pulse 2s infinite;"
-            else:
-                animation = ""
-
             st.markdown(f"""
-            <div style="background-color: {bg}; border: {border}; border-radius: 8px; padding: 8px 12px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; {animation}">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="font-size: 1.2em;">{emoji}</span>
-                    <span style="font-weight: {'bold' if is_turn else 'normal'}; color: #333;">{name}</span>
+            <div class="{card_class}" style="background-color: {bg}; border: 1px solid {border_color}; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s ease;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="font-size: 1.4em; background: white; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        {emoji}
+                    </div>
+                    <div style="display: flex; flex-direction: column;">
+                        <span style="font-weight: 600; color: {'#1a1a1a' if status == 'connected' else '#666'}; font-size: 0.95em;">{name}</span>
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <div style="width: 6px; height: 6px; background-color: {status_color}; border-radius: 50%;"></div>
+                            <span style="font-size: 0.7em; color: {status_color}; font-weight: 500; letter-spacing: 0.5px;">{status_label}</span>
+                        </div>
+                    </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 5px;">
-                    <div style="width: 8px; height: 8px; background-color: {status_color}; border-radius: 50%;"></div>
-                    <span style="font-size: 0.75em; color: {status_color}; font-weight: 600; text-transform: uppercase;">{status_label}</span>
-                </div>
+                {f'<span style="font-size: 1.2em;" title="C\'est son tour !">✨</span>' if is_turn else ''}
             </div>
             """, unsafe_allow_html=True)
             
@@ -546,34 +565,32 @@ elif st.session_state.page == "Cockpit":
             if i + j < len(profiles):
                 p = profiles[i + j]
                 with cols[j]:
-                    count = int(p.get("count", 0))
-                    emoji = p.get("emoji", "🤖")
-                    description = p.get("description", "Aucune description.")
-                    
-                    st.markdown(f"""
-                        <div class="agent-config-card">
+                    with st.container(border=True):
+                        count = int(p.get("count", 0))
+                        emoji = p.get("emoji", "🤖")
+                        description = p.get("description", "Aucune description.")
+                        
+                        st.markdown(f"""
                             <div class="agent-header">
                                 <span style="font-size: 1.5em;">{emoji}</span>
                                 <span class="agent-name">{p['name']}</span>
                             </div>
                             <div class="agent-desc">{description}</div>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    
-                    # Controls inside the column but outside the HTML for functionality
-                    ctrl_c1, ctrl_c2, ctrl_c3 = st.columns([1, 2, 1])
-                    if ctrl_c1.button("➖", key=f"d_{i+j}", use_container_width=True):
-                        p["count"] = max(0, count - 1)
-                        save_config(config)
-                        st.rerun()
-                    
-                    ctrl_c2.markdown(f"<h3 style='text-align: center; margin: 0;'>{count}</h3>", unsafe_allow_html=True)
-                    
-                    if ctrl_c3.button("➕", key=f"i_{i+j}", use_container_width=True):
-                        p["count"] = count + 1
-                        save_config(config)
-                        st.rerun()
-                    st.markdown("<br>", unsafe_allow_html=True)
+                        """, unsafe_allow_html=True)
+                        
+                        # Controls inside the card (container)
+                        ctrl_c1, ctrl_c2, ctrl_c3 = st.columns([1, 1.5, 1])
+                        if ctrl_c1.button("➖", key=f"d_{i+j}", use_container_width=True):
+                            p["count"] = max(0, count - 1)
+                            save_config(config)
+                            st.rerun()
+                        
+                        ctrl_c2.markdown(f"<h3 style='text-align: center; margin: 0; line-height: 1.5;'>{count}</h3>", unsafe_allow_html=True)
+                        
+                        if ctrl_c3.button("➕", key=f"i_{i+j}", use_container_width=True):
+                            p["count"] = count + 1
+                            save_config(config)
+                            st.rerun()
 
     st.markdown("---")
     
