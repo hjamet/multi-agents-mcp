@@ -29,12 +29,17 @@ if [ ! -d "$INSTALL_DIR" ]; then
     echo "Cloning repository..."
     git clone https://github.com/hjamet/multi-agents-mcp.git "$INSTALL_DIR"
 else
-    echo "Directory exists. Pulling latest changes..."
-    # If it's a git repo, pull. Otherwise, user might be testing locally.
+    echo "Directory exists. Updating..."
     if [ -d "$INSTALL_DIR/.git" ]; then
-        cd "$INSTALL_DIR" && git pull && cd - > /dev/null
+        cd "$INSTALL_DIR"
+        # Reset any local changes and pull
+        git fetch origin
+        git reset --hard origin/main
+        cd - > /dev/null
     else
-        echo "Not a git repository, skipping pull."
+        echo -e "${YELLOW}⚠️  Existing directory is not a git repo. Re-installing...${NC}"
+        rm -rf "$INSTALL_DIR"
+        git clone https://github.com/hjamet/multi-agents-mcp.git "$INSTALL_DIR"
     fi
 fi
 
