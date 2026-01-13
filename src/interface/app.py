@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 from streamlit_autorefresh import st_autorefresh
 import graphviz
 import json
@@ -45,10 +46,19 @@ def get_total_agents(profiles):
 
 def format_mentions(text):
     if not text: return text
+    
+    # 1. First decorate @everyone
+    text = re.sub(
+        r'(@everyone)',
+        r'<span style="color: #ffffff; background-color: #ff4b4b; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.9em; box-shadow: 0 2px 4px rgba(255,75,75,0.3);">\1</span>',
+        text
+    )
+    
+    # 2. Then decorate @AgentName
     # Regex for @Name (handling spaces/hashes for Agent IDs)
     return re.sub(
-        r'(@[a-zA-Z0-9_ #]+)', 
-        r'<span style="color: #1565C0; background-color: #E3F2FD; padding: 2px 6px; border-radius: 12px; font-weight: 600; display: inline-block;">\1</span>', 
+        r'(@(?!everyone)[a-zA-Z0-9_ #]+)', 
+        r'<span style="color: #ffffff; background-color: #1565C0; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.9em; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 2px 4px rgba(0,0,0,0.1);">\1</span>', 
         text
     )
 
@@ -73,6 +83,183 @@ def render_graph(profiles, current_editing=None):
             if is_auth and any(prof["name"] == target for prof in profiles):
                 graph.edge(source, target, fontsize='8', color='gray', arrowsize='0.5')
     return graph
+
+def inject_mention_system(agent_names):
+    import json
+    agents_json = json.dumps(agent_names)
+    
+    components_code = f"""
+    <script>
+    (function() {{
+        const agents = {agents_json};
+        let selectedIndex = 0;
+        let isVisible = false;
+        let currentFilter = "";
+
+        function setupMentions() {{
+            const doc = window.parent.document;
+            const textarea = doc.querySelector('textarea[data-testid="stChatInputTextArea"]');
+            
+            if (!textarea) {{
+                setTimeout(setupMentions, 500);
+                return;
+            }}
+
+            // Avoid double initialization
+            if (textarea.dataset.mentionAdded === 'true') return;
+            textarea.dataset.mentionAdded = 'true';
+
+            let menu = doc.getElementById('mention-menu');
+            if (!menu) {{
+                menu = doc.createElement('div');
+                menu.id = 'mention-menu';
+                Object.assign(menu.style, {{
+                    display: 'none',
+                    position: 'fixed',
+                    background: 'white',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                    zIndex: '999999',
+                    maxHeight: '200px',
+                    overflowY: 'auto',
+                    minWidth: '200px',
+                    fontFamily: 'sans-serif'
+                }});
+                doc.body.appendChild(menu);
+            }}
+
+            // Inject styles into parent
+            if (!doc.getElementById('mention-styles')) {{
+                const style = doc.createElement('style');
+                style.id = 'mention-styles';
+                style.innerHTML = `
+                    .mention-item:hover {{
+                        background-color: #f0f2f6 !important;
+                    }}
+                `;
+                doc.head.appendChild(style);
+            }}
+
+            textarea.addEventListener('input', (e) => {{
+                if (e.isComposing) return;
+                const value = textarea.value;
+                const cursorPos = textarea.selectionStart;
+                const textBeforeCursor = value.substring(0, cursorPos);
+                const mentionMatch = textBeforeCursor.match(/@([\\w\\s#]*)$/);
+
+                if (mentionMatch) {{
+                    isVisible = true;
+                    currentFilter = mentionMatch[1].toLowerCase();
+                    renderMenu(textarea);
+                }} else {{
+                    hideMenu();
+                }}
+            }});
+
+            textarea.addEventListener('keydown', (e) => {{
+                if (!isVisible) return;
+
+                const filtered = agents.filter(a => a.toLowerCase().includes(currentFilter));
+                if (filtered.length === 0) return;
+                
+                if (e.key === 'ArrowDown') {{
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    selectedIndex = (selectedIndex + 1) % filtered.length;
+                    renderMenu(textarea);
+                }} else if (e.key === 'ArrowUp') {{
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    selectedIndex = (selectedIndex - 1 + filtered.length) % filtered.length;
+                    renderMenu(textarea);
+                }} else if (e.key === 'Enter' || e.key === 'Tab') {{
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    insertMention(textarea, filtered[selectedIndex]);
+                }} else if (e.key === 'Escape') {{
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    hideMenu();
+                }}
+            }}, true);
+        }}
+
+        function renderMenu(textarea) {{
+            const doc = window.parent.document;
+            const menu = doc.getElementById('mention-menu');
+            const filtered = agents.filter(a => a.toLowerCase().includes(currentFilter));
+            
+            if (filtered.length === 0) {{
+                hideMenu();
+                return;
+            }}
+
+            menu.innerHTML = filtered.map((a, i) => `
+                <div class="mention-item" style="
+                    padding: 8px 12px;
+                    cursor: pointer;
+                    background: ${{i === selectedIndex ? '#f0f2f6' : 'transparent'}};
+                    border-bottom: 1px solid #eee;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    color: ${{a === 'everyone' ? '#ff4b4b' : '#31333F'}};
+                    font-size: 14px;
+                ">
+                    <span style="font-weight: ${{i === selectedIndex ? '600' : '400'}};">@${{a}}</span>
+                    ${{a === 'everyone' ? '<span style="font-size: 10px; background: #ff4b4b; color: white; padding: 1px 4px; border-radius: 4px; margin-left: 5px;">PUBLIC</span>' : ''}}
+                </div>
+            `).join('');
+
+            const rect = textarea.getBoundingClientRect();
+            menu.style.display = 'block';
+            menu.style.left = rect.left + 'px';
+            
+            // Position above the textarea
+            menu.style.bottom = (window.parent.innerHeight - rect.top + 10) + 'px';
+            isVisible = true;
+        }}
+
+        function insertMention(textarea, name) {{
+            const value = textarea.value;
+            const cursorPos = textarea.selectionStart;
+            const textBeforeCursor = value.substring(0, cursorPos);
+            const textAfterCursor = value.substring(cursorPos);
+            
+            const newTextBefore = textBeforeCursor.replace(/@([\\w\\s#]*)$/, '@' + name + ' ');
+            const newValue = newTextBefore + textAfterCursor;
+
+            // Robust React state update
+            const nativeTextareaValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value").set;
+            nativeTextareaValueSetter.call(textarea, newValue);
+            
+            // Trigger events
+            textarea.dispatchEvent(new Event('input', {{ bubbles: true }}));
+            textarea.dispatchEvent(new Event('change', {{ bubbles: true }}));
+
+            textarea.focus();
+            // Move cursor to end of inserted mention
+            const newPos = newTextBefore.length;
+            textarea.setSelectionRange(newPos, newPos);
+            
+            hideMenu();
+        }}
+
+        function hideMenu() {{
+            const doc = window.parent.document;
+            const menu = doc.getElementById('mention-menu');
+            if (menu) menu.style.display = 'none';
+            isVisible = false;
+            selectedIndex = 0;
+        }}
+
+        // Initial setup
+        setupMentions();
+    }})();
+    </script>
+    """
+    components.html(components_code, height=0)
 
 # --- MAIN LOGIC ---
 
@@ -184,8 +371,18 @@ with st.sidebar:
     # 1. Identity / User Status
     st.markdown("### 👤 Identity")
     user_status = config.get("user_availability", "busy")
-    status_icon = "🟢" if user_status == "available" else "🔴"
-    st.info(f"User Status: **{user_status.upper()}** {status_icon}")
+    
+    # User status toggle
+    is_available = st.toggle("Available", value=(user_status == "available"), help="Switch between Available (🟢) and Busy (🔴)")
+    new_status = "available" if is_available else "busy"
+    
+    if new_status != user_status:
+        config["user_availability"] = new_status
+        save_config(config)
+        st.rerun()
+
+    status_icon = "🟢" if new_status == "available" else "🔴"
+    st.info(f"User Status: **{new_status.upper()}** {status_icon}")
 
     # Language
     st.markdown("### 🌐 Language")
@@ -247,11 +444,22 @@ with st.sidebar:
                 status_label = "Initialisation..."
                 bg = "rgba(255, 152, 0, 0.05)"
                 border_color = "rgba(255, 152, 0, 0.2)"
+            elif status == "working":
+                status_color = "#2196F3" # Blue
+                status_label = "Travaille..."
+                bg = "rgba(33, 150, 243, 0.05)"
+                border_color = "rgba(33, 150, 243, 0.2)"
             else:
                 status_color = "#9E9E9E" # Grey
                 status_label = "Hors-ligne"
                 bg = "transparent"
                 border_color = "#eee"
+            
+            # Additional pulse if it's their turn and they are connected
+            is_active_working = is_turn and status == "connected"
+            if is_active_working:
+                status_color = "#2196F3"
+                status_label = "En action..."
             
             st.markdown(f"""
             <div class="{card_class}" style="background-color: {bg}; border: 1px solid {border_color}; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s ease;">
@@ -427,13 +635,11 @@ if st.session_state.page == "Communication":
                 st.session_state.reply_to = None
                 st.rerun()
 
-    # 2. Target Selector (Helper v2.0)
+    # 2. Target Selector (REPLACED BY MENTIONS)
     connected_agents = sorted([name for name, d in agents.items() if d.get("status") == "connected" and name != "User"])
     
-    target_options = ["📢 Tous (Broadcast)"] + connected_agents
-    
-    # Use selectbox for explicit targeting
-    target_sel = st.selectbox("🎯 Destinataire", target_options, label_visibility="visible")
+    # We still need this for the mention system to know the list, adding everyone
+    inject_mention_system(["everyone"] + connected_agents)
 
     # 3. Main Input
     if prompt := st.chat_input("Message..."):
@@ -453,24 +659,31 @@ if st.session_state.page == "Communication":
             # 3. Public
             
             found_mention = False
-            known_agents = sorted(list(agents.keys()), key=len, reverse=True)
-            for name in known_agents:
-                if f"@{name}" in prompt:
-                    target = name
-                    public = False
-                    found_mention = True
-                    break
+            
+            # Special case: @everyone forces public broadcast
+            if "@everyone" in prompt:
+                target = "all"
+                public = True
+                found_mention = True
+            else:
+                known_agents = sorted(list(agents.keys()), key=len, reverse=True)
+                for name in known_agents:
+                    if f"@{name}" in prompt:
+                        target = name
+                        public = False
+                        found_mention = True
+                        break
             
             if not found_mention:
                 if st.session_state.reply_to:
-                     # Reply Context overrides Selector? Tech Lead didn't mention Context in v2.0 logic.
-                     # But it exists in UI. Usually Reply Context implies Target.
+                     # Reply Context overrides Selector
                      target = st.session_state.reply_to["sender"]
                      reply_ref_id = st.session_state.reply_to["id"]
                      public = False
-                elif target_sel != "📢 Tous (Broadcast)":
-                    target = target_sel
-                    public = False
+                else:
+                    # No mention, no reply context -> Public Broadcast
+                    target = "all"
+                    public = True
             
             msg = {
                 "from": "User",
@@ -516,11 +729,8 @@ elif st.session_state.page == "Cockpit":
     if not os.path.exists(preset_dir):
         os.makedirs(preset_dir, exist_ok=True)
     
-    # Standard Layout for Scenarios and Global Context
-    c1, c2 = st.columns([1, 1])
-    
-    with c1:
-        st.subheader("💾 Scénarios")
+    # Scenarios (Moved here under Topology)
+    with st.expander("💾 Scénarios", expanded=False):
         with st.container(border=True):
             save_name = st.text_input("Nom de Sauvegarde", placeholder="scenaro_1")
             if st.button("Sauvegarder", use_container_width=True):
@@ -542,15 +752,15 @@ elif st.session_state.page == "Cockpit":
                     save_config(new_conf)
                     st.rerun()
 
-    with c2:
-        st.subheader("🌍 Contexte Global")
-        with st.container(border=True):
-            global_context = st.text_area("Narratif / Contexte Partagé", config.get("context", ""), height=215)
-            if global_context != config.get("context", ""):
-                if st.button("Mettre à jour le Contexte", use_container_width=True):
-                    config["context"] = global_context
-                    save_config(config)
-                    st.success("Contexte mis à jour")
+    # Global Context (Full Width)
+    st.subheader("🌍 Contexte Global")
+    with st.container(border=True):
+        global_context = st.text_area("Narratif / Contexte Partagé", config.get("context", ""), height=215)
+        if global_context != config.get("context", ""):
+            if st.button("Mettre à jour le Contexte", use_container_width=True):
+                config["context"] = global_context
+                save_config(config)
+                st.success("Contexte mis à jour")
 
     st.divider()
     
@@ -579,7 +789,7 @@ elif st.session_state.page == "Cockpit":
                         """, unsafe_allow_html=True)
                         
                         # Controls inside the card (container)
-                        ctrl_c1, ctrl_c2, ctrl_c3 = st.columns([1, 1.5, 1])
+                        ctrl_c1, ctrl_c2, ctrl_c3, ctrl_c4 = st.columns([1, 1.5, 1, 1.5])
                         if ctrl_c1.button("➖", key=f"d_{i+j}", use_container_width=True):
                             p["count"] = max(0, count - 1)
                             save_config(config)
@@ -590,6 +800,11 @@ elif st.session_state.page == "Cockpit":
                         if ctrl_c3.button("➕", key=f"i_{i+j}", use_container_width=True):
                             p["count"] = count + 1
                             save_config(config)
+                            st.rerun()
+                            
+                        if ctrl_c4.button("✏️ Edit", key=f"ed_{i+j}", use_container_width=True):
+                            st.session_state.editing_agent_name = p["name"]
+                            st.session_state.page = "Editor"
                             st.rerun()
 
     st.markdown("---")
@@ -676,19 +891,19 @@ elif st.session_state.page == "Editor":
         st.markdown("---")
         # Layout Spacieux (Columns)
         cA, cB = st.columns(2)
-        new_name = cA.text_input("Nom", current_profile.get("name", ""))
-        disp = cB.text_input("Affichage", current_profile.get("display_name", ""))
+        new_name = cA.text_input("Nom", current_profile.get("name", ""), key=f"edit_name_{selected_name}")
+        disp = cB.text_input("Affichage", current_profile.get("display_name", ""), key=f"edit_disp_{selected_name}")
         
-        new_desc = st.text_input("Description", current_profile.get("description", ""))
-        new_prompt = st.text_area("System Prompt", current_profile.get("system_prompt", ""), height=300)
+        new_desc = st.text_input("Description", current_profile.get("description", ""), key=f"edit_desc_{selected_name}")
+        new_prompt = st.text_area("System Prompt", current_profile.get("system_prompt", ""), height=300, key=f"edit_prompt_{selected_name}")
         
         st.subheader("Capacités")
         caps = current_profile.get("capabilities", [])
         cc1, cc2, cc3, cc4 = st.columns(4)
-        has_pub = cc1.checkbox("Public", "public" in caps)
-        has_priv = cc2.checkbox("Private", "private" in caps)
-        has_aud = cc3.checkbox("Audience", "audience" in caps)
-        has_open = cc4.checkbox("Open Mode", "open" in caps)
+        has_pub = cc1.checkbox("Public", "public" in caps, key=f"cap_pub_{selected_name}")
+        has_priv = cc2.checkbox("Private", "private" in caps, key=f"cap_priv_{selected_name}")
+        has_aud = cc3.checkbox("Audience", "audience" in caps, key=f"cap_aud_{selected_name}")
+        has_open = cc4.checkbox("Open Mode", "open" in caps, key=f"cap_open_{selected_name}")
         
         new_caps = []
         if has_pub: new_caps.append("public")
@@ -700,33 +915,39 @@ elif st.session_state.page == "Editor":
         st.info("Définissez qui cet agent peut contacter et dans quel but (contexte stratégique).")
         
         other_profile_names = [p["name"] for p in profiles if p["name"] != current_profile.get("name")]
-        targets = ["public", "user"] + other_profile_names
+        # Standardize targets to title case for matching with state.json while keeping user/public accessible
+        targets = ["public", "User"] + other_profile_names
         
         new_connections = []
         
-        # Header
-        h1, h2, h3 = st.columns([2, 5, 1])
-        h1.markdown("**Cible**")
-        h2.markdown("**Condition / Contexte**")
-        h3.markdown("**Active**")
+        # Header for the "Table"
+        with st.container():
+            h1, h2, h3 = st.columns([2, 5, 1])
+            h1.markdown("**Cible**")
+            h2.markdown("**Condition / Contexte**")
+            h3.markdown("**Active**")
+            st.markdown("<hr style='margin-top: 0; margin-bottom: 10px; border-color: #eee;'>", unsafe_allow_html=True)
         
         for target in targets:
-            # Find existing connection
-            existing_conn = next((c for c in current_profile.get("connections", []) if c["target"] == target), None)
+            # Case-insensitive match for connections
+            existing_conn = next((c for c in current_profile.get("connections", []) if c["target"].lower() == target.lower()), None)
             
             c1, c2, c3 = st.columns([2, 5, 1])
-            c1.markdown(f"**{target}**")
+            
+            # Label
+            target_emoji = "🌐" if target == "public" else "👤" if target == "User" else "🤖"
+            c1.markdown(f"{target_emoji} **{target}**")
             
             default_ctx = existing_conn.get("context", "") if existing_conn else ""
             default_auth = existing_conn.get("authorized", False) if existing_conn else False
             
-            # Unique key is important to avoid collision between agents
-            # Use current_profile name as part of the key to ensure stability
-            ctx = c2.text_input(f"Condition for {target}", default_ctx, key=f"conn_ctx_{selected_name}_{target}", label_visibility="collapsed")
+            # Unique key with selected_name and target
+            ctx = c2.text_area(f"Condition for {target}", default_ctx, key=f"conn_ctx_{selected_name}_{target}", label_visibility="collapsed", height=68)
             auth = c3.checkbox(f"Active for {target}", default_auth, key=f"conn_auth_{selected_name}_{target}", label_visibility="collapsed")
             
             if auth or ctx:
                 new_connections.append({"target": target, "context": ctx, "authorized": auth})
+            st.markdown("<div style='margin-bottom: 5px;'></div>", unsafe_allow_html=True)
         
         if st.button("💾 Enregistrer Modifications", type="primary"):
             current_profile["name"] = new_name
