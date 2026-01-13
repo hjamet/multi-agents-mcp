@@ -1,5 +1,7 @@
-État des Tests Système Multi-Agent:
-1. Communication : VALIDE (User + Tom, Public + Prive)
-2. Lecture Fichier : VALIDE
-3. Mémoire : VALIDE (Anais.md + Tom.md)
-4. Phase : Validation Terminee. En attente instruction User.
+⚠️ MÉMOIRE RESTAURÉE (Suite au Git Reset)
+État Réel :
+1. Anti-Ghost : DÉSACTIVÉ (Rollback).
+2. User Unreachable : ACTIF (Le patch "Always Allow User" a été annulé).
+3. Situation : L'Utilisateur nous a stoppé ("Stop. Vous avez agi trop vite...").
+4. Consigne : Attendre l'explication de l'Utilisateur sur la *bonne* méthode pour le contacter.
+5. Statut : STANDBY.
