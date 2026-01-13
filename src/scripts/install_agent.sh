@@ -66,8 +66,8 @@ echo "{\"cwd\": \"\$CWD\"}" > "\$INSTALL_DIR/current_working_dir.json"
 
 # 2. Ensure local data directory exists
 mkdir -p "\$CWD/.multi-agent-mcp/memory"
-mkdir -p "\$CWD/.multi-agent-mcp/presets"
 mkdir -p "\$CWD/.multi-agent-mcp/logs"
+mkdir -p "\$INSTALL_DIR/presets"
 
 # 3. Launch Streamlit from the global installation
 # Unset VIRTUAL_ENV to avoid inheriting from the calling shell's env

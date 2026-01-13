@@ -1,0 +1,78 @@
+{
+  "messages": [
+    {
+      "from": "System",
+      "content": "\ud83d\udfe2 SIMULATION RESET. First Turn: User",
+      "public": true,
+      "timestamp": 1768315887.648594
+    },
+    {
+      "from": "User",
+      "content": "@everyone COucou ! :D",
+      "timestamp": 1768315912.6850283,
+      "public": true,
+      "audience": [],
+      "target": "all"
+    },
+    {
+      "from": "User",
+      "content": "Test",
+      "timestamp": 1768315926.3712268,
+      "public": true,
+      "audience": [],
+      "target": "all"
+    }
+  ],
+  "conversation_id": "4fb4a379-b701-447e-a9fc-b49d05cc02c0",
+  "turn": {
+    "current": "User",
+    "next": null
+  },
+  "agents": {
+    "Agent": {
+      "role": "You are a helpful assistant.",
+      "status": "pending_connection",
+      "profile_ref": "Agent",
+      "emoji": "\ud83e\udd16"
+    },
+    "Test": {
+      "role": "Test",
+      "status": "pending_connection",
+      "profile_ref": "Test",
+      "emoji": "\ud83e\udd16"
+    }
+  },
+  "config": {
+    "total_agents": 2,
+    "profiles": [
+      {
+        "name": "Agent",
+        "description": "Generic Agent",
+        "emoji": "\ud83e\udd89",
+        "system_prompt": "You are a helpful assistant.",
+        "connections": [],
+        "count": 1,
+        "capabilities": [
+          "public",
+          "private",
+          "audience"
+        ],
+        "display_name": ""
+      },
+      {
+        "name": "Test",
+        "description": "Test",
+        "connections": [],
+        "count": 1,
+        "capabilities": [
+          "public",
+          "open"
+        ],
+        "display_name": "",
+        "system_prompt": "Test"
+      }
+    ],
+    "language": "French",
+    "context": ""
+  }
+}

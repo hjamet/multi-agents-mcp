@@ -5,6 +5,7 @@ import json
 # Global Configuration Directory (Permanent install)
 GLOBAL_DIR = Path.home() / ".multi-agent-mcp"
 CWD_INFO_FILE = GLOBAL_DIR / "current_working_dir.json"
+GLOBAL_PRESET_DIR = GLOBAL_DIR / "presets"
 
 # Root of the code (where the python files are)
 CODE_ROOT = Path(__file__).resolve().parent.parent
@@ -37,8 +38,12 @@ STATE_FILE = LOCAL_DATA_DIR / "state.json"
 MEMORY_DIR = LOCAL_DATA_DIR / "memory"
 LOGS_DIR = LOCAL_DATA_DIR / "logs"
 
+# Global Presets (Scenarios) shared across all projects
+# GLOBAL_PRESET_DIR already defined above
+
 # Ensure essential directories exist
 TEMPLATE_DIR.mkdir(parents=True, exist_ok=True)
 LOCAL_DATA_DIR.mkdir(parents=True, exist_ok=True)
 MEMORY_DIR.mkdir(parents=True, exist_ok=True)
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
+GLOBAL_PRESET_DIR.mkdir(parents=True, exist_ok=True)
