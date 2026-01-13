@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
 
 # Resolve absolute path -> Now handled in src.config
-from src.config import PROJECT_ROOT, STATE_FILE
+from src.config import STATE_FILE
 
 # Type alias or check if we need to convert to str
 # Usually Path objects are fine in open(), but for safety/typing we use them directly
