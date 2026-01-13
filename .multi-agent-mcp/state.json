@@ -4,75 +4,94 @@
       "from": "System",
       "content": "\ud83d\udfe2 SIMULATION RESET. First Turn: User",
       "public": true,
-      "timestamp": 1768315887.648594
-    },
-    {
-      "from": "User",
-      "content": "@everyone COucou ! :D",
-      "timestamp": 1768315912.6850283,
-      "public": true,
-      "audience": [],
-      "target": "all"
-    },
-    {
-      "from": "User",
-      "content": "Test",
-      "timestamp": 1768315926.3712268,
-      "public": true,
-      "audience": [],
-      "target": "all"
+      "timestamp": 1768317926.9845126
     }
   ],
-  "conversation_id": "4fb4a379-b701-447e-a9fc-b49d05cc02c0",
+  "conversation_id": "4317d34f-8f80-4bff-976d-80817996e02b",
   "turn": {
     "current": "User",
     "next": null
   },
   "agents": {
-    "Agent": {
-      "role": "You are a helpful assistant.",
+    "Tom": {
+      "role": "Tu es simplement l\u00e0 pour discuter avec l'utilisateur et Anais et debuguer le syst\u00e8me de communication multi-agent afin de v\u00e9rifier que tout fonctionne bien :)",
       "status": "pending_connection",
-      "profile_ref": "Agent",
-      "emoji": "\ud83e\udd16"
+      "profile_ref": "Tom",
+      "emoji": "\ud83e\udd21"
     },
-    "Test": {
-      "role": "Test",
+    "Anais": {
+      "role": "Tu es simplement l\u00e0 pour discuter avec l'utilisateur et Anais et debuguer le syst\u00e8me de communication multi-agent afin de v\u00e9rifier que tout fonctionne bien :)",
       "status": "pending_connection",
-      "profile_ref": "Test",
-      "emoji": "\ud83e\udd16"
+      "profile_ref": "Anais",
+      "emoji": "\ud83e\udd98"
     }
   },
   "config": {
-    "total_agents": 2,
     "profiles": [
       {
-        "name": "Agent",
-        "description": "Generic Agent",
-        "emoji": "\ud83e\udd89",
-        "system_prompt": "You are a helpful assistant.",
-        "connections": [],
+        "name": "Tom",
+        "description": "Un agent",
+        "emoji": "\ud83e\udd21",
+        "connections": [
+          {
+            "target": "public",
+            "context": "",
+            "authorized": true
+          },
+          {
+            "target": "User",
+            "context": "",
+            "authorized": true
+          },
+          {
+            "target": "Anais",
+            "context": "",
+            "authorized": true
+          }
+        ],
         "count": 1,
         "capabilities": [
           "public",
           "private",
-          "audience"
-        ],
-        "display_name": ""
-      },
-      {
-        "name": "Test",
-        "description": "Test",
-        "connections": [],
-        "count": 1,
-        "capabilities": [
-          "public",
+          "audience",
           "open"
         ],
         "display_name": "",
-        "system_prompt": "Test"
+        "system_prompt": "Tu es simplement l\u00e0 pour discuter avec l'utilisateur et Anais et debuguer le syst\u00e8me de communication multi-agent afin de v\u00e9rifier que tout fonctionne bien :)"
+      },
+      {
+        "name": "Anais",
+        "description": "Une agent",
+        "emoji": "\ud83e\udd98",
+        "connections": [
+          {
+            "target": "public",
+            "context": "",
+            "authorized": true
+          },
+          {
+            "target": "User",
+            "context": "",
+            "authorized": true
+          },
+          {
+            "target": "Tom",
+            "context": "",
+            "authorized": true
+          }
+        ],
+        "count": 1,
+        "capabilities": [
+          "public",
+          "private",
+          "audience",
+          "open"
+        ],
+        "display_name": "",
+        "system_prompt": "Tu es simplement l\u00e0 pour discuter avec l'utilisateur et Anais et debuguer le syst\u00e8me de communication multi-agent afin de v\u00e9rifier que tout fonctionne bien :)"
       }
     ],
-    "language": "French",
-    "context": ""
+    "total_agents": 4,
+    "context": "SYST\u00c8ME DE D\u00c9VELOPPEMENT 'QUAD-CORE'.\n\nUne \u00e9quipe d'\u00e9lite divis\u00e9e par fonctions cognitives :\n1. **STRATEGY** (User/Vision)\n2. **ORCHESTRATION** (Plan/Roadmap)\n3. **EXECUTION** (Code/Perfection)\n4. **VERIFICATION** (Critique/Securit\u00e9)\n\nL'Orchestrator est le pivot central. Il ne doit pas laisser le Builder coder sans plan, ni le Challenger critiquer le vide."
   }
 }

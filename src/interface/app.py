@@ -58,8 +58,7 @@ def inject_custom_css():
     /* Global message container */
     [data-testid="stChatMessage"] {
         padding: 1rem !important;
-        margin-bottom: 1.2rem !important;
-        background: transparent !important;
+        margin-bottom: 1.5rem !important;
     }
     
     [data-testid="stChatMessage"] [data-testid="stVerticalBlock"] {
@@ -85,31 +84,27 @@ def inject_custom_css():
         background: white;
     }
     
-    /* Fixed Bottom Toggle Style */
-    #urgent-toggle-wrapper {
-        position: fixed;
-        bottom: 95px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 9999;
-        background: white;
-        padding: 4px 16px;
-        border-radius: 30px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        border: 1px solid #f0f0f0;
+    .reply-banner-custom {
+        background: #f0f7ff;
+        border: 1px solid #d0e7ff;
+        border-radius: 10px;
+        padding: 8px 15px;
         display: flex;
         align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 0.85em;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
-    #urgent-toggle-wrapper:hover {
-        border-color: #ff4b4b44;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-    }
-    /* Force Streamlit toggle inside our wrapper to be clean */
-    #urgent-toggle-wrapper div[data-testid="stCheckbox"] {
-        margin: 0 !important;
-        padding: 0 !important;
+
+    #urgent-toggle-wrapper {
+        background: #f8f9fa;
+        padding: 2px 12px;
+        border-radius: 20px;
+        border: 1px solid #eee;
+        display: inline-flex;
+        align-items: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
     
     .target-badge {
@@ -135,35 +130,24 @@ def inject_custom_css():
     .direct-tag { color: #c62828; background: #ffebee; border: 1px solid #ffcdd2; }
     .urgent-tag { color: #f57f17; background: #fffde7; border: 1px solid #fff59d; }
     
-    /* Input area container spacing */
-    .stChatInput {
-        padding-top: 2rem !important;
-    }
-
     /* Typing Indicator */
     .typing-container {
         display: flex;
         align-items: center;
-        padding: 2px 10px;
+        padding: 2px 0;
         color: #666;
         font-size: 0.8em;
         font-style: italic;
     }
     .typing-dots {
-        display: flex;
-        gap: 3px;
-        margin-left: 6px;
+        display: flex; gap: 3px; margin-left: 6px;
     }
     .typing-dot {
-        width: 4px;
-        height: 4px;
-        background: #999;
-        border-radius: 50%;
+        width: 4px; height: 4px; background: #999; border-radius: 50%;
         animation: typing-bounce 1.4s infinite ease-in-out;
     }
     .typing-dot:nth-child(1) { animation-delay: -0.32s; }
     .typing-dot:nth-child(2) { animation-delay: -0.16s; }
-    
     @keyframes typing-bounce {
         0%, 80%, 100% { transform: translateY(0); opacity: 0.3; }
         40% { transform: translateY(-3px); opacity: 1; }
@@ -279,6 +263,9 @@ def render_graph(profiles, current_editing=None):
     graph = graphviz.Digraph()
     graph.attr(rankdir='LR', size='12,2', ratio='fill', bgcolor='transparent', margin='0')
     
+    # Add User node
+    graph.node("User", label="👤 User", style='filled', fillcolor='lightgrey', shape='circle', fontsize='10', height='0.5')
+    
     for p in profiles:
         name = p["name"]
         color = 'lightblue'
@@ -293,7 +280,7 @@ def render_graph(profiles, current_editing=None):
         for conn in p.get("connections", []):
             target = conn.get("target")
             is_auth = conn.get("authorized", True)
-            if is_auth and any(prof["name"] == target for prof in profiles):
+            if is_auth and (target == "User" or any(prof["name"] == target for prof in profiles)):
                 graph.edge(source, target, fontsize='8', color='gray', arrowsize='0.5')
     return graph
 
@@ -849,47 +836,52 @@ if st.session_state.page == "Communication":
             st.markdown(f"""<div class="message-bubble" style="{bubble_style}"><div style="color: #1f1f1f; line-height: 1.5;">{content_visual}</div></div>""", unsafe_allow_html=True)
 
 
-    # --- FLOATING CONTROLS (FIXED) ---
-    st.markdown('<div id="urgent-toggle-wrapper">', unsafe_allow_html=True)
-    new_urgent_focus = st.toggle("🔍 Focus Urgences", value=is_urgent_focus, help="Affiche uniquement les messages non-répondus", key="urgent_toggle_fixed")
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    if new_urgent_focus != is_urgent_focus:
-        st.session_state.is_urgent_focus = new_urgent_focus
-        st.rerun()
-
-    # --- TYPING INDICATOR ---
-    typing_agents = []
-    current_turn_name = turn.get("current")
-    for name, info in agents.items():
-        if name == "User": continue
-        if info.get("status") == "working" or (name == current_turn_name and info.get("status") == "connected"):
-            typing_agents.append(name)
-    
-    if typing_agents:
-        agent_names = ", ".join(typing_agents)
-        plural = "sont" if len(typing_agents) > 1 else "est"
-        st.markdown(f"""<div class="typing-container" style="margin-bottom: 12px; opacity: 0.7;"><span>{agent_names} {plural} en train d'écrire</span><div class="typing-dots"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>""", unsafe_allow_html=True)
-
-    # --- OMNI-CHANNEL INPUT ---
-
-    # 1. Reply Context Banner
+    # --- UI CONTROLS (Above Input) ---
+    # 1. Reply Banner
     if st.session_state.reply_to:
         ctx = st.session_state.reply_to
-        with st.container():
-            c_info, c_close = st.columns([8, 1])
-            c_info.info(f"↩️ Réponse à **{ctx['sender']}**: \"{ctx['preview']}\"")
-            if c_close.button("✖️", key="cancel_reply"):
+        col_banner, col_x = st.columns([11, 1])
+        with col_banner:
+            st.markdown(f'<div class="reply-banner-custom">↩️ Réponse à <b>{ctx["sender"]}</b>: "{ctx["preview"]}"</div>', unsafe_allow_html=True)
+        with col_x:
+            if st.button("✖️", key="cancel_reply_v6", help="Annuler"):
                 st.session_state.reply_to = None
                 st.rerun()
 
-    # 2. Target Selector (REPLACED BY MENTIONS)
+    # 2. Status & Focus Row
+    col_typ, col_foc = st.columns([1, 1])
+    
+    with col_typ:
+        typing_agents = []
+        current_turn_name = turn.get("current")
+        for name, info in agents.items():
+            if name == "User": continue
+            if info.get("status") == "working" or (name == current_turn_name and info.get("status") == "connected"):
+                typing_agents.append(name)
+        
+        if typing_agents:
+            agent_names = ", ".join(typing_agents)
+            plural = "sont" if len(typing_agents) > 1 else "est"
+            st.markdown(f'<div class="typing-container">{agent_names} {plural}...<div class="typing-dots"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>', unsafe_allow_html=True)
+    
+    with col_foc:
+        col_spacer, col_toggle = st.columns([1, 1])
+        with col_toggle:
+            st.markdown('<div id="urgent-toggle-wrapper">', unsafe_allow_html=True)
+            new_urgent_focus = st.toggle("🔍 Focus Urgences", value=is_urgent_focus, help="Affiche uniquement les messages non-répondus", key="urgent_toggle_v6")
+            st.markdown('</div>', unsafe_allow_html=True)
+            if new_urgent_focus != is_urgent_focus:
+                st.session_state.is_urgent_focus = new_urgent_focus
+                st.rerun()
+
+    # --- OMNI-CHANNEL INPUT ---
+    # Target Selector (REPLACED BY MENTIONS)
     connected_agents = sorted([name for name, d in agents.items() if d.get("status") == "connected" and name != "User"])
     
     # We still need this for the mention system to know the list, adding everyone
     inject_mention_system(["everyone"] + connected_agents)
 
-    # 3. Main Input
+    # Main Input
     if prompt := st.chat_input("Message..."):
         def send_omni_msg(s):
             target = None
@@ -1256,7 +1248,7 @@ elif st.session_state.page == "Editor":
             c1.markdown(f"{target_emoji} **{target}**")
             
             default_ctx = existing_conn.get("context", "") if existing_conn else ""
-            default_auth = existing_conn.get("authorized", False) if existing_conn else False
+            default_auth = existing_conn.get("authorized", True) if existing_conn else False
             
             # Unique key with selected_name and target
             ctx = c2.text_area(f"Condition for {target}", default_ctx, key=f"conn_ctx_{selected_name}_{target}", label_visibility="collapsed", height=68)

@@ -7,7 +7,7 @@ class BaseSchema(BaseModel):
 class Connection(BaseSchema):
     target: str
     context: str = ""
-    authorized: bool = False
+    authorized: bool = True
 
 class Profile(BaseSchema):
     name: str
