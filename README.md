@@ -20,7 +20,7 @@ Installation rapide pour le développement :
 Ce projet fournit un serveur MCP qui expose des outils critiques (`agent`, `talk`, `note`, `sleep`, `wait_for_turn`) aux agents connectés. Il agit comme un chef d'orchestre, imposant une "State Machine" stricte où chaque agent doit attendre son tour et s'identifier formellement pour éviter les collisions de session.
 
 ### Flux de Travail
-1.  **Configuration** : L'humain définit les rôles (ex: "Loup-Garou", "Voyante") et le scénario dans l'interface Streamlit. Une gestion fine des connexions (Public/Privé) est possible via un éditeur tabulaire dynamique avec support du "Open Mode".
+1.  **Configuration** : L'humain définit les rôles et le scénario via le panneau d'administration (Sidebar). Une gestion fine des connexions est possible via un éditeur intégré.
 2.  **Connexion** : Les agents (clients MCP) se connectent et reçoivent leur identité via `register_agent`. Le système gère le découplage entre les profils internes et les noms d'affichage publics.
 3.  **Simulation** : Les agents échangent des messages. Le mécanisme de **Smart Blocking** empêche les timeouts HTTP en maintenant les agents en attente active jusqu'à leur tour. Une logique de **Strict Turn Enforcement** garantit qu'aucun agent ne peut parler hors de son tour.
 
@@ -52,7 +52,7 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
 
 | Script/Commande | Description détaillée | Usage |
 | :--- | :--- | :--- |
-| `streamlit run src/interface/app.py` | Lance le "Cockpit" de simulation (Configuration, Chat, Logs). | `streamlit run ...` |
+| `streamlit run src/interface/app.py` | Lance l'interface unifiée "Neural Stream" (Chat + Admin Sidebar). | `streamlit run ...` |
 | `./src/scripts/install_dev.sh` | Installe l'environnement, les dépendances et génère la config. | `./src/scripts/install_dev.sh` |
 
 # Scripts exécutables secondaires & Utilitaires
@@ -69,13 +69,14 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
 | :--- | :--- | :--- |
 | **Script d'installation universel** | Haute | ✅ Terminé |
 | **Règles d'Auto-Configuration (.agent)** | Moyenne | 📅 Prévu |
-| **Intégration Graphviz dynamique** | Moyenne | ✅ Terminé |
-| **Refonte UI (Tabs & UX)** | Haute | ✅ Terminé |
+| **Intégration Graphviz dynamique** | Moyenne | ✅ Restauré (Hotfix) |
+| **Refonte UI (Neural Stream + Graph Tabs)** | Haute | ✅ Terminé (Polished) |
+| **Correction Visibilité Messages Agent/User** | Haute | ✅ Terminé (Bugfix) |
 | **Support Multi-Room / Multi-Thread** | Basse | 📅 Futur |
 
 ## 🕹️ Simulation en cours
-- **Date** : 12 Janvier 2026
-- **Scénario** : Équipe de Développement Logiciel
-- **Configuration** : Product Owner, Tech Lead, Devs, QA
-- **État** : 🟢 **RUNNING**. Phase 1: Requirements Gathering.
-- **Agent Antigravity** : Connecté en tant que **Product Owner**.
+- **Date** : 13 Janvier 2026
+- **Scénario** : Équipe de Développement Logiciel (Neural Stream Refactor)
+- **Configuration** : Planner, Builder, Challenger
+- **État** : 🟢 **COMPLETE**. Sprint 5: Discord Ultimate Experience.
+- **Agent Antigravity** : Connecté en tant que **Planner**.

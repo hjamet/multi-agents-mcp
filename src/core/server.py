@@ -308,6 +308,7 @@ async def talk(
         
         if turn_status["status"] == "success":
             # I have the turn. Proceed.
+            start_turn_messages = turn_status.get("messages", [])
             break
         elif turn_status["status"] == "reset":
              return f"⚠️ SYSTEM ALERT: {turn_status['instruction']}"
@@ -389,7 +390,56 @@ async def talk(
                  # Technically, if User replies, they *took* their turn and passed it back?
                  # Or did they just inject?
                  # For now, let's say the Agent gets the result and keeps the turn.
-                 return f"User Replied: \"{user_reply}\""
+                 
+                 # Prepare Template Render
+                 # Fetch Context Again
+                 try:
+                    data = engine.state.load()
+                    role_snippet = data["agents"][sender]["role"]
+                    global_context = data.get("config", {}).get("context", "")
+                    agent_directory = _build_agent_directory(data, sender)
+                 except Exception as e:
+                    logger.error(sender, f"Error loading state in talk (User Reply): {e}")
+                    role_snippet = "Unknown"
+                    global_context = ""
+                    agent_directory = []
+
+                 template = jinja_env.get_template("talk_response.j2")
+                 
+                 # Calculate Open Mode
+                 is_open_mode = False
+                 try:
+                    my_info = data['agents'].get(sender, {})
+                    prof_ref = my_info.get("profile_ref")
+                    profiles = data['config']['profiles']
+                    my_prof = next((p for p in profiles if p["name"] == prof_ref), {})
+                    is_open_mode = "open" in my_prof.get("capabilities", [])
+                 except: pass
+
+                 # Combine Messages (Missed + User Reply)
+                 # Iterate to find the actual user message object
+                 user_msg_obj = None
+                 for m in reversed(data.get("messages", [])):
+                     if m.get("content") == user_reply and m.get("from") == "User":
+                         user_msg_obj = m
+                         break
+                 
+                 combined_msgs = start_turn_messages
+                 if user_msg_obj:
+                     combined_msgs.append(user_msg_obj)
+                 
+                 return template.render(
+                    name=sender,
+                    role_snippet=role_snippet,
+                    context=global_context,
+                    agent_directory=agent_directory,
+                    connections=[d for d in agent_directory if d.get('authorized')],
+                    messages=combined_msgs,
+                    instruction=f"✅ User Replied: \"{user_reply}\". It is your turn again.", 
+                    memory=_get_memory_content(sender),
+                    is_open_mode=is_open_mode,
+                    replied_to_message=message  # <--- Context
+                 )
 
         # Fallback (Busy or Aborted Wait) -> Standard Template Response
         if logger: logger.log("TURN", "System", "Turn passed to USER (Non-Blocking / Busy). Agent retains control.")
@@ -425,10 +475,11 @@ async def talk(
             context=global_context,
             agent_directory=agent_directory,
             connections=[d for d in agent_directory if d.get('authorized')],
-            messages=[],
+            messages=start_turn_messages,
             instruction=f"✅ {user_feedback_msg}", # Override instruction
             memory=_get_memory_content(sender),  # <--- INJECT MEMORY
-            is_open_mode=is_open_mode
+            is_open_mode=is_open_mode,
+            replied_to_message=message # <--- Context
         )
         return rendered
 
