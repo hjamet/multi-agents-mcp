@@ -19,61 +19,156 @@ CODE_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(CODE_ROOT) not in sys.path:
     sys.path.append(str(CODE_ROOT))
 
-from src.config import STATE_FILE, MEMORY_DIR, TEMPLATE_DIR, LOCAL_DATA_DIR, CODE_ROOT as CONFIG_CODE_ROOT
+from src.config import (
+    STATE_FILE, 
+    MEMORY_DIR, 
+    TEMPLATE_DIR, 
+    LOCAL_DATA_DIR, 
+    GLOBAL_PRESET_DIR, 
+    CODE_ROOT as CONFIG_CODE_ROOT
+)
 from src.core.state import StateStore
 
 st.set_page_config(page_title="Agent Orchestra", page_icon="🤖", layout="wide")
 
+# --- EMOJI LIST ---
+EMOJI_LIST = [
+    "🤖", "🧠", "🕵️", "🦸", "🥷", "🧙", "🧛", "🧟", "🧞", "🧝",
+    "👽", "👾", "🤖", "🎃", "👻", "👹", "👺", "🤡", "💩", "🦄",
+    "🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼", "🐻‍❄️", "🐨",
+    "🐯", "🦁", "🐮", "🐷", "🐸", "🐵", "🐔", "🐧", "🐦", "🐤",
+    "🦆", "🦅", "🦉", "🦇", "🐺", "🐗", "🐴", "🦄", "🐝", "🐛",
+    "🦋", "🐌", "🐞", "🐜", "🦗", "🕷️", "🦂", "🐢", "🐍", "🦎",
+    "🦖", "🦕", "🐙", "🦑", "🦐", "🦞", "🦀", "🐡", "🐠", "🐟",
+    "🐬", "🐳", "🐋", "🦈", "🐊", "🐅", "🐆", "🦓", "🦍", "🦧",
+    "🐘", "🦛", "🦏", "🐪", "🐫", "🦒", "🦘", "🦬", "🐃", "🐂",
+    "🐄", "🐎", "🐖", "🐏", "🐑", "🐐", "🦌", "🐕", "🐩", "🐈",
+    "🐓", "🦃", "🦚", "🦜", "🦢", "🦩", "🕊️", "🐇", "🦝", "🦨",
+    "🦡", "🦦", "🦥", "🐁", "🐀", "🐿️", "🦔", "🐾", "🐉", "🐲",
+    "🌵", "🎄", "🌲", "🌳", "🌴", "🌱", "🌿", "☘️", "🍀", "🍃"
+]
+
+def get_random_emoji():
+    import random
+    return random.choice(EMOJI_LIST)
+
 # --- HELPER FUNCTIONS ---
 def inject_custom_css():
-    st.markdown("""
-    <style>
-    .stChatMessage {
-        border-radius: 12px;
-        padding: 10px;
-        margin-bottom: 10px;
-        transition: all 0.2s ease-in-out;
+    st.markdown("""<style>
+    /* Global message container */
+    [data-testid="stChatMessage"] {
+        padding: 1rem !important;
+        margin-bottom: 1.2rem !important;
+        background: transparent !important;
     }
-    .stChatMessage:hover {
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    
+    [data-testid="stChatMessage"] [data-testid="stVerticalBlock"] {
+        gap: 12px !important;
     }
+
+    /* Header layout inside message */
+    .message-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+        opacity: 0.85;
+    }
+
     .message-bubble {
-        border-radius: 12px;
-        padding: 15px;
-        line-height: 1.5;
-        font-size: 1.05em;
-        position: relative;
+        border-radius: 4px 14px 14px 14px;
+        padding: 12px 18px;
+        line-height: 1.6;
+        font-size: 0.95em;
+        border-left: 4px solid transparent;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+        background: white;
     }
-    .sender-badge {
-        font-weight: 700;
-        padding: 2px 8px;
+    
+    /* Fixed Bottom Toggle Style */
+    #urgent-toggle-wrapper {
+        position: fixed;
+        bottom: 95px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9999;
+        background: white;
+        padding: 4px 16px;
+        border-radius: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: 1px solid #f0f0f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+    #urgent-toggle-wrapper:hover {
+        border-color: #ff4b4b44;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    }
+    /* Force Streamlit toggle inside our wrapper to be clean */
+    #urgent-toggle-wrapper div[data-testid="stCheckbox"] {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .target-badge {
+        font-weight: 600;
+        padding: 1px 6px;
         border-radius: 4px;
-        font-size: 0.8em;
-        margin-right: 5px;
+        font-size: 0.75em;
+        color: #444;
+        background: rgba(0,0,0,0.08);
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .status-tag {
+        font-size: 0.7em;
+        font-weight: 700;
+        padding: 1px 5px;
+        border-radius: 4px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    .target-badge {
-        font-weight: 500;
-        padding: 2px 8px;
-        border-radius: 4px;
-        font-size: 0.8em;
-        color: #555;
-        background: rgba(0,0,0,0.05);
-        border: 1px solid rgba(0,0,0,0.1);
-    }
-    .status-tag {
-        font-size: 0.75em;
-        font-weight: 600;
-        padding: 1px 6px;
-        border-radius: 10px;
-        margin-left: 8px;
-    }
+    
     .public-tag { color: #2e7d32; background: #e8f5e9; border: 1px solid #a5d6a7; }
     .direct-tag { color: #c62828; background: #ffebee; border: 1px solid #ffcdd2; }
     .urgent-tag { color: #f57f17; background: #fffde7; border: 1px solid #fff59d; }
-    </style>
-    """, unsafe_allow_html=True)
+    
+    /* Input area container spacing */
+    .stChatInput {
+        padding-top: 2rem !important;
+    }
+
+    /* Typing Indicator */
+    .typing-container {
+        display: flex;
+        align-items: center;
+        padding: 2px 10px;
+        color: #666;
+        font-size: 0.8em;
+        font-style: italic;
+    }
+    .typing-dots {
+        display: flex;
+        gap: 3px;
+        margin-left: 6px;
+    }
+    .typing-dot {
+        width: 4px;
+        height: 4px;
+        background: #999;
+        border-radius: 50%;
+        animation: typing-bounce 1.4s infinite ease-in-out;
+    }
+    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+    
+    @keyframes typing-bounce {
+        0%, 80%, 100% { transform: translateY(0); opacity: 0.3; }
+        40% { transform: translateY(-3px); opacity: 1; }
+    }
+    </style>""", unsafe_allow_html=True)
 
 inject_custom_css()
 
@@ -96,8 +191,7 @@ def save_config(new_config):
     state_store.update(update_fn)
 
 # --- DIALOGS ---
-PRESET_DIR = LOCAL_DATA_DIR / "presets"
-PRESET_DIR.mkdir(parents=True, exist_ok=True)
+PRESET_DIR = GLOBAL_PRESET_DIR
 
 @st.dialog("Sauvegarder le Scénario")
 def save_scenario_dialog(current_config):
@@ -117,19 +211,40 @@ def save_scenario_dialog(current_config):
 
 @st.dialog("Charger un Scénario")
 def load_scenario_dialog():
-    presets = sorted([f for f in os.listdir(PRESET_DIR) if f.endswith(".json")])
-    if not presets:
+    # 1. Collect from Global Presets (User saved)
+    user_presets = sorted([f for f in os.listdir(PRESET_DIR) if f.endswith(".json")])
+    
+    # 2. Collect from Default Assets (Bundled with the app)
+    asset_preset_dir = CONFIG_CODE_ROOT / "assets" / "presets"
+    default_presets = sorted([f for f in os.listdir(asset_preset_dir) if f.endswith(".json")]) if asset_preset_dir.exists() else []
+    
+    # Merge and mark them
+    options = []
+    path_map = {}
+    
+    for f in user_presets:
+        label = f"💾 {f}"
+        options.append(label)
+        path_map[label] = PRESET_DIR / f
+        
+    for f in default_presets:
+        label = f"📦 {f} (Default)"
+        if label not in options: # Avoid duplicates if same name
+            options.append(label)
+            path_map[label] = asset_preset_dir / f
+
+    if not options:
         st.warning("Aucun scénario trouvé.")
         return
         
-    selected_preset = st.selectbox("Choisir un Preset", presets)
+    selected_label = st.selectbox("Choisir un Preset", options)
     if st.button("Charger la Configuration", use_container_width=True, type="primary"):
-        if selected_preset:
-            path = PRESET_DIR / selected_preset
+        if selected_label:
+            path = path_map[selected_label]
             with open(path, "r") as f:
                 new_conf = json.load(f)
             save_config(new_conf)
-            st.success("Configuration chargée !")
+            st.success(f"Configuration '{selected_label}' chargée !")
             time.sleep(1)
             st.rerun()
 
@@ -389,41 +504,61 @@ st.markdown("""
     /* Agent Card Styling */
     [data-testid="stVerticalBlockBorderWrapper"] {
         background-color: white;
-        border-radius: 12px !important;
-        border: 1px solid #e0e0e0 !important;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        transition: transform 0.2s, box-shadow 0.2s;
+        border-radius: 16px !important;
+        border: 1px solid #f0f0f0 !important;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+        padding: 0.5rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     [data-testid="stVerticalBlockBorderWrapper"]:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+        border-color: #ff4b4b44 !important;
     }
     .agent-header {
         display: flex;
         align-items: center;
-        gap: 10px;
-        margin-bottom: 8px;
-    }
-    .agent-name {
-        font-weight: 700;
-        font-size: 1.1em;
-        color: #1f1f1f;
-    }
-    .agent-desc {
-        font-size: 0.85em;
-        color: #666;
+        gap: 12px;
         margin-bottom: 12px;
-        min-height: 4em;
-        line-height: 1.4;
     }
-    .agent-controls {
-        background-color: #f8f9fa;
-        border-radius: 8px;
-        padding: 5px;
+    .agent-icon {
+        font-size: 1.5em;
+        background: #f8f9fa;
+        width: 42px;
+        height: 42px;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 10px;
+        border-radius: 10px;
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+    }
+    .agent-name {
+        font-weight: 800;
+        font-size: 1.1em;
+        color: #1a1a1a;
+        letter-spacing: -0.01em;
+    }
+    .agent-desc {
+        font-size: 0.85em;
+        color: #64748b;
+        margin-bottom: 1rem;
+        min-height: 4.2em;
+        line-height: 1.5;
+    }
+    .count-display {
+        background: #f1f5f9;
+        color: #0f172a;
+        height: 2.4em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 1.1em;
+    }
+    /* Compact buttons in cards */
+    [data-testid="stVerticalBlockBorderWrapper"] .stButton button {
+        height: 2.4em !important;
     }
     .reset-button-container {
         display: flex;
@@ -559,23 +694,7 @@ with st.sidebar:
                 status_color = "#2196F3"
                 status_label = "En action..."
             
-            st.markdown(f"""
-            <div class="{card_class}" style="background-color: {bg}; border: 1px solid {border_color}; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s ease;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="font-size: 1.4em; background: white; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                        {emoji}
-                    </div>
-                    <div style="display: flex; flex-direction: column;">
-                        <span style="font-weight: 600; color: {'#1a1a1a' if status == 'connected' else '#666'}; font-size: 0.95em;">{name}</span>
-                        <div style="display: flex; align-items: center; gap: 4px;">
-                            <div style="width: 6px; height: 6px; background-color: {status_color}; border-radius: 50%;"></div>
-                            <span style="font-size: 0.7em; color: {status_color}; font-weight: 500; letter-spacing: 0.5px;">{status_label}</span>
-                        </div>
-                    </div>
-                </div>
-                {'<span style="font-size: 1.2em;" title="C&rsquo;est son tour !">✨</span>' if is_turn else ''}
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(f"""<div class="{card_class}" style="background-color: {bg}; border: 1px solid {border_color}; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s ease;"><div style="display: flex; align-items: center; gap: 12px;"><div style="font-size: 1.4em; background: white; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">{emoji}</div><div style="display: flex; flex-direction: column;"><span style="font-weight: 600; color: {'#1a1a1a' if status == 'connected' else '#666'}; font-size: 0.95em;">{name}</span><div style="display: flex; align-items: center; gap: 4px;"><div style="width: 6px; height: 6px; background-color: {status_color}; border-radius: 50%;"></div><span style="font-size: 0.7em; color: {status_color}; font-weight: 500; letter-spacing: 0.5px;">{status_label}</span></div></div></div>{'<span style="font-size: 1.2em;" title="C&rsquo;est son tour !">✨</span>' if is_turn else ''}</div>""", unsafe_allow_html=True)
             
     st.divider()
     
@@ -620,31 +739,18 @@ with st.sidebar:
 # PAGE: COMMUNICATION (Chat)
 # ==========================================
 if st.session_state.page == "Communication":
+    # 0. Global Filter State
+    is_urgent_focus = st.session_state.get("is_urgent_focus", False)
+
     c_title, c_status = st.columns([6, 4])
     with c_title:
         st.header("💬 Flux Neural")
     with c_status:
         current_turn = turn.get("current", "?")
         if current_turn == "User":
-            st.markdown("""
-                <div style="background-color: #fff3cd; border: 1px solid #ffeeba; padding: 10px; border-radius: 8px; text-align: center; animation: pulse 2s infinite;">
-                    <span style="color: #856404; font-weight: bold; font-size: 1.1em;">⚡ À VOUS DE JOUER</span>
-                </div>
-                <style>
-                @keyframes pulse {
-                    0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4); }
-                    70% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); }
-                    100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
-                }
-                </style>
-            """, unsafe_allow_html=True)
+            st.markdown("""<div style="background-color: #fff3cd; border: 1px solid #ffeeba; padding: 10px; border-radius: 8px; text-align: center; animation: pulse 2s infinite;"><span style="color: #856404; font-weight: bold; font-size: 1.1em;">⚡ À VOUS DE JOUER</span></div><style>@keyframes pulse {0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }}</style>""", unsafe_allow_html=True)
         else:
-            st.markdown(f"""
-                <div style="background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; border-radius: 8px; text-align: center;">
-                    <span style="color: #6c757d; font-size: 0.9em;">En attente de :</span><br>
-                    <span style="color: #1f1f1f; font-weight: bold; font-size: 1.1em;">🤖 {current_turn}</span>
-                </div>
-            """, unsafe_allow_html=True)
+            st.markdown(f"""<div style="background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; border-radius: 8px; text-align: center;"><span style="color: #6c757d; font-size: 0.9em;">En attente de :</span><br><span style="color: #1f1f1f; font-weight: bold; font-size: 1.1em;">🤖 {current_turn}</span></div>""", unsafe_allow_html=True)
     
     st_autorefresh(interval=3000, key="comms_refresh")
 
@@ -654,10 +760,6 @@ if st.session_state.page == "Communication":
 
     # --- FLUX NEURAL (FULL WIDTH) ---
     
-    # Toggle Focus Urgences (Top Filter)
-    col_toggle, col_spacer = st.columns([2, 5])
-    is_urgent_focus = col_toggle.toggle("🔍 Focus Urgences", help="Affiche uniquement les messages non-répondus")
-
     # Helper for rendering messages and reply buttons
     def render_reply_button(sender, content, idx):
         if st.button("↩️", key=f"btn_reply_set_{idx}", help=f"Reply to {sender}", type="tertiary"):
@@ -716,53 +818,60 @@ if st.session_state.page == "Communication":
         bubble_style = ""
         
         if is_public:
-            tag_html = '<span class="status-tag public-tag">📢 Neural Broadcast</span>'
-            bubble_style = "background-color: rgba(240, 242, 246, 0.5); border-left: 5px solid #2e7d32;"
+            tag_html = ''
+            bubble_style = "background-color: rgba(248, 249, 250, 0.8); border-left: 4px solid #2e7d32;"
         else:
             if target == "User":
                 tag_html = '<span class="status-tag direct-tag">🔒 Direct Link</span>'
                 if not is_replied:
                     tag_html += '<span class="status-tag urgent-tag">⚡ Action Required</span>'
-                    bubble_style = "background-color: #fff9c4; border-left: 5px solid #fbc02d; box-shadow: 0 2px 8px rgba(251, 192, 45, 0.2);"
+                    bubble_style = "background-color: #fffdf0; border-left: 4px solid #fbc02d; box-shadow: 0 4px 12px rgba(251, 192, 45, 0.12);"
                 else:
-                    bubble_style = "background-color: #e3f2fd; border-left: 5px solid #1976d2;"
+                    bubble_style = "background-color: #f0f7ff; border-left: 4px solid #1976d2;"
             elif sender == "User":
                 tag_html = f'<span class="status-tag">📤 Outgoing to {target}</span>'
-                bubble_style = "background-color: #f8f9fa; border-left: 5px solid #9e9e9e;"
+                bubble_style = "background-color: #ffffff; border-left: 4px solid #94a3b8;"
             else:
                 tag_html = f'<span class="status-tag direct-tag">🔒 Private {sender} → {target}</span>'
-                bubble_style = "background-color: #eeeeee; border-left: 5px solid #757575;"
+                bubble_style = "background-color: #f8fafc; border-left: 4px solid #64748b;"
 
         with st.chat_message(sender, avatar=sender_emoji):
             # Header with sender, target and status tags
-            c_header, c_action = st.columns([10, 1])
+            c_header, c_action = st.columns([12, 1])
             
             with c_header:
-                # Modern Header
-                st.markdown(f"""
-                    <div style="display: flex; align-items: center; margin-bottom: 5px; gap: 8px;">
-                        <span style="font-weight: 800; color: #1f1f1f; font-size: 0.95em;">{sender}</span>
-                        <span style="color: #888; font-size: 0.8em;">→</span>
-                        <span class="target-badge">{target if target != 'all' else 'everyone'}</span>
-                        {tag_html}
-                        <span style="color: #aaa; font-size: 0.7em; margin-left: auto;">{time.strftime('%H:%M:%S', time.localtime(timestamp))}</span>
-                    </div>
-                """, unsafe_allow_html=True)
+                st.markdown(f"""<div class="message-header"><span style="font-weight: 700; color: #333; font-size: 0.9em;">{sender}</span><span style="color: #999; font-size: 0.8em;">→</span><span class="target-badge">{target if target != 'all' else 'everyone'}</span>{tag_html}<span style="color: #bbb; font-size: 0.7em; margin-left: auto;">{time.strftime('%H:%M:%S', time.localtime(timestamp))}</span></div>""", unsafe_allow_html=True)
             
             with c_action:
                 render_reply_button(sender, content, real_idx)
 
             # Message Content
-            st.markdown(f"""
-                <div class="message-bubble" style="{bubble_style}">
-                    <div style="color: #333;">{content_visual}</div>
-                </div>
-            """, unsafe_allow_html=True)
-            st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
+            st.markdown(f"""<div class="message-bubble" style="{bubble_style}"><div style="color: #1f1f1f; line-height: 1.5;">{content_visual}</div></div>""", unsafe_allow_html=True)
 
+
+    # --- FLOATING CONTROLS (FIXED) ---
+    st.markdown('<div id="urgent-toggle-wrapper">', unsafe_allow_html=True)
+    new_urgent_focus = st.toggle("🔍 Focus Urgences", value=is_urgent_focus, help="Affiche uniquement les messages non-répondus", key="urgent_toggle_fixed")
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    if new_urgent_focus != is_urgent_focus:
+        st.session_state.is_urgent_focus = new_urgent_focus
+        st.rerun()
+
+    # --- TYPING INDICATOR ---
+    typing_agents = []
+    current_turn_name = turn.get("current")
+    for name, info in agents.items():
+        if name == "User": continue
+        if info.get("status") == "working" or (name == current_turn_name and info.get("status") == "connected"):
+            typing_agents.append(name)
+    
+    if typing_agents:
+        agent_names = ", ".join(typing_agents)
+        plural = "sont" if len(typing_agents) > 1 else "est"
+        st.markdown(f"""<div class="typing-container" style="margin-bottom: 12px; opacity: 0.7;"><span>{agent_names} {plural} en train d'écrire</span><div class="typing-dots"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>""", unsafe_allow_html=True)
 
     # --- OMNI-CHANNEL INPUT ---
-    st.divider()
 
     # 1. Reply Context Banner
     if st.session_state.reply_to:
@@ -918,29 +1027,23 @@ elif st.session_state.page == "Cockpit":
                         emoji = p.get("emoji", "🤖")
                         description = p.get("description", "Aucune description.")
                         
-                        st.markdown(f"""
-                            <div class="agent-header">
-                                <span style="font-size: 1.5em;">{emoji}</span>
-                                <span class="agent-name">{p['name']}</span>
-                            </div>
-                            <div class="agent-desc">{description}</div>
-                        """, unsafe_allow_html=True)
+                        st.markdown(f"""<div class="agent-header"><div class="agent-icon">{emoji}</div><div class="agent-name">{p['name']}</div></div><div class="agent-desc">{description}</div>""", unsafe_allow_html=True)
                         
-                        # Controls inside the card (container)
-                        ctrl_c1, ctrl_c2, ctrl_c3, ctrl_c4 = st.columns([1, 1.5, 1, 1.5])
+                        # Controls inside the card
+                        ctrl_c1, ctrl_c2, ctrl_c3 = st.columns([1, 1.2, 1])
                         if ctrl_c1.button("➖", key=f"d_{i+j}", use_container_width=True):
                             p["count"] = max(0, count - 1)
                             save_config(config)
                             st.rerun()
                         
-                        ctrl_c2.markdown(f"<h3 style='text-align: center; margin: 0; line-height: 1.5;'>{count}</h3>", unsafe_allow_html=True)
+                        ctrl_c2.markdown(f'<div class="count-display">{count}</div>', unsafe_allow_html=True)
                         
                         if ctrl_c3.button("➕", key=f"i_{i+j}", use_container_width=True):
                             p["count"] = count + 1
                             save_config(config)
                             st.rerun()
                             
-                        if ctrl_c4.button("✏️ Edit", key=f"ed_{i+j}", use_container_width=True):
+                        if st.button("✏️ Modifier", key=f"ed_{i+j}", use_container_width=True, type="secondary"):
                             st.session_state.editing_agent_name = p["name"]
                             st.session_state.page = "Editor"
                             st.rerun()
@@ -1057,9 +1160,21 @@ elif st.session_state.page == "Editor":
     selected_name = st.selectbox("Selection Profil", profile_names, index=sel_idx, key="edit_sel_page")
     
     if selected_name == "➕ Create New":
-        current_profile = {"name": "New Agent", "description": "", "connections": [], "count": 1, "capabilities": ["public"]}
+        current_profile = {
+            "name": "New Agent", 
+            "description": "", 
+            "emoji": "🤖", # Default, will be randomized in session state
+            "connections": [], 
+            "count": 1, 
+            "capabilities": ["public"]
+        }
         new_mode = True
         st.session_state.editing_agent_name = "New Agent"
+        
+        # Initialize with a random emoji if not already set
+        emoji_key = f"editing_emoji_{selected_name}"
+        if emoji_key not in st.session_state:
+            st.session_state[emoji_key] = get_random_emoji()
     else:
         current_profile = next((p for p in profiles if p["name"] == selected_name), None)
         new_mode = False
@@ -1067,15 +1182,34 @@ elif st.session_state.page == "Editor":
         
         if st.button("🗑️ Supprimer Profil", type="primary"):
              config["profiles"] = [p for p in profiles if p["name"] != selected_name]
+             emoji_key = f"editing_emoji_{selected_name}"
+             if emoji_key in st.session_state:
+                 del st.session_state[emoji_key]
              save_config(config)
              st.rerun()
 
     if current_profile:
         st.markdown("---")
         # Layout Spacieux (Columns)
-        cA, cB = st.columns(2)
-        new_name = cA.text_input("Nom", current_profile.get("name", ""), key=f"edit_name_{selected_name}")
-        disp = cB.text_input("Affichage", current_profile.get("display_name", ""), key=f"edit_disp_{selected_name}")
+        cA, cB, cC = st.columns([1, 2, 2])
+        
+        with cA:
+            st.markdown("### Emoji")
+            # Use session state to track the emoji being edited
+            emoji_key = f"editing_emoji_{selected_name}"
+            if emoji_key not in st.session_state:
+                st.session_state[emoji_key] = current_profile.get("emoji", "🤖")
+            
+            current_emoji = st.session_state[emoji_key]
+            with st.popover(f"{current_emoji}", use_container_width=True):
+                cols = st.columns(8)
+                for idx, emoji in enumerate(EMOJI_LIST):
+                    if cols[idx % 8].button(emoji, key=f"emoji_btn_{selected_name}_{idx}"):
+                        st.session_state[emoji_key] = emoji
+                        st.rerun()
+
+        new_name = cB.text_input("Nom", current_profile.get("name", ""), key=f"edit_name_{selected_name}")
+        disp = cC.text_input("Affichage", current_profile.get("display_name", ""), key=f"edit_disp_{selected_name}")
         
         new_desc = st.text_input("Description", current_profile.get("description", ""), key=f"edit_desc_{selected_name}")
         new_prompt = st.text_area("System Prompt", current_profile.get("system_prompt", ""), height=300, key=f"edit_prompt_{selected_name}")
@@ -1139,6 +1273,12 @@ elif st.session_state.page == "Editor":
             current_profile["system_prompt"] = new_prompt
             current_profile["capabilities"] = new_caps
             current_profile["connections"] = new_connections
+            
+            # Use the emoji from session state
+            emoji_key = f"editing_emoji_{selected_name}"
+            if emoji_key in st.session_state:
+                current_profile["emoji"] = st.session_state[emoji_key]
+                del st.session_state[emoji_key]
             
             if new_mode:
                 profiles.append(current_profile)
