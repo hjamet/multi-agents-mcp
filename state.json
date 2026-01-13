@@ -508,6 +508,7 @@
     ],
     "total_agents": 4,
     "context": "SYST\u00c8ME DE D\u00c9VELOPPEMENT 'QUAD-CORE'.\n\nUne \u00e9quipe d'\u00e9lite divis\u00e9e par fonctions cognitives :\n1. **STRATEGY** (User/Vision)\n2. **ORCHESTRATION** (Plan/Roadmap)\n3. **EXECUTION** (Code/Perfection)\n4. **VERIFICATION** (Critique/Securit\u00e9)\n\nL'Orchestrator est le pivot central. Il ne doit pas laisser le Builder coder sans plan, ni le Challenger critiquer le vide.",
-    "language": "French"
+    "language": "French",
+    "user_availability": "busy"
   }
 }
