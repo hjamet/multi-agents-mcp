@@ -2,58 +2,29 @@
   "messages": [
     {
       "from": "System",
-      "content": "\ud83d\udfe2 SIMULATION RESET. First Turn: User",
+      "content": "\ud83d\udfe2 SIMULATION RESET. En attente de l'utilisateur. (Premier r\u00e9pondant : Anais)",
       "public": true,
-      "timestamp": 1768321923.678662
-    },
-    {
-      "from": "System",
-      "content": "\ud83d\udd35 **Tom** has joined the simulation.",
-      "public": true,
-      "target": "all",
-      "audience": [],
-      "timestamp": 1768321984.5221624
-    },
-    {
-      "from": "System",
-      "content": "\ud83d\udd35 **Anais** has joined the simulation.",
-      "public": true,
-      "target": "all",
-      "audience": [],
-      "timestamp": 1768321987.0876853
-    },
-    {
-      "from": "User",
-      "content": "Hey Anais, comment \u00e7a av ? .D",
-      "timestamp": 1768322024.546905,
-      "public": true,
-      "audience": [],
-      "target": "all"
-    },
-    {
-      "from": "System",
-      "content": "Tour \u00e0 : **Tom** (suite au message de l'utilisateur)",
-      "public": true,
-      "timestamp": 1768322024.5469117
+      "timestamp": 1768323362.2799175
     }
   ],
-  "conversation_id": "1f899d87-d874-4086-aef3-3477538b6fc5",
+  "conversation_id": "dede3112-bfb2-42aa-82cd-e4cb91c0f410",
   "turn": {
-    "current": "Tom",
-    "next": null
+    "current": "User",
+    "next": null,
+    "first_agent": "Anais"
   },
   "agents": {
-    "Tom": {
-      "role": "Tu es simplement l\u00e0 pour discuter avec l'utilisateur et Anais et debuguer le syst\u00e8me de communication multi-agent afin de v\u00e9rifier que tout fonctionne bien :)",
-      "status": "connected",
-      "profile_ref": "Tom",
-      "emoji": "\ud83e\udd21"
-    },
     "Anais": {
       "role": "Tu es simplement l\u00e0 pour discuter avec l'utilisateur et Anais et debuguer le syst\u00e8me de communication multi-agent afin de v\u00e9rifier que tout fonctionne bien :)",
-      "status": "connected",
+      "status": "pending_connection",
       "profile_ref": "Anais",
       "emoji": "\ud83e\udd98"
+    },
+    "Tom": {
+      "role": "Tu es simplement l\u00e0 pour discuter avec l'utilisateur et Anais et debuguer le syst\u00e8me de communication multi-agent afin de v\u00e9rifier que tout fonctionne bien :)",
+      "status": "pending_connection",
+      "profile_ref": "Tom",
+      "emoji": "\ud83e\udd21"
     }
   },
   "config": {
@@ -123,6 +94,7 @@
     ],
     "total_agents": 4,
     "context": "Tu es un agent dans un syst\u00e8me multi-agent avec deux agents, Tom et Ana\u00efs, et un utilisateur, et l'objectif est de v\u00e9rifier si le syst\u00e8me multi-agent que nous sommes en train de designer fonctionne. Alors, vous vous trouvez dans le repository o\u00f9 se trouve le code du syst\u00e8me multi-agent, l'id\u00e9e va \u00eatre d'identifier les faiblesses, d'identifier les choses non pr\u00e9vues en testant le syst\u00e8me, sur une version un peu fig\u00e9e, de corriger tous ces probl\u00e8mes et d'int\u00e9grer en passant \u00e0 une version suivante, de la t\u00e9l\u00e9charger et de retester. L'objectif c'est vraiment de dialoguer avec l'utilisateur, de v\u00e9rifier qu'on arrive correctement \u00e0 joindre et \u00e0 recevoir les messages, que les sorties du serveur MCP fonctionnent correctement, bref, que tout est normal et permet d'avoir une conversation smooth et efficace pour progresser, par exemple si on souhaitait se mettre \u00e0 programmer les choses, est-ce qu'on pourrait le faire comme \u00e7a ? ",
-    "user_availability": "available"
+    "user_availability": "available",
+    "language": "French"
   }
 }

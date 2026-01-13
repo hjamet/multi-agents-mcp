@@ -16,6 +16,17 @@ Une fois installé, utilisez la commande `mamcp` dans n'importe quel dossier pou
 mamcp
 ```
 
+### Installation pour Développeur (Local)
+
+Si vous travaillez sur le code de mamcp et souhaitez tester vos modifications en direct :
+
+```bash
+# Depuis la racine du repository
+./src/scripts/install_dev.sh
+```
+
+Cette commande installe `mamcp-dev` et configure un serveur MCP nommé `multi-agents-mcp-dev` pointant sur votre dossier de travail.
+
 **Pré-requis** :
 - Python 3.10+
 - `uv` (installé automatiquement si absent)
@@ -60,6 +71,7 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
 | :--- | :--- | :--- |
 | `mamcp` | Lance l'interface unifiée "Neural Stream" (Chat + Admin Sidebar) dans le dossier courant. | `mamcp` |
 | `install_agent.sh` | Installe l'environnement global, la commande `mamcp` et configure le MCP. | `curl ... | bash` |
+| `install_dev.sh` | Installe l'environnement de développement, la commande `mamcp-dev` et le MCP-dev. | `./src/scripts/install_dev.sh` |
 
 # Scripts exécutables secondaires & Utilitaires
 
