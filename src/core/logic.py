@@ -196,16 +196,21 @@ class Engine:
             # Find Sender Profile
             sender_profile = next((p for p in profiles if p["name"] == sender_profile_name), None)
             
-            if not sender_profile:
-                # Fallback: If no profile found (e.g. manual/legacy), we block unless strictness is off?
-                # User asked for strict enforcement.
-                # However, let's allow if the system is bootstrapping (e.g. Role assignment phase? No, talk is later).
-                # Let's BLOCK unknown agents to force proper config.
-                import sys
-                msg = f"🚫 ACTION DENIED: Agent '{from_agent}' has no valid profile configuration. Please ask Admin to configure you in the Cockpit."
-                if self.logger: self.logger.log("SECURITY", "System", f"Blocked unregistered agent {from_agent}")
-                else: print(f"[Logic] BLOCK: Agent '{from_agent}' has no profile.", file=sys.stderr)
-                return msg
+            # Special bypass for "User" (Admin/Human)
+            if from_agent == "User":
+                # User is always allowed, even without a profile
+                sender_profile = {"name": "User", "capabilities": ["public", "private", "audience", "open"], "connections": []}
+            else:
+                if not sender_profile:
+                    # Fallback: If no profile found (e.g. manual/legacy), we block unless strictness is off?
+                    # User asked for strict enforcement.
+                    # However, let's allow if the system is bootstrapping (e.g. Role assignment phase? No, talk is later).
+                    # Let's BLOCK unknown agents to force proper config.
+                    import sys
+                    msg = f"🚫 ACTION DENIED: Agent '{from_agent}' has no valid profile configuration. Please ask Admin to configure you in the Cockpit."
+                    if self.logger: self.logger.log("SECURITY", "System", f"Blocked unregistered agent {from_agent}")
+                    else: print(f"[Logic] BLOCK: Agent '{from_agent}' has no profile.", file=sys.stderr)
+                    return msg
 
             caps = sender_profile.get("capabilities", [])
             connections = sender_profile.get("connections", [])
@@ -231,7 +236,24 @@ class Engine:
             is_open = "open" in caps
 
             if next_agent == from_agent:
-                 return "🚫 ACTION DENIED: You cannot pass the turn to yourself. Please choose another agent."
+                 # Allow self-loop with limit
+                 consecutive = state["turn"].get("consecutive_count", 0)
+                 # Note: This count is updated AFTER this check, so if current is 5, next will be 6
+                 # Example: 
+                 # Turn 1: count=0 -> OK (becomes 1)
+                 # Turn 5: count=4 -> OK (becomes 5)
+                 # Turn 6: count=5 -> BLOCK
+                 
+                 # Logic: We only care if we are ALREADY in a self-loop sequence
+                 old_turn = state["turn"].get("current")
+                 if old_turn == from_agent and consecutive >= 5:
+                     # Filter allowed targets to exclude self
+                     others = [k for k in allowed_targets.keys() if k != from_agent and k != "public"] 
+                     # (Assuming public is handled via capability, but allowed_targets usually has profile names)
+                     error_msg = f"🚫 PROHIBITED: Self-loop limit reached (5/5). You cannot speak 6 times in a row. Please yield the turn to another agent (e.g., {', '.join(others) if others else 'User'})."
+                     return error_msg
+                 
+                 # return "🚫 ACTION DENIED: You cannot pass the turn to yourself. Please choose another agent."
             
             if from_agent in audience:
                  return "🚫 ACTION DENIED: You cannot include yourself in the audience."
@@ -324,13 +346,23 @@ class Engine:
                 state["turn"]["current"] = next_agent
                 state["turn"]["next"] = None # Consumed
                 
+                # UPDATE CONSECUTIVE COUNT
+                if next_agent == old_turn:
+                    state["turn"]["consecutive_count"] = state["turn"].get("consecutive_count", 0) + 1
+                else:
+                    state["turn"]["consecutive_count"] = 1
+                
                 import sys
                 if self.logger:
                     self.logger.log("TURN_CHANGE", "System", f"Turn passed to {next_agent}", {"from": old_turn, "to": next_agent})
                 else:
                     print(f"[Logic] TURN CHANGE: {old_turn} -> {next_agent} (Sender: {from_agent})", file=sys.stderr)
                 
-                return f"Message posted. Next speaker is {next_agent}."
+                base_msg = f"Message posted. Turn is now: {next_agent}."
+                if next_agent == from_agent:
+                    base_msg += "\n[INFO] Il est possible de reprendre la parole après avoir envoyé un message. Celà permet d'enchainer plusieurs messages à la suite avec éventuellement différents destinataires. Ne pas en abuser et n'utiliser cette options que lorsqu'on doit adresser des messages précis à des personnes différentes ou si on souhaite effectuer des opérations entre plusieurs messages."
+                
+                return base_msg
         
         return self.state.update(_post)
 
@@ -352,6 +384,11 @@ class Engine:
             try:
                 data = self.state.load()
             except Exception:
+                time.sleep(1)
+                continue
+            
+            # 0. Check for PAUSE
+            if data.get("config", {}).get("paused"):
                 time.sleep(1)
                 continue
             
@@ -465,6 +502,11 @@ class Engine:
                 # Run blocking load() in a separate thread
                 data = await asyncio.to_thread(self.state.load)
             except Exception:
+                await asyncio.sleep(1)
+                continue
+            
+            # 0. Check for PAUSE
+            if data.get("config", {}).get("paused"):
                 await asyncio.sleep(1)
                 continue
             

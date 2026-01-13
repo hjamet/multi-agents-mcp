@@ -100,5 +100,20 @@
 - **Status**: 🆕 New
 - **Priority**: CRITICAL
 
+## 🛡️ Sprint 6: Agent Hardening (Zero Trust)
+- **User**: "Les agents valident trop vite."
+- **Goal**: Implement "Hardcore Mode" (V2) with strict protocols.
+- **Reference**: `brainstorming.md`.
+
+### 15. Preset: Software Development V2
+- **Goal**: Create `assets/presets/software_development_v2.json`.
+- **Changes**:
+    - **PO**: Enforce Acceptance Criteria.
+    - **Architect**: Zero Trust (Logs required).
+    - **Craftsman**: Strict TDD.
+    - **Adversary**: Pre-Mortem steps.
+- **Status**: 🏗️ In Progress (Tom & Anais)
+- **Priority**: CRITICAL
+
 ## 🧊 Icebox
 (Empty)

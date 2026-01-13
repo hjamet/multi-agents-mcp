@@ -342,13 +342,24 @@ def inject_mention_system(agent_names):
             const textarea = doc.querySelector('textarea[data-testid="stChatInputTextArea"]');
             
             if (!textarea) {{
-                setTimeout(setupMentions, 500);
+                // Polled by setInterval, so just return
                 return;
             }}
 
-            // Avoid double initialization
-            if (textarea.dataset.mentionAdded === 'true') return;
-            textarea.dataset.mentionAdded = 'true';
+            // Cleanup previous interaction from this or previous iframes
+            // We use a custom property on the DOM node to store the controller
+            if (textarea._mentionController) {{
+                // If the controller belongs to a DEAD iframe, this might fail or succeed. 
+                // But mostly it allows us to signal "Stop Listing".
+                try {{
+                    textarea._mentionController.abort();
+                }} catch(e) {{}}
+            }}
+
+            // Create new controller for this instance
+            const controller = new AbortController();
+            textarea._mentionController = controller;
+            const signal = controller.signal;
 
             let menu = doc.getElementById('mention-menu');
             if (!menu) {{
@@ -370,7 +381,7 @@ def inject_mention_system(agent_names):
                 doc.body.appendChild(menu);
             }}
 
-            // Inject styles into parent
+            // Inject styles
             if (!doc.getElementById('mention-styles')) {{
                 const style = doc.createElement('style');
                 style.id = 'mention-styles';
@@ -396,7 +407,7 @@ def inject_mention_system(agent_names):
                 }} else {{
                     hideMenu();
                 }}
-            }});
+            }}, {{ signal }});
 
             textarea.addEventListener('keydown', (e) => {{
                 if (!isVisible) return;
@@ -423,7 +434,7 @@ def inject_mention_system(agent_names):
                     e.stopImmediatePropagation();
                     hideMenu();
                 }}
-            }}, true);
+            }}, {{ capture: true, signal: signal }});
         }}
 
         function renderMenu(textarea) {{
@@ -495,8 +506,8 @@ def inject_mention_system(agent_names):
             selectedIndex = 0;
         }}
 
-        // Initial setup
-        setupMentions();
+        // Initial setup & Polling for re-mounts
+        setInterval(setupMentions, 1000);
     }})();
     </script>
     """
@@ -736,6 +747,24 @@ with st.sidebar:
             st.markdown(f"""<div class="{card_class}" style="background-color: {bg}; border: 1px solid {border_color}; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s ease;"><div style="display: flex; align-items: center; gap: 12px;"><div style="font-size: 1.4em; background: white; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">{emoji}</div><div style="display: flex; flex-direction: column;"><span style="font-weight: 600; color: {'#1a1a1a' if status == 'connected' else '#666'}; font-size: 0.95em;">{name}</span><div style="display: flex; align-items: center; gap: 4px;"><div style="width: 6px; height: 6px; background-color: {status_color}; border-radius: 50%;"></div><span style="font-size: 0.7em; color: {status_color}; font-weight: 500; letter-spacing: 0.5px;">{status_label}</span></div></div></div>{'<span style="font-size: 1.2em;" title="C&rsquo;est son tour !">✨</span>' if is_turn else ''}</div>""", unsafe_allow_html=True)
             
     st.divider()
+
+    # --- PAUSE CONTROL ---
+    is_paused = config.get("paused", False)
+    if st.toggle("⏸️ PAUSE MCP", value=is_paused, help="Fige le temps pour tous les agents."):
+        if not is_paused:
+            config["paused"] = True
+            save_config(config)
+            st.rerun()
+    else:
+        if is_paused:
+            config["paused"] = False
+            save_config(config)
+            st.rerun()
+            
+    if is_paused:
+        st.warning("⚠️ SIMULATION EN PAUSE")
+    
+    st.divider()
     
     # Debug Tools
     with st.expander("🔧 DEBUG"):
@@ -802,8 +831,7 @@ if st.session_state.page == "Communication":
             </style>
             """, unsafe_allow_html=True)
             
-            st.markdown("""<div style="background-color: #fff3cd; border: 2px solid #ff3d00; padding: 15px; border-radius: 8px; text-align: center; animation: pulse 2s infinite; margin-bottom: 10px;"><span style="color: #bf360c; font-weight: 900; font-size: 1.4em; text-transform: uppercase; letter-spacing: 1px;">⚡ À VOUS DE JOUER ⚡</span><br><span style="font-size: 0.9em; color: #a00;">Le système attend votre réponse.</span></div><style>@keyframes pulse {0% { box-shadow: 0 0 0 0 rgba(255, 61, 0, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(255, 61, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 61, 0, 0); }}</style>""", unsafe_allow_html=True)
-            st.toast("⚡ C'EST À VOUS DE JOUER !", icon="⚡")
+
         else:
             st.markdown(f"""<div style="background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; border-radius: 8px; text-align: center;"><span style="color: #6c757d; font-size: 0.9em;">En attente de :</span><br><span style="color: #1f1f1f; font-weight: bold; font-size: 1.1em;">🤖 {current_turn}</span></div>""", unsafe_allow_html=True)
     
@@ -938,6 +966,11 @@ if st.session_state.page == "Communication":
     c1, c2, c3 = st.columns([1, 1, 1])
     with c2:
         new_urgent_focus = st.toggle("🔍 Focus Urgences", value=is_urgent_focus, key="urgent_toggle_v6")
+
+    # MOVED: Banner in bottom right (c3)
+    if turn.get("current") == "User":
+        with c3:
+            st.markdown("""<div style="background-color: #fff3cd; border: 2px solid #ff3d00; padding: 8px; border-radius: 8px; text-align: center; animation: pulse 2s infinite;"><span style="color: #bf360c; font-weight: 900; font-size: 0.9em; text-transform: uppercase;">⚡ À VOUS DE JOUER ⚡</span></div><style>@keyframes pulse {0% { box-shadow: 0 0 0 0 rgba(255, 61, 0, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(255, 61, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 61, 0, 0); }}</style>""", unsafe_allow_html=True)
     
     if new_urgent_focus != is_urgent_focus:
         st.session_state.is_urgent_focus = new_urgent_focus
@@ -1027,9 +1060,10 @@ if st.session_state.page == "Communication":
                 
                 if next_speaker:
                     s["turn"]["current"] = next_speaker
-                    s.setdefault("messages", []).append({
-                        "from": "System", "content": f"Tour à : **{next_speaker}** (suite au message de l'utilisateur)", "public": True, "timestamp": time.time()
-                    })
+                    # System message removed as per User request
+                    # s.setdefault("messages", []).append({
+                    #     "from": "System", "content": f"Tour à : **{next_speaker}** (suite au message de l'utilisateur)", "public": True, "timestamp": time.time()
+                    # })
 
             # Context Cleanup
             if reply_ref_id is not None:
@@ -1043,8 +1077,7 @@ if st.session_state.page == "Communication":
         st.toast(res)
         st.rerun()
 
-    # MENTIONS INJECTION (Moved to bottom)
-    inject_mention_system(["everyone"] + connected_agents)
+
 
 # ==========================================
 # PAGE: COCKPIT (Admin)

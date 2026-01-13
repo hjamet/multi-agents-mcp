@@ -96,8 +96,9 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
 - **Date** : 13 Janvier 2026
 - **Scénario** : Équipe de Développement Logiciel (Neural Stream Refactor)
 - **Configuration** : Planner, Builder, Challenger
-- **État** : 🟢 **COMPLETE**. Sprint 5: Discord Ultimate Experience.
+- **État** : 🟢 **RUNNING**. Sprint 6: Validation & Debug.
 - **Agent Anais** : Connecté (Debug & Validation).
+- **Agent Tom** : Connecté (Debug & Validation).
 - **Résultat** : ✅ Tests Techniques Validés (Comms, Fichiers, Mémoire, Privé).
 - **Features Ajoutées** :
     - God Mode (Visibilité Admin Totale).
