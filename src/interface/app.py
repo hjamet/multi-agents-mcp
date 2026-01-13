@@ -24,10 +24,62 @@ from src.core.state import StateStore
 
 st.set_page_config(page_title="Agent Orchestra", page_icon="🤖", layout="wide")
 
+# --- HELPER FUNCTIONS ---
+def inject_custom_css():
+    st.markdown("""
+    <style>
+    .stChatMessage {
+        border-radius: 12px;
+        padding: 10px;
+        margin-bottom: 10px;
+        transition: all 0.2s ease-in-out;
+    }
+    .stChatMessage:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .message-bubble {
+        border-radius: 12px;
+        padding: 15px;
+        line-height: 1.5;
+        font-size: 1.05em;
+        position: relative;
+    }
+    .sender-badge {
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.8em;
+        margin-right: 5px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .target-badge {
+        font-weight: 500;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.8em;
+        color: #555;
+        background: rgba(0,0,0,0.05);
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+    .status-tag {
+        font-size: 0.75em;
+        font-weight: 600;
+        padding: 1px 6px;
+        border-radius: 10px;
+        margin-left: 8px;
+    }
+    .public-tag { color: #2e7d32; background: #e8f5e9; border: 1px solid #a5d6a7; }
+    .direct-tag { color: #c62828; background: #ffebee; border: 1px solid #ffcdd2; }
+    .urgent-tag { color: #f57f17; background: #fffde7; border: 1px solid #fff59d; }
+    </style>
+    """, unsafe_allow_html=True)
+
+inject_custom_css()
+
 # --- INITIALIZE STATE (ONCE) ---
 state_store = StateStore()
 
-# --- HELPER FUNCTIONS ---
 def load_config():
     state = state_store.load()
     config = state.get("config", {})
@@ -42,6 +94,44 @@ def save_config(new_config):
         s["config"] = new_config
         return "Config Saved"
     state_store.update(update_fn)
+
+# --- DIALOGS ---
+PRESET_DIR = LOCAL_DATA_DIR / "presets"
+PRESET_DIR.mkdir(parents=True, exist_ok=True)
+
+@st.dialog("Sauvegarder le Scénario")
+def save_scenario_dialog(current_config):
+    save_name = st.text_input("Nom de Sauvegarde", placeholder="mon_scenario")
+    if st.button("Confirmer la Sauvegarde", use_container_width=True):
+        if save_name:
+            # Basic filename cleaning
+            filename = "".join([c for c in save_name if c.isalnum() or c in (' ', '.', '_', '-')]).rstrip()
+            path = PRESET_DIR / f"{filename}.json"
+            with open(path, "w") as f:
+                json.dump(current_config, f, indent=2)
+            st.success(f"Sauvegardé : {filename}")
+            time.sleep(1)
+            st.rerun()
+        else:
+            st.error("Veuillez entrer un nom.")
+
+@st.dialog("Charger un Scénario")
+def load_scenario_dialog():
+    presets = sorted([f for f in os.listdir(PRESET_DIR) if f.endswith(".json")])
+    if not presets:
+        st.warning("Aucun scénario trouvé.")
+        return
+        
+    selected_preset = st.selectbox("Choisir un Preset", presets)
+    if st.button("Charger la Configuration", use_container_width=True, type="primary"):
+        if selected_preset:
+            path = PRESET_DIR / selected_preset
+            with open(path, "r") as f:
+                new_conf = json.load(f)
+            save_config(new_conf)
+            st.success("Configuration chargée !")
+            time.sleep(1)
+            st.rerun()
 
 def get_total_agents(profiles):
     total = 0
@@ -66,7 +156,7 @@ def format_mentions(text):
     # Regex for @Name (handling spaces/hashes for Agent IDs)
     return re.sub(
         r'(@(?!everyone)[a-zA-Z0-9_ #]+)', 
-        r'<span style="color: #ffffff; background-color: #1565C0; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.9em; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 2px 4px rgba(0,0,0,0.1);">\1</span>', 
+        r'<span style="color: #ffffff; background-color: #0d47a1; padding: 2px 8px; border-radius: 4px; font-weight: 600; font-size: 0.85em; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">\1</span>', 
         text
     )
 
@@ -530,7 +620,31 @@ with st.sidebar:
 # PAGE: COMMUNICATION (Chat)
 # ==========================================
 if st.session_state.page == "Communication":
-    st.header("💬 Flux Neural")
+    c_title, c_status = st.columns([6, 4])
+    with c_title:
+        st.header("💬 Flux Neural")
+    with c_status:
+        current_turn = turn.get("current", "?")
+        if current_turn == "User":
+            st.markdown("""
+                <div style="background-color: #fff3cd; border: 1px solid #ffeeba; padding: 10px; border-radius: 8px; text-align: center; animation: pulse 2s infinite;">
+                    <span style="color: #856404; font-weight: bold; font-size: 1.1em;">⚡ À VOUS DE JOUER</span>
+                </div>
+                <style>
+                @keyframes pulse {
+                    0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4); }
+                    70% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); }
+                    100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
+                }
+                </style>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown(f"""
+                <div style="background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; border-radius: 8px; text-align: center;">
+                    <span style="color: #6c757d; font-size: 0.9em;">En attente de :</span><br>
+                    <span style="color: #1f1f1f; font-weight: bold; font-size: 1.1em;">🤖 {current_turn}</span>
+                </div>
+            """, unsafe_allow_html=True)
     
     st_autorefresh(interval=3000, key="comms_refresh")
 
@@ -597,37 +711,54 @@ if st.session_state.page == "Communication":
         sender_emoji = agent_info.get("emoji", "🤖") if sender != "System" else "💾"
         if sender == "User": sender_emoji = "👤"
         
-        context_tag = ""
+        # Style and Tag Logic
+        tag_html = ""
+        bubble_style = ""
+        
         if is_public:
-            context_tag = "📢 PUBLIC"
-            bg_color = "transparent"
-            border_style = "none"
+            tag_html = '<span class="status-tag public-tag">📢 Neural Broadcast</span>'
+            bubble_style = "background-color: rgba(240, 242, 246, 0.5); border-left: 5px solid #2e7d32;"
         else:
             if target == "User":
-                context_tag = "🔒 DIRECT"
-                bg_color = "#fff3cd" if not is_replied else "#e3f2fd"
-                border_style = "2px solid #ffecb5" if not is_replied else "1px solid #dee2e6"
+                tag_html = '<span class="status-tag direct-tag">🔒 Direct Link</span>'
+                if not is_replied:
+                    tag_html += '<span class="status-tag urgent-tag">⚡ Action Required</span>'
+                    bubble_style = "background-color: #fff9c4; border-left: 5px solid #fbc02d; box-shadow: 0 2px 8px rgba(251, 192, 45, 0.2);"
+                else:
+                    bubble_style = "background-color: #e3f2fd; border-left: 5px solid #1976d2;"
             elif sender == "User":
-                    context_tag = f"📤 SENT to {target}"
-                    bg_color = "#f8f9fa"
-                    border_style = "1px solid #eee"
+                tag_html = f'<span class="status-tag">📤 Outgoing to {target}</span>'
+                bubble_style = "background-color: #f8f9fa; border-left: 5px solid #9e9e9e;"
             else:
-                    context_tag = f"🔒 DIRECT {sender}->{target}"
-                    bg_color = "#f1f1f1"
-                    border_style = "none"
+                tag_html = f'<span class="status-tag direct-tag">🔒 Private {sender} → {target}</span>'
+                bubble_style = "background-color: #eeeeee; border-left: 5px solid #757575;"
 
         with st.chat_message(sender, avatar=sender_emoji):
-            c_h, c_a = st.columns([19, 1]) 
-            c_h.caption(f"{context_tag} | {time.ctime(timestamp)}")
+            # Header with sender, target and status tags
+            c_header, c_action = st.columns([10, 1])
             
-            with c_a:
+            with c_header:
+                # Modern Header
+                st.markdown(f"""
+                    <div style="display: flex; align-items: center; margin-bottom: 5px; gap: 8px;">
+                        <span style="font-weight: 800; color: #1f1f1f; font-size: 0.95em;">{sender}</span>
+                        <span style="color: #888; font-size: 0.8em;">→</span>
+                        <span class="target-badge">{target if target != 'all' else 'everyone'}</span>
+                        {tag_html}
+                        <span style="color: #aaa; font-size: 0.7em; margin-left: auto;">{time.strftime('%H:%M:%S', time.localtime(timestamp))}</span>
+                    </div>
+                """, unsafe_allow_html=True)
+            
+            with c_action:
                 render_reply_button(sender, content, real_idx)
 
+            # Message Content
             st.markdown(f"""
-            <div style="background-color: {bg_color}; border: {border_style}; padding: 12px; border-radius: 8px; margin-bottom: 5px;">
-                {content_visual}
-            </div>
+                <div class="message-bubble" style="{bubble_style}">
+                    <div style="color: #333;">{content_visual}</div>
+                </div>
             """, unsafe_allow_html=True)
+            st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
 
 
     # --- OMNI-CHANNEL INPUT ---
@@ -707,6 +838,23 @@ if st.session_state.page == "Communication":
                 
             s.setdefault("messages", []).append(msg)
             
+            # --- TURN MANAGEMENT (If User had the turn) ---
+            if s.get("turn", {}).get("current") == "User":
+                next_speaker = None
+                if target and target != "all" and target in s.get("agents", {}):
+                    next_speaker = target
+                else:
+                    # Pass to the first connected agent if no specific target
+                    connected = [n for n, d in s.get("agents", {}).items() if d.get("status") == "connected"]
+                    if connected:
+                        next_speaker = connected[0]
+                
+                if next_speaker:
+                    s["turn"]["current"] = next_speaker
+                    s.setdefault("messages", []).append({
+                        "from": "System", "content": f"Tour à : **{next_speaker}** (suite au message de l'utilisateur)", "public": True, "timestamp": time.time()
+                    })
+
             # Context Cleanup
             if reply_ref_id is not None:
                 if reply_ref_id < len(s["messages"]):
@@ -733,32 +881,14 @@ elif st.session_state.page == "Cockpit":
         except Exception as e:
             st.error(f"Erreur de rendu du graphe : {e}")
 
-    preset_dir = LOCAL_DATA_DIR / "presets"
-    if not preset_dir.exists():
-        preset_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Scenarios (Moved here under Topology)
-    with st.expander("💾 Scénarios", expanded=False):
-        with st.container(border=True):
-            save_name = st.text_input("Nom de Sauvegarde", placeholder="scenaro_1")
-            if st.button("Sauvegarder", use_container_width=True):
-                if save_name:
-                    path = preset_dir / f"{save_name}.json"
-                    with open(path, "w") as f:
-                        json.dump(config, f, indent=2)
-                    st.success(f"Sauvegardé : {path}")
-            
-            st.divider()
-            
-            presets = [f for f in os.listdir(preset_dir) if f.endswith(".json")]
-            selected_preset = st.selectbox("Charger Preset", presets) if presets else None
-            if st.button("Charger la Configuration", use_container_width=True, type="secondary"):
-                if selected_preset:
-                    path = preset_dir / selected_preset
-                    with open(path, "r") as f:
-                        new_conf = json.load(f)
-                    save_config(new_conf)
-                    st.rerun()
+    # Scenarios
+    st.subheader("💾 Scénarios")
+    with st.container(border=True):
+        col_scen1, col_scen2 = st.columns(2)
+        if col_scen1.button("💾 Sauvegarder", use_container_width=True, help="Sauvegarder la configuration actuelle"):
+            save_scenario_dialog(config)
+        if col_scen2.button("📂 Charger", use_container_width=True, help="Charger une configuration existante"):
+            load_scenario_dialog()
 
     # Global Context (Full Width)
     st.subheader("🌍 Contexte Global")
@@ -816,11 +946,46 @@ elif st.session_state.page == "Cockpit":
                             st.rerun()
 
     st.markdown("---")
+
+    # --- 2.5 FIRST SPEAKER SELECTOR ---
+    st.subheader("🎯 Séquence de Départ")
+    potential_agents = ["User"]
     
+    # Calculate potential agent IDs the same way reset_logic does
+    temp_slots = []
+    for p in profiles:
+        for _ in range(int(p.get("count", 0))):
+            temp_slots.append(p.get("display_name") or p["name"])
+            
+    counters = {}
+    for base in temp_slots:
+        counters.setdefault(base, 0)
+        counters[base] += 1
+        total_of_this_base = sum(1 for b in temp_slots if b == base)
+        agent_id = f"{base} #{counters[base]}" if total_of_this_base > 1 else base
+        potential_agents.append(agent_id)
+
+    # Use session state to persist choice
+    if "first_speaker" not in st.session_state:
+        st.session_state.first_speaker = "User"
+
+    # Check if current choice is still valid (profiles might have changed)
+    if st.session_state.first_speaker not in potential_agents:
+        st.session_state.first_speaker = "User"
+
+    selected_first = st.selectbox("Qui doit parler en premier ?", potential_agents,
+                                 index=potential_agents.index(st.session_state.first_speaker),
+                                 help="L'agent ou l'utilisateur qui aura le premier tour lors de l'initialisation.")
+    st.session_state.first_speaker = selected_first
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
     # --- 3. RESET BUTTON (MODERN) ---
     col_r1, col_r2, col_r3 = st.columns([1, 2, 1])
     with col_r2:
         if st.button("🚀 INITIALISER LA SIMULATION", type="primary", use_container_width=True, help="Réinitialise tous les agents et la conversation"):
+            first_speaker_choice = st.session_state.first_speaker
+            
             def reset_logic(s):
                 s["conversation_id"] = str(uuid.uuid4())
                 s["messages"] = []
@@ -851,8 +1016,18 @@ elif st.session_state.page == "Cockpit":
                         "profile_ref": slot["profile_ref"], "emoji": slot["emoji"]
                     }
                 s["agents"] = new_agents
-                if new_agents:
+                
+                # Turn Management
+                first = None
+                if first_speaker_choice == "User":
+                    first = "User"
+                elif first_speaker_choice in new_agents:
+                    first = first_speaker_choice
+                elif new_agents:
+                    # Fallback to first available agent if choice is invalid for some reason
                     first = list(new_agents.keys())[0]
+                
+                if first:
                     s["turn"]["current"] = first
                     s.setdefault("messages", []).append({
                         "from": "System", "content": f"🟢 SIMULATION RESET. First Turn: {first}", "public": True, "timestamp": time.time()
