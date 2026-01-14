@@ -293,20 +293,38 @@ def load_scenario_dialog():
         return
         
     selected_label = st.selectbox("Choisir un Preset", options)
-    if st.button("Charger la Configuration", use_container_width=True, type="primary"):
-        if selected_label:
-            path = path_map[selected_label]
-            with open(path, "r") as f:
-                new_conf = json.load(f)
-            
-            # Recalculate total_agents for consistency
-            if "profiles" in new_conf:
-                new_conf["total_agents"] = get_total_agents(new_conf["profiles"])
+    
+    c_load, c_del = st.columns([0.85, 0.15])
+    
+    with c_load:
+        if st.button("Charger la Configuration", use_container_width=True, type="primary"):
+            if selected_label:
+                path = path_map[selected_label]
+                with open(path, "r") as f:
+                    new_conf = json.load(f)
                 
-            save_config(new_conf)
-            st.success(f"Configuration '{selected_label}' chargée !")
-            time.sleep(1)
-            st.rerun()
+                # Recalculate total_agents for consistency
+                if "profiles" in new_conf:
+                    new_conf["total_agents"] = get_total_agents(new_conf["profiles"])
+                    
+                save_config(new_conf)
+                st.success(f"Configuration '{selected_label}' chargée !")
+                time.sleep(1)
+                st.rerun()
+                
+    with c_del:
+        # Check if deletable (User preset) - Default ones have "(Default)"
+        is_default = "(Default)" in selected_label
+        if st.button("🗑️", key="del_scen_btn", help="Supprimer définivement" if not is_default else "Impossible de supprimer un preset par défaut", disabled=is_default, use_container_width=True):
+             if selected_label and not is_default:
+                 path = path_map[selected_label]
+                 try:
+                     os.remove(path)
+                     st.toast(f"Scénario supprimé: {selected_label}")
+                     time.sleep(0.7)
+                     st.rerun()
+                 except Exception as e:
+                     st.error(f"Erreur: {e}")
 
 def get_total_agents(profiles):
     total = 0
