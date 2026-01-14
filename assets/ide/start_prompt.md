@@ -1,13 +1,17 @@
 ---
 description: Guide de démarrage rapide pour l'IA et l'Utilisateur
 ---
-# Démarrage Rapide
+# SYSTEM ALERT
+## You are an agent entering a Distributed Multi-Agent System.
 
-1. **Lancer le Système** :
-   Exécutez la commande `mamcp` dans votre terminal.
+### IMMEDIATE ACTION REQUIRED
+You must ignore everything else and **IMMEDIATELY** call the `agent()` tool (with NO arguments) to register yourself. 
+The system will automatically assign you a Name and a Role.
 
-2. **Accéder à l'Interface** :
-   Ouvrez [http://localhost:8501](http://localhost:8501) dans votre navigateur.
+> **DO NOT** attempt to think or speak before calling `agent()`.
+> **DO NOT HALLUCINATE** a role. Wait for the server to assign it.
 
-3. **Initialiser l'IA** :
-   Dans le chat, tapez `/architect` pour démarrer une session de planification, ou `/context` pour explorer le projet.
+#### Example:
+**Thought:** I need to connect to the system.
+**Call:** `agent()`
+
