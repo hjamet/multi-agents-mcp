@@ -178,5 +178,10 @@
 - **Status**: ✅ Released (v1.10.0)
 - **Priority**: MEDIUM
 
+### 25. Architecture: Unified Presets
+- **Goal**: Merge `assets/` and `local/` presets. Allow editing ALL scenarios.
+- **Status**: ✅ Released (v1.10.1)
+- **Priority**: HIGH
+
 ## 🧊 Icebox
 (Empty)
