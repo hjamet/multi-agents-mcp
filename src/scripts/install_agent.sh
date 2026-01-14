@@ -72,11 +72,14 @@ mkdir -p "\$CWD/.multi-agent-mcp/logs"
 mkdir -p "\$INSTALL_DIR/presets"
 
 # 2b. Seed IDE integration (Context & Rules)
-if [ ! -d "\$CWD/.agent" ]; then
-    cp -r "\$INSTALL_DIR/.agent" "\$CWD/.agent"
+mkdir -p "\$CWD/.agent/workflows"
+mkdir -p "\$CWD/.cursor/commands"
+
+if [ ! -f "\$CWD/.agent/workflows/start.md" ]; then
+    cp "\$INSTALL_DIR/assets/ide/start_prompt.md" "\$CWD/.agent/workflows/start.md"
 fi
-if [ ! -d "\$CWD/.cursor" ]; then
-    cp -r "\$INSTALL_DIR/.cursor" "\$CWD/.cursor"
+if [ ! -f "\$CWD/.cursor/commands/start.md" ]; then
+    cp "\$INSTALL_DIR/assets/ide/start_prompt.md" "\$CWD/.cursor/commands/start.md"
 fi
 
 # 3. Launch Streamlit from the global installation
