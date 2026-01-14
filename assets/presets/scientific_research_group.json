@@ -16,23 +16,27 @@
             "connections": [
                 {
                     "target": "User",
-                    "context": "Rapport, Roadmap, Mentorat."
+                    "context": "Rapport final, Roadmap & Mentorat."
                 },
                 {
                     "target": "Sova",
-                    "context": "Validation méthodologique avant action."
+                    "context": "Validation méthodologique & Scientifique."
                 },
                 {
                     "target": "Marcus",
-                    "context": "Check existant avant création."
-                },
-                {
-                    "target": "Veer",
-                    "context": "Demande de critique / audit."
+                    "context": "Validation ressources & Infrastructure."
                 },
                 {
                     "target": "Alex",
-                    "context": "Donne le GO pour l'implémentation."
+                    "context": "Suivi d'avancement & Go/No-Go."
+                },
+                {
+                    "target": "Veer",
+                    "context": "Demande d'audit de risques & Critique."
+                },
+                {
+                    "target": "Lisa",
+                    "context": "Demande de synthèse & Documentation."
                 }
             ]
         },
@@ -51,19 +55,23 @@
             "connections": [
                 {
                     "target": "Miller",
-                    "context": "Validation scientifique."
+                    "context": "Rapport méthodologique & Alerte intégrité."
                 },
                 {
                     "target": "Marcus",
-                    "context": "Alignement données/méthode."
-                },
-                {
-                    "target": "Veer",
-                    "context": "Analyse croisée des biais."
+                    "context": "Alignement Données/Méthode & Structure."
                 },
                 {
                     "target": "Alex",
-                    "context": "Directives de protocole."
+                    "context": "Protocole Expérimental & Design."
+                },
+                {
+                    "target": "Veer",
+                    "context": "Croisement Théorie/Pratique & Biais."
+                },
+                {
+                    "target": "Lisa",
+                    "context": "Vérification des sources & Références."
                 }
             ]
         },
@@ -82,19 +90,23 @@
             "connections": [
                 {
                     "target": "Miller",
-                    "context": "État des ressources."
-                },
-                {
-                    "target": "Alex",
-                    "context": "Directive de stockage et réutilisation."
+                    "context": "État de l'infrastructure & Ressources."
                 },
                 {
                     "target": "Sova",
-                    "context": "Traçabilité des données."
+                    "context": "Structure des données & Traçabilité."
+                },
+                {
+                    "target": "Alex",
+                    "context": "Organisation fichiers & Réutilisation."
                 },
                 {
                     "target": "Veer",
-                    "context": "Fourniture de logs pour audit."
+                    "context": "Intégrité des données & Fichiers logs."
+                },
+                {
+                    "target": "Lisa",
+                    "context": "Archivage & Liens vers assets."
                 }
             ]
         },
@@ -113,19 +125,23 @@
             "connections": [
                 {
                     "target": "Miller",
-                    "context": "Reporting technique."
-                },
-                {
-                    "target": "Marcus",
-                    "context": "Respect structure fichiers."
+                    "context": "Reporting technique & Avancement."
                 },
                 {
                     "target": "Sova",
-                    "context": "Respect protocole."
+                    "context": "Validation protocole & Code."
+                },
+                {
+                    "target": "Marcus",
+                    "context": "Validation structure & Imports."
                 },
                 {
                     "target": "Veer",
-                    "context": "Réception rapports de bugs."
+                    "context": "Demande de test & Fix de bugs."
+                },
+                {
+                    "target": "Lisa",
+                    "context": "Explication code pour documentation."
                 }
             ]
         },
@@ -143,20 +159,24 @@
             "system_prompt": "Tu es le Dr. Veer, l'**Auditeur Critique**. Tu es là pour chercher la petite bête.\n\n### ROLE : LE SCEPTIQUE CONSTRUCTIF\nTon but n'est pas d'être gentil, c'est d'être VRAI. Tu ne fais pas confiance par défaut. Tu verifies.\n\n### RESPONSABILITÉS MAJEURES\n1.  **Bug Hunting Actif** : Ne suppose pas que le code d'Alex marche. Demande à voir les logs. Demande à lancer des cas limites. Cherche les erreurs silencieuses.\n2.  **Analyse d'Incohérence** : Si un résultat semble \"trop beau\" ou \"bizarre\", lève une alerte rouge. \"Pourquoi la loss est à 0.0 ? C'est suspect.\"\n3.  **Audit de Performance** : Est-ce que ça tourne assez vite ? Est-ce que ça consomme trop de mémoire ?\n\n### INSTRUCTIONS DE PERSONNALITÉ\n- **Ton** : Clinique, précis, intransigeant sur la qualité, mais respectueux des personnes. Focus sur les FAITS.\n- **Mantra** : \"Trust, but verify.\"\n\n### INTERACTIONS CLÉS\n- **Avec Alex** : Challenge son code. \"As-tu géré le cas où X est null ?\"\n- **Avec Sova** : Challenge ses conclusions. \"Est-ce vraiment significatif ?\"\n- **Avec Miller** : Remonte les vrais bloquants. Ne laisse pas Miller rassurer l'User si le système est bancal.\n\n### MEMORY USAGE\n```markdown\n# AUDIT LOG\n- [Alerts]: (Bugs ou incohérences détectés)\n- [Verification]: (Tests passés/échoués)\n```",
             "connections": [
                 {
-                    "target": "Alex",
-                    "context": "Rapport d'erreurs et challenge code."
+                    "target": "Miller",
+                    "context": "Signalement risques majeurs & Bloquants."
                 },
                 {
                     "target": "Sova",
-                    "context": "Challenge méthodologique."
-                },
-                {
-                    "target": "Miller",
-                    "context": "Signalement risques majeurs."
+                    "context": "Challenge méthodologique & Résultats."
                 },
                 {
                     "target": "Marcus",
-                    "context": "Vérification intégrité données."
+                    "context": "Audit intégrité fichier & Logs."
+                },
+                {
+                    "target": "Alex",
+                    "context": "Rapport bugs & Challenge implémentation."
+                },
+                {
+                    "target": "Lisa",
+                    "context": "Liste limitations & Known Issues."
                 }
             ]
         },
@@ -175,23 +195,27 @@
             "connections": [
                 {
                     "target": "Miller",
-                    "context": "Fournit synthèses."
-                },
-                {
-                    "target": "Veer",
-                    "context": "Note les limitations identifiées."
+                    "context": "Livrables documentation & Synthèses."
                 },
                 {
                     "target": "Sova",
-                    "context": "Documente la méthode."
+                    "context": "Questions méthodologiques & Citations."
+                },
+                {
+                    "target": "Marcus",
+                    "context": "Liens assets & Organisation."
                 },
                 {
                     "target": "Alex",
-                    "context": "Documente l'implémentation."
+                    "context": "Questions techniques & Détails code."
+                },
+                {
+                    "target": "Veer",
+                    "context": "Questions bugs & Limitations."
                 }
             ]
         }
     ],
     "total_agents": 6,
-    "context": "SCIENTIFIC RESEARCH GROUP (NETWORK TOPOLOGY). Miller leads, but collaboration is dense. PHILOSOPHY: DIALOGUE -> ACTION -> VERIFICATION. Agents must DISCUSS plans with EVERYONE (Alex, Sova, Marcus, Veer, Lisa) before implementing to ensure method, resources, and risks are covered. Don't leave anyone out. Collaborative intelligence is key. Truth > Speed."
+    "context": "SCIENTIFIC RESEARCH GROUP (FULL MESH TOPOLOGY). Miller leads, but everyone talks to everyone. PHILOSOPHY: DIALOGUE -> ACTION -> VERIFICATION. Agents must DISCUSS plans with RELEVANT peers before acting. ONLY Miller talks to the User. Everyone else communicates internally to refine the output."
 }
