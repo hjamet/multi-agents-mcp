@@ -118,3 +118,4 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
     - 💬 **Reply Context** : Visibilité explicite du message auquel on répond dans l'interface (Template Injection) (v1.7.4).
     - 🔄 **Global Reload** : Bouton pour déconnecter tous les agents simultanément sans perte d'historique (v1.8.0).
     - 🛑 **Explicit Termination** : Signal `[TERMINATE_SESSION]` envoyé aux agents lors d'une déconnexion forcée (v1.8.0).
+    - 🔔 **Notification System** : Badge de messages non-lus et Toast Notification global (v1.9.0).

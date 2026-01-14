@@ -660,8 +660,44 @@ if "page" not in st.session_state:
 with st.sidebar:
     st.title("🤖 Orchestra")
     
+    # Global Autorefresh (Active on all pages to catch messages)
+    st_autorefresh(interval=4000, key="global_pulse")
+
     st.markdown("### Navigation")
-    if st.button("💬 Communication", use_container_width=True, type="primary" if st.session_state.page == "Communication" else "secondary"):
+    
+    # --- NOTIFICATION LOGIC ---
+    total_msgs = len(messages)
+    if "last_read_count" not in st.session_state:
+        st.session_state.last_read_count = total_msgs
+        st.session_state.last_toast_count = total_msgs
+
+    unread = 0
+    if st.session_state.page != "Communication":
+        unread = max(0, total_msgs - st.session_state.last_read_count)
+        
+        # Toast for new messages
+        if "last_toast_count" not in st.session_state:
+             st.session_state.last_toast_count = total_msgs
+             
+        if total_msgs > st.session_state.last_toast_count:
+             new_count = total_msgs - st.session_state.last_toast_count
+             # Toast the last one
+             newest = messages[-1]
+             sender = newest.get("from", "?")
+             content = newest.get("content", "")
+             preview = (content[:60] + "...") if len(content) > 60 else content
+             st.toast(f"📨 {sender}: {preview}", icon="🔔")
+             st.session_state.last_toast_count = total_msgs
+    else:
+        # On Chat Page -> Mark all read
+        st.session_state.last_read_count = total_msgs
+        st.session_state.last_toast_count = total_msgs
+
+    label_comm = "💬 Communication"
+    if unread > 0:
+        label_comm = f"💬 Chat ({unread} 🔴)"
+
+    if st.button(label_comm, use_container_width=True, type="primary" if st.session_state.page == "Communication" else "secondary"):
         st.session_state.page = "Communication"
         st.rerun()
         
@@ -902,8 +938,6 @@ if st.session_state.page == "Communication":
         else:
             st.markdown(f"""<div style="background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; border-radius: 8px; text-align: center;"><span style="color: #6c757d; font-size: 0.9em;">En attente de :</span><br><span style="color: #1f1f1f; font-weight: bold; font-size: 1.1em;">🤖 {current_turn}</span></div>""", unsafe_allow_html=True)
     
-    st_autorefresh(interval=3000, key="comms_refresh")
-
     # 1. Reply Context State
     if "reply_to" not in st.session_state:
         st.session_state.reply_to = None
