@@ -8,6 +8,7 @@ import sys
 import os
 import time
 import re
+import shutil
 from pathlib import Path
 
 # Add src to path to allow imports if run directly
@@ -210,6 +211,27 @@ def save_config(new_config):
         return "Config Saved"
     state_store.update(update_fn)
 
+# --- PRESET SYNC LOGIC (V2.0) ---
+def sync_presets():
+    """
+    Copies default presets from assets to user's global directory 
+    if they don't exist. This makes them editable.
+    """
+    asset_preset_dir = CONFIG_CODE_ROOT / "assets" / "presets"
+    if not asset_preset_dir.exists():
+        return
+        
+    # GLOBAL_PRESET_DIR is imported from config
+    for f in os.listdir(asset_preset_dir):
+        if f.endswith(".json"):
+            src = asset_preset_dir / f
+            dst = GLOBAL_PRESET_DIR / f
+            if not dst.exists():
+                shutil.copy(src, dst)
+
+# specific call to sync on module load
+sync_presets()
+
 # --- DIALOGS ---
 def handle_disconnect_agent(agent_name):
     """
@@ -266,31 +288,16 @@ def save_scenario_dialog(current_config):
 
 @st.dialog("Charger un Scénario")
 def load_scenario_dialog():
-    # 1. Collect from Global Presets (User saved)
-    user_presets = sorted([f for f in os.listdir(PRESET_DIR) if f.endswith(".json")])
+    # Unified Source: User Global Presets
+    # (Defaults have been synced here by sync_presets)
+    presets = sorted([f for f in os.listdir(PRESET_DIR) if f.endswith(".json")])
     
-    # 2. Collect from Default Assets (Bundled with the app)
-    asset_preset_dir = CONFIG_CODE_ROOT / "assets" / "presets"
-    default_presets = sorted([f for f in os.listdir(asset_preset_dir) if f.endswith(".json")]) if asset_preset_dir.exists() else []
-    
-    # Merge and mark them
-    options = []
-    path_map = {}
-    
-    for f in user_presets:
-        label = f"💾 {f}"
-        options.append(label)
-        path_map[label] = PRESET_DIR / f
-        
-    for f in default_presets:
-        label = f"📦 {f} (Default)"
-        if label not in options: # Avoid duplicates if same name
-            options.append(label)
-            path_map[label] = asset_preset_dir / f
-
-    if not options:
+    if not presets:
         st.warning("Aucun scénario trouvé.")
         return
+
+    options = [f"💾 {f}" for f in presets]
+    path_map = {f"💾 {f}": PRESET_DIR / f for f in presets}
         
     selected_label = st.selectbox("Choisir un Preset", options)
     
@@ -313,10 +320,8 @@ def load_scenario_dialog():
                 st.rerun()
                 
     with c_del:
-        # Check if deletable (User preset) - Default ones have "(Default)"
-        is_default = "(Default)" in selected_label
-        if st.button("🗑️", key="del_scen_btn", help="Supprimer définivement" if not is_default else "Impossible de supprimer un preset par défaut", disabled=is_default, use_container_width=True):
-             if selected_label and not is_default:
+        if st.button("🗑️", key="del_scen_btn", help="Supprimer définivement", use_container_width=True):
+             if selected_label:
                  path = path_map[selected_label]
                  try:
                      os.remove(path)

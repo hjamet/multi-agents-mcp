@@ -119,3 +119,4 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
     - 🔄 **Global Reload** : Bouton pour déconnecter tous les agents simultanément sans perte d'historique (v1.8.0).
     - 🛑 **Explicit Termination** : Signal `[TERMINATE_SESSION]` envoyé aux agents lors d'une déconnexion forcée (v1.8.0).
     - 🔔 **Notification System** : Badge de messages non-lus et Toast Notification global (v1.9.0).
+    - 📦 **Preset Unification** : Les scénarios par défaut sont clônés dans l'espace utilisateur, rendant tout éditable et supprimable (v1.11.0).
