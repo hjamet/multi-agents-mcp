@@ -101,8 +101,8 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
 - **Date** : 14 Janvier 2026
 - **Scénario** : Scientific Research Group (Autonomy V2)
 - **Configuration** : Anna (Planner), Tom (Builder)
-- **État** : 🟢 **FINALIZED**. Sprint 7 Completed.
-- **Résultat** : ✅ Système Prêt v1.14.2.
+- **État** : 🟢 **COMPLETE**. Sprint 8 (IDE Integration) Finished.
+- **Résultat** : ✅ Système Final v1.15.0.
 - **Features Ajoutées** :
     - 🔄 **Global Reload** : Déconnexion propre de tous les agents (v1.8.1).
     - 🔔 **Notifications** : Badges et Toasts (v1.9.0).
