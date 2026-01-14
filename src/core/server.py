@@ -162,10 +162,6 @@ def _build_agent_directory(state, my_name):
         is_auth = c_data.get("authorized", True) if "User" in conn_map else False
         note = c_data.get("context", "")
         
-        # --- SECURITY CONSTRAINT (Miller Only) ---
-        if my_name != "Miller":
-            is_auth = False
-            
         if is_open_mode or is_auth:
             directory.append({
                 "name": "User",
