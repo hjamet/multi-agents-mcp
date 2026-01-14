@@ -10,6 +10,11 @@ Installation rapide (Global & MCP) :
 curl -sSL https://raw.githubusercontent.com/hjamet/multi-agents-mcp/main/src/scripts/install_agent.sh | bash
 ```
 
+Le script configure :
+1. L'environnement Python (`uv`).
+2. Le serveur MCP global.
+3. La commande `mamcp` qui inclut l'intégration automatique IDE (Cursor/Antigravity).
+
 Une fois installé, utilisez la commande `mamcp` dans n'importe quel dossier pour démarrer l'interface :
 
 ```bash
@@ -60,8 +65,8 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
 │   ├── core/           # Logique métier (StateMachine, StateStore)
 │   ├── interface/      # Application Streamlit (Dashboard)
 │   └── scripts/        # Outils d'installation et maintenance
+├── documentation/      # Archives et Docs techniques
 ├── state.json          # Source de vérité partagée (Persistance)
-├── mcp_config.json     # Configuration générée pour les clients MCP
 └── .agent/             # Règles et Workflows
 ```
 
@@ -94,29 +99,15 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
 
 ## 🕹️ Simulation en cours
 - **Date** : 14 Janvier 2026
-- **Scénario** : Équipe de Développement Logiciel (Neural Stream Refactor)
-- **Configuration** : Planner, Builder, Challenger
-- **État** : 🟢 **READY**. Sprint 6 (Hardening) Started.
-- **Agent Anna** : Connecté (Validation Lead).
-- **Agent Tom** : Connecté (Tech Support).
-- **Résultat** : ✅ Système Validé & Stabilisé (Ready for Hardcore Mode).
+- **Scénario** : Scientific Research Group (Autonomy V2)
+- **Configuration** : Anna (Planner), Tom (Builder)
+- **État** : 🟢 **FINALIZED**. Sprint 7 Completed.
+- **Résultat** : ✅ Système Prêt v1.14.2.
 - **Features Ajoutées** :
-    - 🩹 **Mentions Fix** : Réparation définitive du sélecteur (Anti-Zombie Listeners).
-    - 🚑 **Reachability Fix** : Correction critique de l'accès User (typo Case Sensitive) dans `server.py`.
-    - ⏸️ **Contrôle Flux** : Bouton Pause + Agent Self-Loop (Max 5).
-    - 🧹 **UI Polish** : Nettoyage Chat (No "Tour à") + Bannière Sticky "High-Vis".
-    - 🛡️ **Sécurité** : Whitelist Anti-Ghost (Race Condition Fix).
-    - 🏗️ **Hardcore Preset** : Restauration du fichier `hardcore.json` (Protocole v2.3.0).
-    - 🔄 **Graceful Reload** : Bouton dans l'interface pour déconnecter proprement un agent et libérer le slot (v1.6.0).
-    - 💉 **Context Injection** : Restauration des 15 derniers messages après reload (v1.6.2).
-    - ⚡ **Latency Optimization** : Polling User réduit à 0.5s (v1.6.3).
-    - 🏛️ **Preset V2** : Architecture "Software Development V2" (Zero Trust) disponible.
-    - 🛡️ **Auto-Recovery** : Résilience accrue (Try/Except talk -> Pending) (v1.7.0).
-    - 🐞 **Syntax Fix** : Correction d'une erreur de syntaxe bloquante dans l'initialisation de l'agent (`server.py`) (v1.7.1).
-    - 🧠 **Smart Context** : Injection d'un overlap contextuel (3 messages) lors de la reprise de main ou connexion (v1.7.2).
-    - 👻 **Ghost-Buster Fix** : Résolution du Deadlock et du Silence lors d'une interruption User (Logic Reset) (v1.7.3).
-    - 💬 **Reply Context** : Visibilité explicite du message auquel on répond dans l'interface (Template Injection) (v1.7.4).
-    - 🔄 **Global Reload** : Bouton pour déconnecter tous les agents simultanément sans perte d'historique (v1.8.0).
-    - 🛑 **Explicit Termination** : Signal `[TERMINATE_SESSION]` envoyé aux agents lors d'une déconnexion forcée (v1.8.0).
-    - 🔔 **Notification System** : Badge de messages non-lus et Toast Notification global (v1.9.0).
-    - 📦 **Preset Unification** : Les scénarios par défaut sont clônés dans l'espace utilisateur, rendant tout éditable et supprimable (v1.11.0).
+    - 🔄 **Global Reload** : Déconnexion propre de tous les agents (v1.8.1).
+    - 🔔 **Notifications** : Badges et Toasts (v1.9.0).
+    - 📦 **Preset System V2** : Unification `assets/local` et Nettoyage complet (v1.10.1).
+    - 🧪 **Scenario Science** : `scientific_research_group.json` (Autonomie Maximale, Miller Gateway, Critical Thinking) (v1.14.2).
+    - 🛡️ **Security** : Rollback sur le Token (Trust-Based) après essai non-concluant (v1.12.0).
+    - 🚀 **IDE Integration** : Auto-seeding `.agent` & `.cursor` + Start Prompt (v1.15.0).
+    - 🧹 **Deep Cleanup** : Racine du repo et Scénarios purgés.
