@@ -71,6 +71,14 @@ mkdir -p "\$CWD/.multi-agent-mcp/memory"
 mkdir -p "\$CWD/.multi-agent-mcp/logs"
 mkdir -p "\$INSTALL_DIR/presets"
 
+# 2b. Seed IDE integration (Context & Rules)
+if [ ! -d "\$CWD/.agent" ]; then
+    cp -r "\$INSTALL_DIR/.agent" "\$CWD/.agent"
+fi
+if [ ! -d "\$CWD/.cursor" ]; then
+    cp -r "\$INSTALL_DIR/.cursor" "\$CWD/.cursor"
+fi
+
 # 3. Launch Streamlit from the global installation
 # Unset VIRTUAL_ENV to avoid inheriting from the calling shell's env
 unset VIRTUAL_ENV
