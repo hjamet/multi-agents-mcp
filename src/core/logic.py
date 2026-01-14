@@ -2,6 +2,7 @@ import time
 import asyncio
 from typing import Optional, List, Dict, Any
 from .state import StateStore
+import uuid
 
 class Engine:
     def __init__(self, state_store: StateStore = None):
@@ -516,10 +517,19 @@ class Engine:
 
                         advice_text += "------------------------"
 
+                # TOKEN GENERATION (Sync)
+                token = str(uuid.uuid4())
+                def inject_token(s):
+                     if s.get("turn", {}).get("current") == agent_name:
+                         s.setdefault("turn", {})["token"] = token
+                     return "Token injected"
+                self.state.update(inject_token)
+
                 return {
                     "status": "success",
                     "messages": visible_messages, # FULL Delta, no truncation
-                    "instruction": f"It is your turn. Speak.{advice_text}"
+                    "token": token,
+                    "instruction": f"It is your turn. Speak. (SECURE TOKEN: {token})" + advice_text
                 }
             
             time.sleep(1)
@@ -633,10 +643,20 @@ class Engine:
                                 advice_text += f"- **{target_profile}**: No other active agents found. Strategy: {ctx}\n"
                         advice_text += "------------------------"
 
+                # TOKEN GENERATION (Async)
+                token = str(uuid.uuid4())
+                def inject_token(s):
+                     if s.get("turn", {}).get("current") == agent_name:
+                         s.setdefault("turn", {})["token"] = token
+                     return "Token injected"
+                # Use to_thread for blocking update
+                await asyncio.to_thread(self.state.update, inject_token)
+
                 return {
                     "status": "success",
                     "messages": visible_messages,
-                    "instruction": f"It is your turn. Speak.{advice_text}"
+                    "token": token,
+                    "instruction": f"It is your turn. Speak. (SECURE TOKEN: {token})" + advice_text
                 }
             
             await asyncio.sleep(1) # Non-blocking Sleep

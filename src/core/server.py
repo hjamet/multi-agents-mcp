@@ -240,6 +240,7 @@ async def agent(ctx: Context) -> str:
         agent_directory=agent_dir,
         connections=[d for d in agent_dir if d.get('authorized')],
         messages=visible_messages,
+        instruction=instruction_text, # Pass instruction with Token
         is_open_mode=is_open_mode
     )
 
@@ -248,6 +249,7 @@ async def talk(
     message: str,
     public: bool,
     to: str,
+    token: str,
     ctx: Context,
     audience: List[str] = []
 ) -> str:
@@ -261,19 +263,20 @@ async def talk(
         message: The content to speak.
         public: If true, everyone sees the message. If false, only 'to' and 'audience' see it.
         to: The name of the agent who should speak next. (The message is always visible to them).
+        token: The Security Token provided in your instruction. REQUIRED for identity verification.
         audience: (Optional) List of other agents who can see a Private message.
     """
-    sender = None  # Scope for error recovery
+    sender = None
     try:
-        # --- TURN-BASED IDENTITY ---
-        # We strictly use the current turn holder as the sender.
-        # We wait until it's an agent turn (not User).
-        while True:
-            state = engine.state.load()
-            sender = state.get("turn", {}).get("current")
-            if sender and sender != "User":
-                break
-            await asyncio.sleep(1)
+        # --- TOKEN IDENTITY CHECK ---
+        state = engine.state.load()
+        current_token = state.get("turn", {}).get("token")
+        current_turn = state.get("turn", {}).get("current")
+
+        if not current_token or token != current_token:
+             return f"🚫 SECURITY ALERT: Invalid Security Token. You cannot speak without a valid turn token. (Expected: {current_token[:4]}..., Got: {token[:4]}...)"
+        
+        sender = current_turn
 
         # --- SECURITY: WHITELIST CHECK ---
         # Prevent "Ghost" agents from talking
@@ -578,11 +581,14 @@ async def talk(
         
         return f"🚫 SYSTEM ERROR: An internal error occurred ({e}). Your session has been reset to ensure system stability. Please restart or reconnect."
 @mcp.tool()
-async def sleep(seconds: int, ctx: Context) -> str:
+async def sleep(seconds: int, token: str, ctx: Context) -> str:
     """
     Pause execution for a specified duration by sleeping.
     Useful for waiting for external events or pacing execution.
     Maximum duration is 300 seconds (5 minutes).
+    Args:
+        seconds: Duration to sleep.
+        token: Security Token.
     """
     MAX_SLEEP = 300
     warning = ""
@@ -591,13 +597,13 @@ async def sleep(seconds: int, ctx: Context) -> str:
         warning = f"⚠️ WARNING: Requested sleep of {seconds}s exceeds limit. Capped at {MAX_SLEEP}s.\n"
         seconds = MAX_SLEEP
     
-    # --- TURN-BASED IDENTITY ---
-    while True:
-        state = engine.state.load()
-        agent_name = state.get("turn", {}).get("current")
-        if agent_name and agent_name != "User":
-            break
-        await asyncio.sleep(1)
+    # --- TOKEN IDENTITY CHECK ---
+    state = engine.state.load()
+    current_token = state.get("turn", {}).get("token")
+    agent_name = state.get("turn", {}).get("current")
+    
+    if not current_token or token != current_token:
+         return "🚫 SECURITY ALERT: Invalid Token."
          
     # 1. Update Status to Sleeping
     if agent_name:
@@ -648,34 +654,24 @@ def _get_memory_content(agent_name: str) -> str:
     return ""
 
 @mcp.tool()
-async def note(content: str, ctx: Context) -> str:
+async def note(content: str, token: str, ctx: Context) -> str:
     """
     Manage your persistent memory.
     This tool OVERWRITES your existing memory file with the new content provided.
     
-    USE THIS TO:
-    - Maintain a roadmap or to-do list.
-    - Synthesize observations and results.
-    - Prepare for future turns.
-    
-    IMPORTANT:
-    - The content of this note is re-injected into your context at the start of every turn (via 'talk').
-    - You must synthesize previous memories with new ones using a SUMMARY PRINCIPLE to integrate new memories while losing as little info as possible.
-    - Do not just append blindly if you want to stay organized.
-    - Maximum size: 5000 characters.
-    
     Args:
         content: The text content to save.
+        token: Security Token.
     """
     MAX_CHARS = 5000
     
-    # --- TURN-BASED IDENTITY ---
-    while True:
-        state = engine.state.load()
-        agent_name = state.get("turn", {}).get("current")
-        if agent_name and agent_name != "User":
-            break
-        await asyncio.sleep(1)
+    # --- TOKEN IDENTITY CHECK ---
+    state = engine.state.load()
+    current_token = state.get("turn", {}).get("token")
+    agent_name = state.get("turn", {}).get("current")
+    
+    if not current_token or token != current_token:
+         return "🚫 SECURITY ALERT: Invalid Token."
 
     # 1. Validate Length
     if len(content) > MAX_CHARS:
