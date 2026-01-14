@@ -162,5 +162,5 @@
         }
     ],
     "total_agents": 5,
-    "context": "SCIENTIFIC RESEARCH GROUP (STAR TOPOLOGY). Miller led. Interactive, rigorous, efficient. Goal: Breakthrough."
+    "context": "SCIENTIFIC RESEARCH GROUP (STAR TOPOLOGY). Miller led. This is a multi-agent autonomous research group. Agents must be relatively autonomous, discuss with the User (via Miller), find solutions, and retrieve results. TRUTH IS PARAMOUNT: Never fake results, never lie, never be over-optimistic. Objective: Rigorous scientific breakthrough through collaboration. Work together, solve problems, and report honest truth."
 }
