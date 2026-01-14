@@ -34,6 +34,10 @@ fi
 echo -e "${BLUE}📦 Synchronisation des dépendances (uv sync)...${NC}"
 uv sync
 
+# 3b. Initialisation des Presets Utilisateur
+echo -e "${BLUE}📦 Initialisation des Presets (copie locale)...${NC}"
+uv run python src/scripts/init_presets.py
+
 # 4. Installation de la commande 'mamcp-dev'
 echo -e "${BLUE}⚙️ Installation de la commande 'mamcp-dev'...${NC}"
 BIN_DIR="$HOME/.local/bin"

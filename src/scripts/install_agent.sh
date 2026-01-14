@@ -47,6 +47,8 @@ fi
 echo -e "${BLUE}📦 Installing dependencies...${NC}"
 cd "$INSTALL_DIR"
 uv sync
+echo -e "${BLUE}📦 Initializing Presets...${NC}"
+uv run python src/scripts/init_presets.py
 cd - > /dev/null
 
 # 4. Install 'mamcp' command

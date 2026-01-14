@@ -211,26 +211,6 @@ def save_config(new_config):
         return "Config Saved"
     state_store.update(update_fn)
 
-# --- PRESET SYNC LOGIC (V2.0) ---
-def sync_presets():
-    """
-    Copies default presets from assets to user's global directory 
-    if they don't exist. This makes them editable.
-    """
-    asset_preset_dir = CONFIG_CODE_ROOT / "assets" / "presets"
-    if not asset_preset_dir.exists():
-        return
-        
-    # GLOBAL_PRESET_DIR is imported from config
-    for f in os.listdir(asset_preset_dir):
-        if f.endswith(".json"):
-            src = asset_preset_dir / f
-            dst = GLOBAL_PRESET_DIR / f
-            if not dst.exists():
-                shutil.copy(src, dst)
-
-# specific call to sync on module load
-sync_presets()
 
 # --- DIALOGS ---
 def handle_disconnect_agent(agent_name):
