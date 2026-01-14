@@ -102,7 +102,7 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
 - **Scénario** : Scientific Research Group (Autonomy V2)
 - **Configuration** : Anna (Planner), Tom (Builder)
 - **État** : 🟢 **COMPLETE**. Sprint 8 (IDE Integration) Finished.
-- **Résultat** : ✅ Système Final v1.15.0.
+- **Résultat** : ✅ Système Final v1.15.1.
 - **Features Ajoutées** :
     - 🔄 **Global Reload** : Déconnexion propre de tous les agents (v1.8.1).
     - 🔔 **Notifications** : Badges et Toasts (v1.9.0).
@@ -111,3 +111,4 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
     - 🛡️ **Security** : Rollback sur le Token (Trust-Based) après essai non-concluant (v1.12.0).
     - 🚀 **IDE Integration** : Auto-seeding `.agent` & `.cursor` + Start Prompt (v1.15.0).
     - 🧹 **Deep Cleanup** : Racine du repo et Scénarios purgés.
+    - 🧠 **Smart Context** : Amélioration de la récupération du contexte (Overlap) et correction bug indentation (v1.15.1).

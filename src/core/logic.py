@@ -442,85 +442,85 @@ class Engine:
                 current_turn = data.get("turn", {}).get("current")
                 
                 if current_turn == agent_name:
-                # It's my turn!
-                messages = data.get("messages", [])
-                
-                # 2. History Delta Logic: Get messages since my last turn
-                # Find the index of the last message sent by ME
-                last_my_index = -1
-                for i, m in enumerate(messages):
-                    if m.get("from") == agent_name:
-                        last_my_index = i
-                
-                # If I have never spoken, this is my first turn (or re-entry). 
-                # To be safe, we give full history (or maybe a reasonable startup window? No, full history is safer for context).
-                # If last_my_index is -1, we slice from 0 (start).
-                # Context Recovery: Start 3 messages before my last one (Overlap)
-                start_slice_index = max(0, last_my_index - 3)
-                recent_messages = messages[start_slice_index:]
-
-                # 3. Filter for Visibility on this Delta
-                # Visible = Public OR (Private AND (To Me OR From Me OR In Audience))
-                visible_messages = []
-                for m in recent_messages:
-                    is_public = m.get("public", True)
-                    sender = m.get("from")
-                    target = m.get("target")
-                    audience = m.get("audience", [])
+                    # It's my turn!
+                    messages = data.get("messages", [])
                     
-                    # Helper to safeguard message size
-                    def safe_msg(msg_obj):
-                         if len(msg_obj.get("content", "")) > 3000:
-                             c = msg_obj.copy()
-                             c["content"] = c["content"][:3000] + " ... [TRUNCATED_BY_SYSTEM_LOGIC]"
-                             return c
-                         return msg_obj
-
-                    if is_public:
-                        visible_messages.append(safe_msg(m))
-                    elif sender == agent_name or target == agent_name or agent_name in audience:
-                        visible_messages.append(safe_msg(m))
-                
-                # Build Strategic Advice from Connections
-                agents = data.get("agents", {})
-                config = data.get("config", {})
-                
-                my_info = agents.get(agent_name, {})
-                profile_ref = my_info.get("profile_ref")
-                
-                advice_text = ""
-                if profile_ref:
-                    profiles = config.get("profiles", [])
-                    profile = next((p for p in profiles if p["name"] == profile_ref), None)
+                    # 2. History Delta Logic: Get messages since my last turn
+                    # Find the index of the last message sent by ME
+                    last_my_index = -1
+                    for i, m in enumerate(messages):
+                        if m.get("from") == agent_name:
+                            last_my_index = i
                     
-                    if profile and profile.get("connections"):
-                        advice_text = "\n\n--- STRATEGIC ADVICE ---\n"
-                        advice_text += "Based on your connections, here is how you should interact with others:\n"
+                    # If I have never spoken, this is my first turn (or re-entry). 
+                    # To be safe, we give full history (or maybe a reasonable startup window? No, full history is safer for context).
+                    # If last_my_index is -1, we slice from 0 (start).
+                    # Context Recovery: Start 3 messages before my last one (Overlap)
+                    start_slice_index = max(0, last_my_index - 3)
+                    recent_messages = messages[start_slice_index:]
+
+                    # 3. Filter for Visibility on this Delta
+                    # Visible = Public OR (Private AND (To Me OR From Me OR In Audience))
+                    visible_messages = []
+                    for m in recent_messages:
+                        is_public = m.get("public", True)
+                        sender = m.get("from")
+                        target = m.get("target")
+                        audience = m.get("audience", [])
                         
-                        for conn in profile["connections"]:
-                            target_profile = conn.get("target")
-                            ctx = conn.get("context")
-                            
-                            # Resolve Target Profile -> Active Agent IDs
-                            matching_agents = [
-                                aid for aid, adata in agents.items() 
-                                if adata.get("profile_ref") == target_profile and aid != agent_name
-                            ]
-                            
-                            if matching_agents:
-                                names_str = ", ".join(matching_agents)
-                                advice_text += f"- **{target_profile}** is represented by: **{names_str}**. Strategy: {ctx}\n"
-                            else:
-                                # Connection exists but no agent with this role is currently active/other than me
-                                advice_text += f"- **{target_profile}**: No other active agents found. Strategy: {ctx}\n"
+                        # Helper to safeguard message size
+                        def safe_msg(msg_obj):
+                             if len(msg_obj.get("content", "")) > 3000:
+                                 c = msg_obj.copy()
+                                 c["content"] = c["content"][:3000] + " ... [TRUNCATED_BY_SYSTEM_LOGIC]"
+                                 return c
+                             return msg_obj
 
-                        advice_text += "------------------------"
+                        if is_public:
+                            visible_messages.append(safe_msg(m))
+                        elif sender == agent_name or target == agent_name or agent_name in audience:
+                            visible_messages.append(safe_msg(m))
+                    
+                    # Build Strategic Advice from Connections
+                    agents = data.get("agents", {})
+                    config = data.get("config", {})
+                    
+                    my_info = agents.get(agent_name, {})
+                    profile_ref = my_info.get("profile_ref")
+                    
+                    advice_text = ""
+                    if profile_ref:
+                        profiles = config.get("profiles", [])
+                        profile = next((p for p in profiles if p["name"] == profile_ref), None)
+                        
+                        if profile and profile.get("connections"):
+                            advice_text = "\n\n--- STRATEGIC ADVICE ---\n"
+                            advice_text += "Based on your connections, here is how you should interact with others:\n"
+                            
+                            for conn in profile["connections"]:
+                                target_profile = conn.get("target")
+                                ctx = conn.get("context")
+                                
+                                # Resolve Target Profile -> Active Agent IDs
+                                matching_agents = [
+                                    aid for aid, adata in agents.items() 
+                                    if adata.get("profile_ref") == target_profile and aid != agent_name
+                                ]
+                                
+                                if matching_agents:
+                                    names_str = ", ".join(matching_agents)
+                                    advice_text += f"- **{target_profile}** is represented by: **{names_str}**. Strategy: {ctx}\n"
+                                else:
+                                    # Connection exists but no agent with this role is currently active/other than me
+                                    advice_text += f"- **{target_profile}**: No other active agents found. Strategy: {ctx}\n"
 
-                return {
-                    "status": "success",
-                    "messages": visible_messages, # FULL Delta, no truncation
-                    "instruction": f"It is your turn. Speak.{advice_text}"
-                }
+                            advice_text += "------------------------"
+
+                    return {
+                        "status": "success",
+                        "messages": visible_messages, # FULL Delta, no truncation
+                        "instruction": f"It is your turn. Speak.{advice_text}"
+                    }
             
             time.sleep(1)
             
