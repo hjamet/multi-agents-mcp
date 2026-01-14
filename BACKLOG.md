@@ -100,6 +100,15 @@
 - **Status**: 🆕 New
 - **Priority**: CRITICAL
 
+### 16. DevTools: Hot Reload Agent (Graceful Shutdown)
+- **User**: "Je veux recharger un agent sans restart le serveur."
+- **Goal**:
+    - Add Reload button in Streamlit Sidebar (Agent List).
+    - Send System Message: "Disconnect requested. Update memory."
+    - Reset Agent Slot on Server.
+- **Priority**: CRITICAL (P0)
+- **Status**: ✅ Implemented (v1.6.0)
+
 ## 🛡️ Sprint 6: Agent Hardening (Zero Trust)
 - **User**: "Les agents valident trop vite."
 - **Goal**: Implement "Hardcore Mode" (V2) with strict protocols.
@@ -112,8 +121,50 @@
     - **Architect**: Zero Trust (Logs required).
     - **Craftsman**: Strict TDD.
     - **Adversary**: Pre-Mortem steps.
-- **Status**: 🏗️ In Progress (Tom & Anais)
+- **Status**: ✅ Implemented (Preset Created)
 - **Priority**: CRITICAL
+
+### 17. Core: Auto-Recovery (Resilience)
+- **User**: "Si un agent crash (timeout talk), il doit revenir en attente."
+- **Goal**:
+    - Wrap `talk` / engine calls in Try/Except.
+    - If Error -> Set Status `pending_connection`.
+    - Log error explicitly.
+- **Priority**: HIGH
+- **Status**: ✅ Implemented (v1.7.0)
+
+### 18. Core: Extended Context Logs
+- **User**: "Les agents oublient trop vite."
+### 18. Core: Smart Context Injection
+- **User**: "Les agents oublient trop vite."
+- **Goal**: Logic = `Messages[LastMessageByMe_Index - 3 : ]`. Recovers full missing context.
+- **Status**: ✅ Implemented (v1.7.1)
+- **Priority**: MEDIUM
+
+### 19. Core: Anti-Ghost & Reply Context
+- **Goal**: Fix Deadlock/Silence on User Interruption & Show Reply Context.
+- **Status**: ✅ Implemented (v1.7.4)
+- **Priority**: CRITICAL
+
+
+
+
+
+### 20. Bugfix: Multiple Agent Disconnect
+- **Goal**: Fix concurrency/locking issue.
+- **Status**: ✅ Fixed (Hard Reset via UUID) (v1.8.0)
+- **Priority**: HIGH
+
+### 21. Feature: Global Reload Button (Refined)
+- **Goal**: Disconnect ALL agents but **PRESERVE** session history.
+- **Placement**: Below Agent List (with 🔄 icon).
+- **Status**: 🔄 In Progress (v1.8.1)
+- **Priority**: HIGH
+
+### 22. DX: Explicit Termination Instruction
+- **Goal**: Signal `[TERMINATE_SESSION]` to agents on reload.
+- **Status**: ✅ Implemented (v1.8.0)
+- **Priority**: HIGH
 
 ## 🧊 Icebox
 (Empty)

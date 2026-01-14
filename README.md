@@ -93,11 +93,11 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
 | **Support Multi-Room / Multi-Thread** | Basse | 📅 Futur |
 
 ## 🕹️ Simulation en cours
-- **Date** : 13 Janvier 2026
+- **Date** : 14 Janvier 2026
 - **Scénario** : Équipe de Développement Logiciel (Neural Stream Refactor)
 - **Configuration** : Planner, Builder, Challenger
-- **État** : 🟢 **READY**. Sprint 6 (Validation Complète). Transition vers Architecture V2.
-- **Agent Anais** : Connecté (Validation Lead).
+- **État** : 🟢 **READY**. Sprint 6 (Hardening) Started.
+- **Agent Anna** : Connecté (Validation Lead).
 - **Agent Tom** : Connecté (Tech Support).
 - **Résultat** : ✅ Système Validé & Stabilisé (Ready for Hardcore Mode).
 - **Features Ajoutées** :
@@ -107,3 +107,14 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
     - 🧹 **UI Polish** : Nettoyage Chat (No "Tour à") + Bannière Sticky "High-Vis".
     - 🛡️ **Sécurité** : Whitelist Anti-Ghost (Race Condition Fix).
     - 🏗️ **Hardcore Preset** : Restauration du fichier `hardcore.json` (Protocole v2.3.0).
+    - 🔄 **Graceful Reload** : Bouton dans l'interface pour déconnecter proprement un agent et libérer le slot (v1.6.0).
+    - 💉 **Context Injection** : Restauration des 15 derniers messages après reload (v1.6.2).
+    - ⚡ **Latency Optimization** : Polling User réduit à 0.5s (v1.6.3).
+    - 🏛️ **Preset V2** : Architecture "Software Development V2" (Zero Trust) disponible.
+    - 🛡️ **Auto-Recovery** : Résilience accrue (Try/Except talk -> Pending) (v1.7.0).
+    - 🐞 **Syntax Fix** : Correction d'une erreur de syntaxe bloquante dans l'initialisation de l'agent (`server.py`) (v1.7.1).
+    - 🧠 **Smart Context** : Injection d'un overlap contextuel (3 messages) lors de la reprise de main ou connexion (v1.7.2).
+    - 👻 **Ghost-Buster Fix** : Résolution du Deadlock et du Silence lors d'une interruption User (Logic Reset) (v1.7.3).
+    - 💬 **Reply Context** : Visibilité explicite du message auquel on répond dans l'interface (Template Injection) (v1.7.4).
+    - 🔄 **Global Reload** : Bouton pour déconnecter tous les agents simultanément sans perte d'historique (v1.8.0).
+    - 🛑 **Explicit Termination** : Signal `[TERMINATE_SESSION]` envoyé aux agents lors d'une déconnexion forcée (v1.8.0).

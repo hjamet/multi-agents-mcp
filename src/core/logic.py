@@ -240,10 +240,16 @@ class Engine:
                 
                 # If User spoke AFTER turn started
                 if last_user > turn_start:
-                     # We allow a small epsilon? No, strict.
+                     # 1. Update Turn Start to unblock next attempt (Fix Deadlock)
+                     state["turn"]["turn_start_time"] = time.time()
+                     
+                     # 2. Fetch missed messages (Fix Silence)
+                     missed = [m for m in state.get("messages", []) if m.get("from") == "User" and m.get("timestamp", 0) > turn_start]
+                     missed_text = "\n".join([f"- User: {m.get('content')}" for m in missed])
+                     
                      import sys
-                     print(f"[Anti-Ghost] BLOCK: Action rejected. User Msg Time {last_user} > Turn Start {turn_start}", file=sys.stderr)
-                     return "🚫 INTERACTION REJECTED: User posted new messages while you were thinking. Please read the conversation history again and respond to the new context."
+                     print(f"[Anti-Ghost] BLOCK & RESET: Updated turn_start. User Msg Time {last_user}", file=sys.stderr)
+                     return f"🚫 INTERACTION REJECTED: The User interrupted you with new messages:\n{missed_text}\n\nACTION: Core logic has reset your turn timer. Incorporate this new info and try again."
 
             # A. Capability Checks
             is_open = "open" in caps
@@ -424,9 +430,18 @@ class Engine:
                     "instruction": "SYSTEM RESET: THe conversation has been reset by the user. Forget everything. Re-read your Role and Context."
                 }
                 
-            current_turn = data.get("turn", {}).get("current")
-            
-            if current_turn == agent_name:
+                # 1b. Check for Status Reset (Kicked/Reloaded)
+                my_status = data.get("agents", {}).get(agent_name, {}).get("status")
+                if my_status == "pending_connection":
+                     return {
+                        "status": "reset",
+                        "messages": [],
+                        "instruction": "SYSTEM RESET: Your session has been terminated by the user. [TERMINATE_SESSION]"
+                    }
+
+                current_turn = data.get("turn", {}).get("current")
+                
+                if current_turn == agent_name:
                 # It's my turn!
                 messages = data.get("messages", [])
                 
@@ -440,8 +455,8 @@ class Engine:
                 # If I have never spoken, this is my first turn (or re-entry). 
                 # To be safe, we give full history (or maybe a reasonable startup window? No, full history is safer for context).
                 # If last_my_index is -1, we slice from 0 (start).
-                # If last_my_index is 5, we slice from 6 (next message).
-                start_slice_index = last_my_index + 1
+                # Context Recovery: Start 3 messages before my last one (Overlap)
+                start_slice_index = max(0, last_my_index - 3)
                 recent_messages = messages[start_slice_index:]
 
                 # 3. Filter for Visibility on this Delta
@@ -453,10 +468,18 @@ class Engine:
                     target = m.get("target")
                     audience = m.get("audience", [])
                     
+                    # Helper to safeguard message size
+                    def safe_msg(msg_obj):
+                         if len(msg_obj.get("content", "")) > 3000:
+                             c = msg_obj.copy()
+                             c["content"] = c["content"][:3000] + " ... [TRUNCATED_BY_SYSTEM_LOGIC]"
+                             return c
+                         return msg_obj
+
                     if is_public:
-                        visible_messages.append(m)
+                        visible_messages.append(safe_msg(m))
                     elif sender == agent_name or target == agent_name or agent_name in audience:
-                        visible_messages.append(m)
+                        visible_messages.append(safe_msg(m))
                 
                 # Build Strategic Advice from Connections
                 agents = data.get("agents", {})
@@ -542,6 +565,15 @@ class Engine:
                     "instruction": "SYSTEM RESET: THe conversation has been reset by the user. Forget everything. Re-read your Role and Context."
                 }
                 
+            # 1b. Check for Status Reset (Kicked/Reloaded)
+            my_status = data.get("agents", {}).get(agent_name, {}).get("status")
+            if my_status == "pending_connection":
+                 return {
+                    "status": "reset",
+                    "messages": [],
+                    "instruction": "SYSTEM RESET: Your session has been terminated by the user. [TERMINATE_SESSION]"
+                }
+
             current_turn = data.get("turn", {}).get("current")
             
             if current_turn == agent_name:
@@ -554,7 +586,8 @@ class Engine:
                     if m.get("from") == agent_name:
                         last_my_index = i
                 
-                start_slice_index = last_my_index + 1
+                # Context Recovery: Start 3 messages before my last one (Overlap)
+                start_slice_index = max(0, last_my_index - 3)
                 recent_messages = messages[start_slice_index:]
 
                 # 3. Filter for Visibility
@@ -565,10 +598,18 @@ class Engine:
                     target = m.get("target")
                     audience = m.get("audience", [])
                     
+                    # Helper to safeguard message size
+                    def safe_msg(msg_obj):
+                         if len(msg_obj.get("content", "")) > 3000:
+                             c = msg_obj.copy()
+                             c["content"] = c["content"][:3000] + " ... [TRUNCATED_BY_SYSTEM_LOGIC]"
+                             return c
+                         return msg_obj
+
                     if is_public:
-                        visible_messages.append(m)
+                        visible_messages.append(safe_msg(m))
                     elif sender == agent_name or target == agent_name or agent_name in audience:
-                        visible_messages.append(m)
+                        visible_messages.append(safe_msg(m))
                 
                 agents = data.get("agents", {})
                 config = data.get("config", {})

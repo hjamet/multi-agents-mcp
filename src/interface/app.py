@@ -211,6 +211,41 @@ def save_config(new_config):
     state_store.update(update_fn)
 
 # --- DIALOGS ---
+def handle_disconnect_agent(agent_name):
+    """
+    Sends a system signal to the agent to save memory and stop, 
+    effectively disconnecting them for a reload.
+    """
+    def update_fn(s):
+        # 1. Inject System Message (High Priority)
+        # We explicitly target the agent so they see it.
+        msg = {
+            "from": "System",
+            "content": f"🔁 **SYSTEM NOTIFICATION**: RELOAD REQUESTED.\n\nThe User has requested a context reset for you.\n\n**INSTRUCTIONS:**\n1. Synthesize your final state into a `note` (Critical).\n2. Stop speaking (do not call `talk`).\n\n(You will be disconnected shortly.)",
+            "public": False,
+            "target": agent_name,
+            "audience": [],
+            "timestamp": time.time()
+        }
+        s.setdefault("messages", []).append(msg)
+        
+        # 2. Force Turn to Agent (Wake up call)
+        # This interrupts any waiting state or enables them to act immediately
+        s.setdefault("turn", {})
+        s["turn"]["current"] = agent_name
+        s["turn"]["turn_start_time"] = time.time()
+        s["turn"]["consecutive_count"] = 0 # Avoid anti-loop block
+        
+        # 3. Update Status
+        if "agents" in s and agent_name in s["agents"]:
+            # Set to 'pending_connection' so the slot is available for a new 'agent()' call
+            s["agents"][agent_name]["status"] = "pending_connection"
+            
+        return f"Reload Signal -> {agent_name}"
+    
+    state_store.update(update_fn)
+    st.toast(f"Signal de déconnexion envoyé à {agent_name} 🔁")
+
 PRESET_DIR = GLOBAL_PRESET_DIR
 
 @st.dialog("Sauvegarder le Scénario")
@@ -744,8 +779,39 @@ with st.sidebar:
                 status_color = "#2196F3"
                 status_label = "En action..."
             
-            st.markdown(f"""<div class="{card_class}" style="background-color: {bg}; border: 1px solid {border_color}; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s ease;"><div style="display: flex; align-items: center; gap: 12px;"><div style="font-size: 1.4em; background: white; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">{emoji}</div><div style="display: flex; flex-direction: column;"><span style="font-weight: 600; color: {'#1a1a1a' if status == 'connected' else '#666'}; font-size: 0.95em;">{name}</span><div style="display: flex; align-items: center; gap: 4px;"><div style="width: 6px; height: 6px; background-color: {status_color}; border-radius: 50%;"></div><span style="font-size: 0.7em; color: {status_color}; font-weight: 500; letter-spacing: 0.5px;">{status_label}</span></div></div></div>{'<span style="font-size: 1.2em;" title="C&rsquo;est son tour !">✨</span>' if is_turn else ''}</div>""", unsafe_allow_html=True)
+            card_html = f"""<div class="{card_class}" style="background-color: {bg}; border: 1px solid {border_color}; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s ease;"><div style="display: flex; align-items: center; gap: 12px;"><div style="font-size: 1.4em; background: white; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">{emoji}</div><div style="display: flex; flex-direction: column;"><span style="font-weight: 600; color: {'#1a1a1a' if status == 'connected' else '#666'}; font-size: 0.95em;">{name}</span><div style="display: flex; align-items: center; gap: 4px;"><div style="width: 6px; height: 6px; background-color: {status_color}; border-radius: 50%;"></div><span style="font-size: 0.7em; color: {status_color}; font-weight: 500; letter-spacing: 0.5px;">{status_label}</span></div></div></div>{'<span style="font-size: 1.2em;" title="C&rsquo;est son tour !">✨</span>' if is_turn else ''}</div>"""
             
+            if name == "User":
+                st.markdown(card_html, unsafe_allow_html=True)
+            else:
+                c_card, c_btn = st.columns([0.82, 0.18])
+                with c_card:
+                    st.markdown(card_html, unsafe_allow_html=True)
+                with c_btn:
+                    # Center the button vertically relative to card is hard, but simple button works
+                    # Add some top margin to align with card center approx
+                    st.markdown('<div style="height: 6px;"></div>', unsafe_allow_html=True)
+                    if st.button("🔄", key=f"reload_{name}", help=f"Déconnecter {name} pour rechargement"):
+                        handle_disconnect_agent(name)
+                        time.sleep(0.5) # UI Feedback
+                        st.rerun()
+            
+    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+    if st.button("🔄 Reload All Agents", type="secondary", use_container_width=True, help="Déconnecter tous les agents pour une reconnexion, sans perdre l'historique."):
+         def reload_all(s):
+             count = 0
+             for name in s.get("agents", {}):
+                 # Target 'connected' or 'working' agents
+                 if s["agents"][name].get("status") in ["connected", "working"]:
+                     s["agents"][name]["status"] = "pending_connection"
+                     count += 1
+             return f"Signal Reload envoyé à {count} agents."
+         
+         msg = state_store.update(reload_all)
+         st.toast(msg)
+         time.sleep(0.5)
+         st.rerun()
+
     st.divider()
 
     # --- PAUSE CONTROL ---
@@ -765,6 +831,7 @@ with st.sidebar:
         st.warning("⚠️ SIMULATION EN PAUSE")
     
     st.divider()
+
     
     # Debug Tools
     with st.expander("🔧 DEBUG"):
@@ -1028,9 +1095,15 @@ if st.session_state.page == "Communication":
                     target = "all"
                     public = True
             
+            # Prepare content with Reply Context
+            final_content = prompt
+            if st.session_state.reply_to:
+                ref = st.session_state.reply_to
+                final_content = f"↪️ [Réponse à {ref['sender']}: \"{ref['preview']}\"]\n{prompt}"
+
             msg = {
                 "from": "User",
-                "content": prompt,
+                "content": final_content,
                 "timestamp": time.time(),
                 "public": public,
                 "audience": []
@@ -1041,6 +1114,9 @@ if st.session_state.page == "Communication":
                 msg["target"] = "all"
                 
             s.setdefault("messages", []).append(msg)
+            
+            # CRITICAL: Update timestamp for Anti-Ghost logic in logic.py
+            s.setdefault("turn", {})["last_user_message_time"] = msg["timestamp"]
             
             # --- TURN MANAGEMENT (If User had the turn) ---
             if s.get("turn", {}).get("current") == "User":
