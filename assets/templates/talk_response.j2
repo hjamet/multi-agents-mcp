@@ -44,10 +44,11 @@ L'utilisateur te répond directement ci-dessous.
 -------------------------------------------------
 
 --- ⚠️ YOUR TURN: ACTION REQUIRED ---
-It is your turn to speak. You MUST NOT STOP.
-1. **Analyze** the messages and your role.
-2. **Decide** who to speak to next based on your Connections table below.
-3. **Call `talk(...)`** to send your message and pass the turn.
+It is your turn to speak.
+1. **SHUTDOWN CHECK**: If instructed to 'TERMINATE' or 'STOP_ROUTINE', do NOT call `talk`. Call `note()` if needed, then STOP. Do not loop back to `agent`.
+2. **Analyze** the messages and your role.
+3. **Decide** who to speak to next based on your Connections table below.
+4. **Call `talk(...)`** to send your message and pass the turn.
 
 **Arguments for `talk`:**
 - `message`: Your content.

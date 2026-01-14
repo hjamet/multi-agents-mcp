@@ -140,6 +140,19 @@ class Engine:
             
             time.sleep(2) # Polling interval
         
+    def acknowledge_turn(self, agent_name: str) -> None:
+        """
+        Updates the turn_start_time to now.
+        Used when an agent successfully retrieves the turn, acknowledging they have seen all prior messages.
+        """
+        def _ack(state):
+            # Only update if it is indeed this agent's turn to prevent hijacking
+            if state.get("turn", {}).get("current") == agent_name:
+                state["turn"]["turn_start_time"] = time.time()
+                return "Turn Acknowledged"
+            return "Turn Ack Failed: Not your turn"
+        self.state.update(_ack)
+
     async def wait_for_all_agents_async(self, name: str, timeout_seconds: int = 600) -> str:
         """
         Async version of wait_for_all_agents.
@@ -182,6 +195,15 @@ class Engine:
             
             nonlocal next_agent
             if next_agent: next_agent = next_agent.strip()
+
+            # --- RESOLVE AGENT ID FROM PROFILE ---
+            # Fixes bug where turn is passed to "Alex" instead of "Alex (Senior Dev)"
+            if next_agent and next_agent not in agents and next_agent != "User":
+                for aid, adata in agents.items():
+                    if adata.get("profile_ref") == next_agent and adata.get("status") == "connected":
+                        next_agent = aid
+                        break # Use the first connected agent matching the profile
+            # -------------------------------------
             
             if not next_agent:
                 return "🚫 ACTION DENIED: 'next_agent' cannot be empty. You must specify who speaks next (e.g., 'MaitreDuJeu')."
@@ -189,6 +211,32 @@ class Engine:
             # Sanitize audience
             nonlocal audience
             audience = [a.strip() for a in audience if a.strip()]
+
+            # --- RESOLVE AUDIENCE FROM PROFILE (Automatic Mapping) ---
+            # Fixes bug where private messages to "Miller" were not seen by "Miller (Product Mgr)"
+            resolved_audience = []
+            for aud in audience:
+                # 1. If it matches a strict Agent ID (or User), keep it.
+                if aud in agents or aud == "User":
+                    resolved_audience.append(aud)
+                    continue
+                
+                # 2. Try to find an Agent ID that links to this Profile Ref
+                found_match = False
+                for aid, adata in agents.items():
+                    if adata.get("profile_ref") == aud and adata.get("status") == "connected":
+                        resolved_audience.append(aid)
+                        found_match = True
+                        break # Link to the first connected agent with this profile
+                
+                if found_match and resolved_audience[-1] not in resolved_audience[:-1]:
+                    pass # Appended above
+                elif not found_match:
+                    # Keep original (for error handling by check_target)
+                    resolved_audience.append(aud)
+            
+            audience = resolved_audience
+            # ---------------------------------------------------------
 
             sender_info = agents.get(from_agent, {})
             sender_profile_name = sender_info.get("profile_ref")
@@ -240,16 +288,21 @@ class Engine:
                 
                 # If User spoke AFTER turn started
                 if last_user > turn_start:
-                     # 1. Update Turn Start to unblock next attempt (Fix Deadlock)
-                     state["turn"]["turn_start_time"] = time.time()
-                     
                      # 2. Fetch missed messages (Fix Silence)
                      missed = [m for m in state.get("messages", []) if m.get("from") == "User" and m.get("timestamp", 0) > turn_start]
-                     missed_text = "\n".join([f"- User: {m.get('content')}" for m in missed])
                      
-                     import sys
-                     print(f"[Anti-Ghost] BLOCK & RESET: Updated turn_start. User Msg Time {last_user}", file=sys.stderr)
-                     return f"🚫 INTERACTION REJECTED: The User interrupted you with new messages:\n{missed_text}\n\nACTION: Core logic has reset your turn timer. Incorporate this new info and try again."
+                     # Filter: Only interrupt if message is relevant to ME
+                     relevant = [m for m in missed if m.get("public") or m.get("target") == from_agent or from_agent in m.get("audience", [])]
+                     
+                     if relevant:
+                         # 1. Update Turn Start to unblock next attempt (Fix Deadlock)
+                         state["turn"]["turn_start_time"] = time.time()
+                         
+                         missed_text = "\n".join([f"- User: {m.get('content')}" for m in relevant])
+                         
+                         import sys
+                         print(f"[Anti-Ghost] BLOCK & RESET: Updated turn_start. User Msg Time {last_user}", file=sys.stderr)
+                         return f"🚫 INTERACTION REJECTED: The User interrupted you with new messages:\n{missed_text}\n\nACTION: Core logic has reset your turn timer. Incorporate this new info and try again."
 
             # A. Capability Checks
             is_open = "open" in caps
@@ -466,14 +519,10 @@ class Engine:
                         is_public = m.get("public", True)
                         sender = m.get("from")
                         target = m.get("target")
-                        audience = m.get("audience", [])
+                        audience = m.get("audience") or []
                         
                         # Helper to safeguard message size
                         def safe_msg(msg_obj):
-                             if len(msg_obj.get("content", "")) > 3000:
-                                 c = msg_obj.copy()
-                                 c["content"] = c["content"][:3000] + " ... [TRUNCATED_BY_SYSTEM_LOGIC]"
-                                 return c
                              return msg_obj
 
                         if is_public:
@@ -596,14 +645,10 @@ class Engine:
                     is_public = m.get("public", True)
                     sender = m.get("from")
                     target = m.get("target")
-                    audience = m.get("audience", [])
+                    audience = m.get("audience") or []
                     
                     # Helper to safeguard message size
                     def safe_msg(msg_obj):
-                         if len(msg_obj.get("content", "")) > 3000:
-                             c = msg_obj.copy()
-                             c["content"] = c["content"][:3000] + " ... [TRUNCATED_BY_SYSTEM_LOGIC]"
-                             return c
                          return msg_obj
 
                     if is_public:

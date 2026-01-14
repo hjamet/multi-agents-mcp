@@ -837,19 +837,70 @@ with st.sidebar:
             
     st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
     if st.button("🔄 Reload All Agents", type="secondary", use_container_width=True, help="Déconnecter tous les agents pour une reconnexion, sans perdre l'historique."):
-         def reload_all(s):
-             count = 0
-             for name in s.get("agents", {}):
-                 # Target 'connected' or 'working' agents
-                 if s["agents"][name].get("status") in ["connected", "working"]:
-                     s["agents"][name]["status"] = "pending_connection"
-                     count += 1
-             return f"Signal Reload envoyé à {count} agents."
-         
-         msg = state_store.update(reload_all)
-         st.toast(msg)
-         time.sleep(0.5)
-         st.rerun()
+        # 1. Identify Target Agents (Connected or Working)
+        agents_to_reload = [
+            n for n, d in agents.items() 
+            if d.get("status") in ["connected", "working"]
+        ]
+        
+        if not agents_to_reload:
+             st.toast("Aucun agent connecté à recharger.")
+        else:
+             status_box = st.status("🔄 Séquence de Reload en cours...", expanded=True)
+             
+             for agent_name in agents_to_reload:
+                 status_box.write(f"🛑 Arrêt de **{agent_name}**...")
+                 
+                 # A. TRIGGER SIGNAL (Inject Message & Turn)
+                 def trigger_signal(s):
+                     # 1. Inject System Message (High Priority)
+                     msg = {
+                         "from": "System",
+                         "content": f"🔁 **SYSTEM NOTIFICATION**: RELOAD REQUESTED.\n\nThe User has requested a context reset for you.\n\n**INSTRUCTIONS:**\n1. Synthesize your final state into a `note` (Critical).\n2. Stop speaking (do not call `talk`).\n\n(You will be disconnected shortly.)",
+                         "public": False,
+                         "target": agent_name,
+                         "audience": [],
+                         "timestamp": time.time()
+                     }
+                     s.setdefault("messages", []).append(msg)
+                     
+                     # 2. Force Turn to Agent (Wake up call)
+                     s.setdefault("turn", {})
+                     s["turn"]["current"] = agent_name
+                     s["turn"]["turn_start_time"] = time.time()
+                     s["turn"]["consecutive_count"] = 0 
+                     
+                     return f"Signal sent to {agent_name}"
+                 
+                 state_store.update(trigger_signal)
+                 
+                 # B. WAIT FOR MEMORY UPDATE (Heartbeat)
+                 mem_file = MEMORY_DIR / f"{agent_name}.md"
+                 initial_mtime = 0
+                 if mem_file.exists():
+                     initial_mtime = mem_file.stat().st_mtime
+                 
+                 # Loop for max 3 seconds (Fast fail)
+                 # We don't want to wait too long if they are stuck
+                 for _ in range(30): 
+                     time.sleep(0.1)
+                     if mem_file.exists() and mem_file.stat().st_mtime > initial_mtime:
+                         status_box.write(f"✅ Mémoire de {agent_name} synchronisée.")
+                         break
+                 
+                 # C. KILL (Update Status)
+                 def kill_agent(s):
+                     if "agents" in s and agent_name in s["agents"]:
+                         s["agents"][agent_name]["status"] = "pending_connection"
+                     return f"{agent_name} disconnected."
+                 
+                 state_store.update(kill_agent)
+                 time.sleep(0.5) # Pace buffer
+                 
+             status_box.update(label="Reload Complete!", state="complete", expanded=False)
+             st.toast("Tous les agents ont été rechargés avec succès !")
+             time.sleep(1)
+             st.rerun()
 
     st.divider()
 
@@ -1066,19 +1117,13 @@ if st.session_state.page == "Communication":
         plural = "sont" if len(typing_agents) > 1 else "est"
         st.markdown(f'<div class="typing-container">{agent_names} {plural} en train d\'écrire...<div class="typing-dots"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>', unsafe_allow_html=True)
     
-    # 2b. Focus Toggle (Centered & Premium)
+    # 2b. Focus Toggle (Removed)
     c1, c2, c3 = st.columns([1, 1, 1])
-    with c2:
-        new_urgent_focus = st.toggle("🔍 Focus Urgences", value=is_urgent_focus, key="urgent_toggle_v6")
-
+    
     # MOVED: Banner in bottom right (c3)
     if turn.get("current") == "User":
         with c3:
             st.markdown("""<div style="background-color: #fff3cd; border: 2px solid #ff3d00; padding: 8px; border-radius: 8px; text-align: center; animation: pulse 2s infinite;"><span style="color: #bf360c; font-weight: 900; font-size: 0.9em; text-transform: uppercase;">⚡ À VOUS DE JOUER ⚡</span></div><style>@keyframes pulse {0% { box-shadow: 0 0 0 0 rgba(255, 61, 0, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(255, 61, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 61, 0, 0); }}</style>""", unsafe_allow_html=True)
-    
-    if new_urgent_focus != is_urgent_focus:
-        st.session_state.is_urgent_focus = new_urgent_focus
-        st.rerun()
 
     # --- OMNI-CHANNEL INPUT ---
     # Target Selector (REPLACED BY MENTIONS)

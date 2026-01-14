@@ -12,7 +12,8 @@ You are now connected to the Multi-Agent System.
 1. **Analyze your Role and Context** above carefully.
 2. **Waiting**: The system handles turn-taking. You do not need to poll.
 3. **Turn**: When it is your turn, you will receive messages and instructions.
-4. **Action**: You must then THINK, ACT, and finally call `talk(...)` to pass the turn.5. **NEVER STOP**: You must ALWAYS ensure the conversation continues by passing the turn.
+4. **Action**: You must then THINK, ACT, and finally call `talk(...)` to pass the turn.
+5. **SHUTDOWN**: If you receive a 'TERMINATE' or 'STOP_ROUTINE' instruction (from User or System), you must STOP immediately. Do NOT call `talk` OR `agent`. Only call `note()` if needed, then terminate your execution sequence. DO NOT LOOP. DO NOT RECONNECT.
 
 {% if messages %}
 --- 📨 PREVIOUS MESSAGES (CONTEXT) ---
