@@ -158,13 +158,25 @@
 ### 21. Feature: Global Reload Button (Refined)
 - **Goal**: Disconnect ALL agents but **PRESERVE** session history.
 - **Placement**: Below Agent List (with 🔄 icon).
-- **Status**: 🔄 In Progress (v1.8.1)
+- **Status**: ✅ Released (v1.8.1)
 - **Priority**: HIGH
 
 ### 22. DX: Explicit Termination Instruction
 - **Goal**: Signal `[TERMINATE_SESSION]` to agents on reload.
 - **Status**: ✅ Implemented (v1.8.0)
 - **Priority**: HIGH
+
+## 🚀 Sprint 7: User Experience & Admin (Released)
+
+### 23. Feature: System Notifications
+- **Goal**: Sidebar Badges + Global Toasts for events.
+- **Status**: ✅ Released (v1.9.0)
+- **Priority**: MEDIUM
+
+### 24. Feature: Delete Scenarios
+- **Goal**: UI to delete custom presets/scenarios.
+- **Status**: ✅ Released (v1.10.0)
+- **Priority**: MEDIUM
 
 ## 🧊 Icebox
 (Empty)

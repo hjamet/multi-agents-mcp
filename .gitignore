@@ -75,3 +75,12 @@ venv.bak/
 *.swp
 *.swo
 
+
+# Project Specific
+state.json
+state_*.json
+current_working_dir.json
+mcp_config.json
+.multi-agent-mcp/
+logs/
+test-todel/

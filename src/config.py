@@ -12,9 +12,21 @@ CODE_ROOT = Path(__file__).resolve().parent.parent
 
 def get_current_working_dir() -> Path:
     """
-    Returns the path where the user last ran 'mamcp'.
+    Returns the path where the user last ran 'mamcp' or 'mamcp-dev'.
     Defaults to the current process directory if not specified.
     """
+    # 1. Check for Local Env Overrides (Dev Mode Priority)
+    # mamcp-dev generates this file in the repo root
+    local_info = CODE_ROOT / "current_working_dir.json"
+    if local_info.exists():
+        try:
+            with open(local_info, "r") as f:
+                data = json.load(f)
+                return Path(data.get("cwd", os.getcwd())).resolve()
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    # 2. Check Global Config (User Install)
     if CWD_INFO_FILE.exists():
         try:
             with open(CWD_INFO_FILE, "r") as f:
@@ -22,6 +34,7 @@ def get_current_working_dir() -> Path:
                 return Path(data.get("cwd", os.getcwd())).resolve()
         except (json.JSONDecodeError, OSError):
             pass
+            
     return Path(os.getcwd()).resolve()
 
 # Project-Specific Data Directory (Local to the execution path)
