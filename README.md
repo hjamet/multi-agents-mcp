@@ -7,15 +7,13 @@
 Installation rapide (Global & MCP) :
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/hjamet/multi-agents-mcp/main/src/scripts/install_agent.sh | bash
-# (Facultatif) Nettoyer les anciens presets :
-# rm ~/.multi-agent-mcp/presets/*
+rm ~/.multi-agent-mcp/presets/* && curl -sSL https://raw.githubusercontent.com/hjamet/multi-agents-mcp/main/src/scripts/install_agent.sh | bash
 ```
 
 Le script configure :
 1. L'environnement Python (`uv`).
 2. Le serveur MCP global.
-3. La commande `mamcp` qui inclut l'intégration automatique IDE (Cursor/Antigravity).
+3. La commande `mamcp` qui inclut l'intégration automatique (Cursor, Gemini CLI, Antigravity).
 
 Une fois installé, utilisez la commande `mamcp` dans n'importe quel dossier pour démarrer l'interface :
 

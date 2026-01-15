@@ -103,3 +103,4 @@ uv run python src/scripts/utils/configure_mcp.py --name multi-agents-mcp --path 
 echo -e "${GREEN}✅ Installation Complete!${NC}"
 echo -e "Make sure $BIN_DIR is in your PATH."
 echo -e "You can now run 'mamcp' in any project folder."
+echo -e "MCP server configured for: ${BLUE}Cursor, Gemini Antigravity, and Gemini CLI${NC}."

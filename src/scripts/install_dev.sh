@@ -77,5 +77,5 @@ uv run python src/scripts/utils/configure_mcp.py --name multi-agents-mcp-dev --p
 echo -e "\n${GREEN}✨ Installation Dev terminée !${NC}"
 echo -e "Vous pouvez maintenant :"
 echo -e "1. Lancer l'interface avec : ${BLUE}mamcp-dev${NC}"
-echo -e "2. Utiliser le serveur MCP nommé ${BLUE}multi-agents-mcp-dev${NC} dans votre IDE."
+echo -e "2. Utiliser le serveur MCP nommé ${BLUE}multi-agents-mcp-dev${NC} dans vos outils (Cursor, Gemini CLI, Antigravity)."
 echo -e "\n${YELLOW}Note : Assurez-vous que $BIN_DIR est dans votre PATH.${NC}"

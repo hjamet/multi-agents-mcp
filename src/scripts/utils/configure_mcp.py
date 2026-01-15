@@ -6,7 +6,7 @@ from pathlib import Path
 
 def configure_mcp(name, project_path, is_dev=False):
     """
-    Configures MCP for both Gemini Antigravity and Cursor IDE.
+    Configures MCP for Gemini Antigravity, Cursor IDE, and Gemini CLI.
     """
     project_path = os.path.abspath(project_path)
     server_script = os.path.join(project_path, 'src', 'core', 'server.py')
@@ -28,7 +28,8 @@ def configure_mcp(name, project_path, is_dev=False):
     # Paths to configure
     configs = [
         os.path.expanduser('~/.gemini/antigravity/mcp_config.json'),
-        os.path.expanduser('~/.cursor/mcp.json')
+        os.path.expanduser('~/.cursor/mcp.json'),
+        os.path.expanduser('~/.gemini/settings.json')
     ]
 
     for config_path in configs:
@@ -65,6 +66,12 @@ def configure_mcp(name, project_path, is_dev=False):
             # We don't exit here to try the next config, but we'll exit at the end if any failed?
             # User rule: Fail-Fast. Let's fail if we can't write a config we expected to be able to.
             sys.exit(1)
+    
+    # Inform about Gemini CLI if not found
+    import shutil
+    if not shutil.which('gemini'):
+        print("\n💡 Tip: Gemini CLI not found. To use it with this MCP, install it with:")
+        print("   npm install -g @google/gemini-cli")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Configure MCP for IDEs')
