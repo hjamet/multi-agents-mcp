@@ -80,6 +80,29 @@ def _get_agent_connections(state, agent_name):
         
     return connections
 
+
+def _get_latest_role(state, agent_name: str) -> str:
+    """
+    Fetches the most up-to-date system prompt for an agent.
+    Priority: config.profiles[profile_ref].system_prompt > agents[agent_name].role
+    """
+    try:
+        agent_info = state.get("agents", {}).get(agent_name, {})
+        p_ref = agent_info.get("profile_ref")
+        profiles = state.get("config", {}).get("profiles", [])
+
+        # Find profile by name
+        profile = next((p for p in profiles if p["name"] == p_ref), None)
+
+        if profile and profile.get("system_prompt"):
+            return profile["system_prompt"]
+
+        # Fallback to the role stored in the agent's instance
+        return agent_info.get("role", "Unknown Role")
+    except Exception as e:
+        logger.error("System", f"Error fetching latest role for {agent_name}: {e}")
+        return "Unknown Role"
+
 def _build_agent_directory(state, my_name):
     """
     Build a comprehensive list of all agents for the prompt.
@@ -268,7 +291,7 @@ async def agent(ctx: Context) -> str:
 
     response = template.render(
         name=name,
-        role=result["role"],
+        role=_get_latest_role(data, name),
         context=result["context"],
         agent_directory=agent_dir,
         connections=[d for d in agent_dir if d.get('authorized')],
@@ -439,7 +462,7 @@ async def talk(
                      # Fetch Context Again
                      try:
                         data = engine.state.load()
-                        role_snippet = data["agents"][sender]["role"]
+                        role_snippet = _get_latest_role(data, sender)
                         global_context = data.get("config", {}).get("context", "")
                         agent_directory = _build_agent_directory(data, sender)
                      except Exception as e:
@@ -493,7 +516,7 @@ async def talk(
             
             try:
                 data = engine.state.load()
-                role_snippet = data["agents"][sender]["role"]
+                role_snippet = _get_latest_role(data, sender)
                 global_context = data.get("config", {}).get("context", "")
                 agent_directory = _build_agent_directory(data, sender)
             except Exception as e:
@@ -562,7 +585,7 @@ async def talk(
         try:
             data = engine.state.load()
             # Role
-            role_snippet = data["agents"][sender]["role"]
+            role_snippet = _get_latest_role(data, sender)
             # Context
             global_context = data.get("config", {}).get("context", "")
             # Directory
