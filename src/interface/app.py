@@ -1447,25 +1447,30 @@ elif st.session_state.page == "Editor":
     if current_profile:
         st.markdown("---")
         # Layout Spacieux (Columns)
-        cA, cB, cC = st.columns([1, 2, 2])
+        c_main, c_disp = st.columns([3, 2])
         
-        with cA:
-            st.markdown("### Emoji")
-            # Use session state to track the emoji being edited
+        with c_main:
+            c_emoji, c_name = st.columns([0.18, 0.82])
+            
             emoji_key = f"editing_emoji_{selected_name}"
             if emoji_key not in st.session_state:
                 st.session_state[emoji_key] = current_profile.get("emoji", "🤖")
-            
             current_emoji = st.session_state[emoji_key]
-            with st.popover(f"{current_emoji}", use_container_width=True):
-                cols = st.columns(8)
-                for idx, emoji in enumerate(EMOJI_LIST):
-                    if cols[idx % 8].button(emoji, key=f"emoji_btn_{selected_name}_{idx}"):
-                        st.session_state[emoji_key] = emoji
-                        st.rerun()
+            
+            with c_emoji:
+                st.markdown('<div style="height: 28px;"></div>', unsafe_allow_html=True) # Spacer to align with text input label
+                with st.popover(f"{current_emoji}", use_container_width=True):
+                    cols = st.columns(8)
+                    for idx, emoji in enumerate(EMOJI_LIST):
+                        if cols[idx % 8].button(emoji, key=f"emoji_btn_{selected_name}_{idx}"):
+                            st.session_state[emoji_key] = emoji
+                            st.rerun()
+            
+            with c_name:
+                new_name = st.text_input("Nom", current_profile.get("name", ""), key=f"edit_name_{selected_name}")
 
-        new_name = cB.text_input("Nom", current_profile.get("name", ""), key=f"edit_name_{selected_name}")
-        disp = cC.text_input("Affichage", current_profile.get("display_name", ""), key=f"edit_disp_{selected_name}")
+        with c_disp:
+            disp = st.text_input("Affichage", current_profile.get("display_name", ""), key=f"edit_disp_{selected_name}")
         
         new_desc = st.text_input("Description", current_profile.get("description", ""), key=f"edit_desc_{selected_name}")
         new_prompt = st.text_area("System Prompt", current_profile.get("system_prompt", ""), height=300, key=f"edit_prompt_{selected_name}")
@@ -1508,7 +1513,8 @@ elif st.session_state.page == "Editor":
             c1, c2, c3 = st.columns([2, 5, 1])
             
             # Label
-            target_emoji = "🌐" if target == "public" else "👤" if target == "User" else "🤖"
+            target_profile = next((p for p in profiles if p["name"] == target), None)
+            target_emoji = "🌐" if target == "public" else "👤" if target == "User" else (target_profile.get("emoji", "🤖") if target_profile else "🤖")
             c1.markdown(f"{target_emoji} **{target}**")
             
             default_ctx = existing_conn.get("context", "") if existing_conn else ""
