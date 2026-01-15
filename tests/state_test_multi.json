@@ -6,7 +6,7 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768237206.386212
+      "timestamp": 1768482246.1344686
     },
     {
       "from": "System",
@@ -14,13 +14,14 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768237206.4167075
+      "timestamp": 1768482246.1629267
     }
   ],
   "conversation_id": "test-uuid-multi",
   "turn": {
     "current": "Agent1",
-    "next": null
+    "next": null,
+    "turn_start_time": 1768482248.1836112
   },
   "agents": {
     "Agent1": {

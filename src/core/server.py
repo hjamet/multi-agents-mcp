@@ -339,7 +339,10 @@ async def talk(
                 "target": "all",
                 "timestamp": time.time()
             }
-            engine.state.setdefault("messages", []).append(violation_msg)
+            def log_violation(s):
+                s.setdefault("messages", []).append(violation_msg)
+                return "Violation Logged"
+            engine.state.update(log_violation)
             
             if logger: logger.log("VIOLATION", sender, f"Spoke out of turn (Current: {current_turn_holder}). Pausing agent...")
             

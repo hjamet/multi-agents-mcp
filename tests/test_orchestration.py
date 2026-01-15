@@ -165,7 +165,7 @@ class ServerProcess:
         # Read stderr line by line
         for line in self.process.stderr:
             self.stderr_log.append(line.strip())
-            # print(f"[SERVER STDERR] {line.strip()}", file=sys.stderr)
+            print(f"[SERVER STDERR] {line.strip()}", file=sys.stderr)
 
     def get_response(self, request_id: int, timeout=10) -> Any:
         start = time.time()
@@ -259,11 +259,11 @@ def test_features_single_agent(server_single):
     assert "REGISTRATION SUCCESSFUL" in resp
     
     # 2. Note (Memory)
-    server_single.call_tool("note", {"content": "My Secret Note"})
+    server_single.call_tool("note", {"content": "My Secret Note", "from_agent": "Agent1"})
     
     # 3. Talk (Send Message to User) -> Apps to history but keeps turn
     # Sending to User is valid even for single agent
-    res_talk = server_single.call_tool("talk", {"message": "Hello History", "public": True, "to": "User"})
+    res_talk = server_single.call_tool("talk", {"message": "Hello History", "public": True, "to": "User", "from_agent": "Agent1"})
     
     # 'talk' returns the NEXT prompt (since turn is kept).
     # We rely on rejoin to verify history.
@@ -283,6 +283,7 @@ def test_features_single_agent(server_single):
         fcntl.flock(f, fcntl.LOCK_EX) # Lock for safety
         data = json.load(f)
         data["agents"]["Agent1"]["status"] = "pending_connection"
+        data["turn"]["current"] = "Agent1" # Reset turn to avoid deadlock since User has it
         f.seek(0)
         json.dump(data, f)
         f.truncate()

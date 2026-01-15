@@ -1146,10 +1146,12 @@ if st.session_state.page == "Communication":
             else:
                 msg["target"] = "all"
                 
-            s.setdefault("messages", []).append(msg)
+            if "messages" not in s: s["messages"] = []
+            s["messages"].append(msg)
             
             # CRITICAL: Update timestamp for Anti-Ghost logic in logic.py
-            s.setdefault("turn", {})["last_user_message_time"] = msg["timestamp"]
+            if "turn" not in s: s["turn"] = {}
+            s["turn"]["last_user_message_time"] = msg["timestamp"]
             
             # --- TURN MANAGEMENT (If User had the turn) ---
             if s.get("turn", {}).get("current") == "User":

@@ -6,15 +6,14 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768237210.4105537
+      "timestamp": 1768482250.1752796
     },
     {
       "from": "Agent1",
       "content": "Hello History",
       "public": true,
       "target": "User",
-      "audience": [],
-      "timestamp": 1768237210.6126204
+      "timestamp": 1768482250.3813303
     },
     {
       "from": "System",
@@ -22,13 +21,15 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768237211.62266
+      "timestamp": 1768482251.302289
     }
   ],
   "conversation_id": "test-uuid-single",
   "turn": {
     "current": "Agent1",
-    "next": null
+    "next": null,
+    "turn_start_time": 1768482251.3208926,
+    "consecutive_count": 1
   },
   "agents": {
     "Agent1": {

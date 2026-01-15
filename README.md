@@ -48,6 +48,12 @@ Ce projet fournit un serveur MCP qui expose des outils critiques (`agent`, `talk
 2.  **Connexion** : Les agents (clients MCP) se connectent et reçoivent leur identité via `register_agent`. Le système gère le découplage entre les profils internes et les noms d'affichage publics.
 3.  **Simulation** : Les agents échangent des messages. Le mécanisme de **Smart Blocking** empêche les timeouts HTTP en maintenant les agents en attente active jusqu'à leur tour. Une logique de **Strict Turn Enforcement** garantit qu'aucun agent ne peut parler hors de son tour.
 
+### Sécurité & Identité (Protocole v2)
+Pour garantir l'intégrité de la simulation, le système impose désormais des règles strictes :
+- **Authentification par `from_agent`** : Chaque appel aux outils de communication (`talk`, `note`) **DOIT** inclure le paramètre `from_agent` avec le nom exact de l'agent.
+- **Anti-Usurpation** : Si `from_agent` ne correspond pas au détenteur du tour actuel, l'action est bloquée et l'agent est mis en "Pause Forcée" (Smart Block) jusqu'à ce que son tour réel arrive.
+- **Validation des Tests** : Une suite complète de tests (`tests/verify_logic.py`, `tests/test_orchestration.py`) valide automatiquement ces contraintes à chaque déploiement (Security-by-Design).
+
 ### Rôle de l'Architecte & Direction
 Le système évolue vers une plateforme agnostique permettant des simulations complexes (Debates, Jeux, Planification Stratégique). Les travaux actuels se concentrent sur la robustesse de la gestion d'état (File Locking) et l'expérience utilisateur (Dashboard temps réel avec Pagination et Personnalisation par Emoji).
 
@@ -118,3 +124,4 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
     - 💬 **Messaging 2.0** : Simplification radicale (To/Public/Content), suppression Open Mode/Audience, et Privacy par équipe (v2.0.0).
     - 🔒 **Identity Enforcement** : Argument obligatoire `from_agent` et validation stricte du tour (Pause/Ban auto) (v2.2.0).
     - 🚑 **Identity Hotfix** : Correction blocage infini sur typo de nom (Fail Fast au lieu de Pause) (v2.2.1).
+    - 🗣️ **API Cleanup** : Argument `public` remplacé par `private` (facultatif, défaut False=Public) dans `talk` (v2.3.0).
