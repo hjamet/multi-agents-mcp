@@ -212,7 +212,7 @@ class Engine:
         
         return "TIMEOUT: Waiting for other agents took too long. Please retry agent() tool."
 
-    def post_message(self, from_agent: str, content: str, public: bool, next_agent: str) -> str:
+    def post_message(self, from_agent: str, content: str, public: bool, next_agent: str, audience: List[str] = None) -> str:
         """
         Posts a message and updates the turn.
         Validates capabilities and connections before posting.
@@ -321,6 +321,7 @@ class Engine:
                 "content": content,
                 "public": public,
                 "target": next_agent, 
+                "audience": audience or [],
                 "timestamp": time.time()
             }
             state.setdefault("messages", []).append(msg)
@@ -432,7 +433,7 @@ class Engine:
                         continue
                         
                     # Private Logic
-                    if sender == agent_name or target == agent_name:
+                    if sender == agent_name or target == agent_name or agent_name in (m.get("audience") or []):
                         visible_messages.append(m)
                     elif my_prof:
                          sender_prof = agents_map.get(sender, {}).get("profile_ref")
@@ -575,7 +576,7 @@ class Engine:
                         continue
                         
                     # Private Logic
-                    if sender == agent_name or target == agent_name:
+                    if sender == agent_name or target == agent_name or agent_name in (m.get("audience") or []):
                         visible_messages.append(m)
                     elif my_prof:
                          sender_prof = agents_map.get(sender, {}).get("profile_ref")

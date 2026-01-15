@@ -104,3 +104,26 @@ def test_visibility_private_message_team(mock_state):
     mock_state["turn"]["current"] = "Charlie"
     msgs_charlie = engine.wait_for_turn("Charlie", timeout_seconds=1)["messages"]
     assert len(msgs_charlie) == 0
+
+def test_visibility_private_message_audience(mock_state):
+    store = MockStateStore(mock_state)
+    engine = Engine(store)
+    
+    # Alice sends Private message to Miller, mentioning Charlie in audience
+    # Charlie is an Engineer (Diff role from Alice)
+    engine.post_message("Alice", "Secret with Charlie", False, "Miller", audience=["Charlie"])
+    
+    # 1. Miller (Target) should see it
+    msgs_miller = engine.wait_for_turn("Miller", timeout_seconds=1)["messages"]
+    assert len(msgs_miller) == 1
+    
+    # 2. Charlie (Audience) should see it
+    mock_state["turn"]["current"] = "Charlie"
+    msgs_charlie = engine.wait_for_turn("Charlie", timeout_seconds=1)["messages"]
+    assert len(msgs_charlie) == 1
+    assert msgs_charlie[0]["content"] == "Secret with Charlie"
+    
+    # 3. Bob (Scientist, same role as Alice) should also see it due to team visibility
+    mock_state["turn"]["current"] = "Bob"
+    msgs_bob = engine.wait_for_turn("Bob", timeout_seconds=1)["messages"]
+    assert len(msgs_bob) == 1

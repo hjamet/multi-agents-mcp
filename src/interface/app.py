@@ -1110,16 +1110,30 @@ if st.session_state.page == "Communication":
             # 2. Selector check
             # 3. Public
             
-            found_mention = False
+            found_mentions = []
             
             # Mention Check (Specific Agents only)
             known_agents = sorted(list(agents.keys()), key=len, reverse=True)
-            for name in known_agents:
-                if f"@{name}" in prompt:
-                    target = name
-                    public = False
-                    found_mention = True
-                    break
+            
+            # Use regex to find all mentions in order of appearance
+            # Sorting known_agents by length reverse ensures longer names are matched first
+            if known_agents:
+                pattern = "@(" + "|".join([re.escape(name) for name in known_agents]) + ")"
+                matches = re.finditer(pattern, prompt)
+                seen = set()
+                for match in matches:
+                    name = match.group(1)
+                    if name not in seen:
+                        found_mentions.append(name)
+                        seen.add(name)
+            
+            if found_mentions:
+                target = found_mentions[0]
+                audience = found_mentions[1:]
+                public = False
+                found_mention = True
+            else:
+                audience = []
             
             if not found_mention:
                 if st.session_state.reply_to:
@@ -1143,7 +1157,7 @@ if st.session_state.page == "Communication":
                 "content": final_content,
                 "timestamp": time.time(),
                 "public": public,
-                "audience": []
+                "audience": audience
             }
             if target:
                 msg["target"] = target
