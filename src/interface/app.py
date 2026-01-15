@@ -1111,6 +1111,7 @@ if st.session_state.page == "Communication":
             # 3. Public
             
             found_mentions = []
+            found_mention = False
             
             # Mention Check (Specific Agents only)
             known_agents = sorted(list(agents.keys()), key=len, reverse=True)
