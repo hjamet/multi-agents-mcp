@@ -406,6 +406,24 @@ async def talk(
         
         # Check for DENIED action
         if post_result.startswith("🚫"):
+            if post_result.startswith("🚫 TARGET_NOT_FOUND:"):
+                target_tried = post_result.split(":", 1)[1].strip()
+                data = engine.state.load()
+                agent_dir = _build_agent_directory(data, sender)
+                connections_list = [d for d in agent_dir if d.get('authorized')]
+                
+                # Format a nice table-like list for the agent
+                dir_str = "\n".join([f"- **{c['name']}** ({c['public_desc']}): {c['note']}" for c in connections_list])
+                
+                error_msg = f"🚫 ACTION DENIED: Target agent '{target_tried}' does not exist.\n\n"
+                error_msg += "### 📋 YOUR AUTHORIZED CONNECTIONS:\n"
+                error_msg += "You must use the EXACT name from this list:\n"
+                error_msg += dir_str
+                error_msg += "\n\nAction rejected. You retain your turn. Please correct the 'to' argument and try again."
+                
+                if logger: logger.log("DENIED", "System", error_msg, {"target": sender})
+                return error_msg
+
             if logger: logger.log("DENIED", "System", post_result, {"target": sender})
             return post_result
             

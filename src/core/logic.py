@@ -237,6 +237,10 @@ class Engine:
             if not next_agent:
                 return "🚫 ACTION DENIED: 'next_agent' cannot be empty. You must specify who speaks next."
             
+            if next_agent not in agents and next_agent != "User":
+                 # Strict Existence Check (Fix for typos causing deadlocks)
+                 return f"🚫 TARGET_NOT_FOUND: {next_agent}"
+
             sender_info = agents.get(from_agent, {})
             sender_profile_name = sender_info.get("profile_ref")
             
