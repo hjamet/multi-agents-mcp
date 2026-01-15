@@ -216,12 +216,12 @@ def save_config(new_config):
 # --- DIALOGS ---
 def handle_disconnect_agent(agent_name):
     """
-    Sets the reload_active flag for the agent immediately.
-    The agent will be notified on its next interaction or wait.
+    Sets the reload_active flag for the agent immediately and allows reconnection.
     """
     def update_fn(s):
         if agent_name in s.get("agents", {}):
             s["agents"][agent_name]["reload_active"] = True
+            s["agents"][agent_name]["status"] = "pending_connection"
             
             # Inject System Message for the Agent
             msg = {
@@ -791,7 +791,7 @@ with st.sidebar:
                 border_color = "rgba(76, 175, 80, 0.2)"
             elif status == "pending_connection":
                 status_color = "#FF9800" # Orange
-                status_label = "Initialisation..."
+                status_label = "Attente Reconnexion"
                 bg = "rgba(255, 152, 0, 0.05)"
                 border_color = "rgba(255, 152, 0, 0.2)"
             elif status == "working":
@@ -843,6 +843,7 @@ with st.sidebar:
                  for agent_name in agents_to_reload:
                      if agent_name in s.get("agents", {}):
                          s["agents"][agent_name]["reload_active"] = True
+                         s["agents"][agent_name]["status"] = "pending_connection"
                          
                          # Inject System Message
                          msg = {

@@ -48,6 +48,7 @@ class Engine:
             
             # 2. Claim it
             agents[found_name]["status"] = "connected"
+            agents[found_name]["reload_active"] = False
             
             # 2b. Announce it (System Message)
             # This fixes the "User sees nothing" bug
