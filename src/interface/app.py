@@ -758,6 +758,8 @@ with st.sidebar:
     # Explicitly add User to the top
     roster_list.insert(0, "User")
     
+    current_turn = turn.get("current")
+    
     if not roster_list:
         st.caption("Aucun agent détecté.")
     else:
