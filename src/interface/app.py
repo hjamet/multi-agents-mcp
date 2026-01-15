@@ -1095,19 +1095,14 @@ if st.session_state.page == "Communication":
             
             found_mention = False
             
-            # Special case: @everyone forces public broadcast
-            if "@everyone" in prompt:
-                target = "all"
-                public = True
-                found_mention = True
-            else:
-                known_agents = sorted(list(agents.keys()), key=len, reverse=True)
-                for name in known_agents:
-                    if f"@{name}" in prompt:
-                        target = name
-                        public = False
-                        found_mention = True
-                        break
+            # Mention Check (Specific Agents only)
+            known_agents = sorted(list(agents.keys()), key=len, reverse=True)
+            for name in known_agents:
+                if f"@{name}" in prompt:
+                    target = name
+                    public = False
+                    found_mention = True
+                    break
             
             if not found_mention:
                 if st.session_state.reply_to:
@@ -1419,17 +1414,13 @@ elif st.session_state.page == "Editor":
         
         st.subheader("Capacités")
         caps = current_profile.get("capabilities", [])
-        cc1, cc2, cc3, cc4 = st.columns(4)
-        has_pub = cc1.checkbox("Public", "public" in caps, key=f"cap_pub_{selected_name}")
-        has_priv = cc2.checkbox("Private", "private" in caps, key=f"cap_priv_{selected_name}")
-        has_aud = cc3.checkbox("Audience", "audience" in caps, key=f"cap_aud_{selected_name}")
-        has_open = cc4.checkbox("Open Mode", "open" in caps, key=f"cap_open_{selected_name}")
+        cc1, cc2 = st.columns(2)
+        has_pub = cc1.checkbox("Public", "public" in caps, key=f"cap_pub_{selected_name}", help="Peut parler publiquement à tout le monde.")
+        has_priv = cc2.checkbox("Private", "private" in caps, key=f"cap_priv_{selected_name}", help="Peut envoyer des messages privés ciblés.")
         
         new_caps = []
         if has_pub: new_caps.append("public")
         if has_priv: new_caps.append("private")
-        if has_aud: new_caps.append("audience")
-        if has_open: new_caps.append("open")
 
         st.subheader("Connexions")
         st.info("Définissez qui cet agent peut contacter et dans quel but (contexte stratégique).")
@@ -1502,4 +1493,4 @@ elif st.session_state.page == "Editor":
 if st.session_state.page == "Communication":
     # Ensure mentions are injected even if logic flow was broken
     active_names = [name for name in agents.keys() if agents[name].get("status") == "connected" and name != "User"]
-    inject_mention_system(["everyone"] + active_names)
+    inject_mention_system(active_names)

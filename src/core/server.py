@@ -106,7 +106,7 @@ def _get_latest_role(state, agent_name: str) -> str:
 def _build_agent_directory(state, my_name):
     """
     Build a comprehensive list of all agents for the prompt.
-    Includes public info and specific connection notes.
+    Includes only authorized connections.
     """
     directory = []
     
@@ -116,83 +116,64 @@ def _build_agent_directory(state, my_name):
     profiles = state.get("config", {}).get("profiles", [])
     my_profile = next((p for p in profiles if p["name"] == my_profile_ref), {})
     my_caps = my_profile.get("capabilities", [])
-    is_open_mode = "open" in my_caps
     
     # My Connections (List of dicts {target, context, authorized})
     my_connections = _get_agent_connections(state, my_name)
     # Map target -> dict(context, authorized)
-    conn_map = {c["target"]: c for c in my_connections}
+    conn_map = {c["target"]: c for c in my_connections if c.get("authorized", True)}
     
     # 1. SPECIAL: Public Entity
-    # Check if we have a rule for compliance/strategy regarding Public speaking
-    if "public" in conn_map or is_open_mode:
+    if "public" in my_caps or "public" in conn_map:
         c_data = conn_map.get("public", {})
-        is_auth = c_data.get("authorized", True) if "public" in conn_map else False
-        
-        should_show = is_open_mode or is_auth
-        if should_show:
-            directory.append({
-                "name": "📢 PUBLIC",
-                "public_desc": "All Agents",
-                "note": c_data.get("context", ""),
-                "authorized": is_auth, 
-                "status": "Authorized" if is_auth else "Restricted"
-            })
+        directory.append({
+            "name": "📢 PUBLIC",
+            "public_desc": "All Agents",
+            "note": c_data.get("context", "Public Announcement"),
+            "authorized": True, 
+            "status": "Authorized"
+        })
 
     # 2. Real Agents
     all_agents = state.get("agents", {})
     
+    # Identify authorized agents
+    # We iterate over ALL agents and check if we match their ID or Profile in our conn_map
     for agent_id, info in all_agents.items():
         if agent_id == my_name:
             continue
             
-        # Resolve Profile
         p_ref = info.get("profile_ref")
-        p_data = next((p for p in profiles if p["name"] == p_ref), {})
         
-        # Public Data
-        display_name = agent_id # ID is the display identifier usually
-        public_desc = p_data.get("public_description") or p_data.get("description") or "Unknown"
-        
-        # Connection Logic
-        # Priority: Check specific agent_id, then check profile p_ref
-        c_data = conn_map.get(agent_id) or conn_map.get(p_ref, {})
-        is_auth = c_data.get("authorized", True) if (agent_id in conn_map or p_ref in conn_map) else False
-        note = c_data.get("context", "")
-        
-        # Filtering Logic
-        if is_open_mode:
-            status_str = "✅ Authorized" if is_auth else "❌ Unauthorized"
+        # Check Authorization
+        auth_context = None
+        if agent_id in conn_map:
+            auth_context = conn_map[agent_id].get("context", "")
+        elif p_ref in conn_map:
+            auth_context = conn_map[p_ref].get("context", "")
+            
+        if auth_context is not None:
+            # Resolve Profile Data for description
+            p_data = next((p for p in profiles if p["name"] == p_ref), {})
+            display_name = agent_id
+            public_desc = p_data.get("public_description") or p_data.get("description") or "Unknown"
+            
             directory.append({
                 "name": agent_id,
                 "public_desc": public_desc,
-                "note": note,
-                "authorized": is_auth,
-                "status": status_str
-            })
-        elif is_auth:
-            directory.append({
-                "name": agent_id,
-                "public_desc": public_desc,
-                "note": note,
+                "note": auth_context,
                 "authorized": True,
                 "status": "✅ Authorized"
             })
     
     # 3. User
-    if "User" in conn_map or is_open_mode:
-        c_data = conn_map.get("User", {})
-        is_auth = c_data.get("authorized", True) if "User" in conn_map else False
-        note = c_data.get("context", "")
-        
-        if is_open_mode or is_auth:
-            directory.append({
-                "name": "User",
-                "public_desc": "Human Operator",
-                "note": note,
-                "authorized": is_auth,
-                "status": "Authorized" if is_auth else "Restricted (Miller Only)"
-            })
+    if "User" in conn_map:
+        directory.append({
+            "name": "User",
+            "public_desc": "Human Operator",
+            "note": conn_map["User"].get("context", ""),
+            "authorized": True,
+            "status": "Authorized"
+        })
         
     return directory
 

@@ -113,3 +113,4 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
     - 🧹 **Deep Cleanup** : Racine du repo et Scénarios purgés.
     - 🧠 **Smart Context** : Amélioration de la récupération du contexte (Overlap) et correction bug indentation (v1.15.1).
     - 🔒 **Identity Leak Fix** : Correction fuite de tour lors du Reload (Ghost Agent) (v1.17.2).
+    - 💬 **Messaging 2.0** : Simplification radicale (To/Public/Content), suppression Open Mode/Audience, et Privacy par équipe (v2.0.0).

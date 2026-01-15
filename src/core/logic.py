@@ -253,7 +253,7 @@ class Engine:
         
         return "TIMEOUT: Waiting for other agents took too long. Please retry agent() tool."
 
-    def post_message(self, from_agent: str, content: str, public: bool, next_agent: str, audience: List[str]) -> str:
+    def post_message(self, from_agent: str, content: str, public: bool, next_agent: str) -> str:
         """
         Posts a message and updates the turn.
         Validates capabilities and connections before posting.
@@ -268,8 +268,6 @@ class Engine:
             if next_agent: next_agent = next_agent.strip()
 
             # --- RESOLVE AGENT ID FROM PROFILE ---
-            # Fixes bug where turn is passed to "Alex" instead of "Alex (Senior Dev)"
-            # Now allows resolving to agents even if they are in 'pending_connection' (for reloading)
             if next_agent and next_agent not in agents and next_agent != "User":
                 for aid, adata in agents.items():
                     if adata.get("profile_ref") == next_agent:
@@ -278,38 +276,8 @@ class Engine:
             # -------------------------------------
             
             if not next_agent:
-                return "🚫 ACTION DENIED: 'next_agent' cannot be empty. You must specify who speaks next (e.g., 'MaitreDuJeu')."
+                return "🚫 ACTION DENIED: 'next_agent' cannot be empty. You must specify who speaks next."
             
-            # Sanitize audience
-            nonlocal audience
-            audience = [a.strip() for a in audience if a.strip()]
-
-            # --- RESOLVE AUDIENCE FROM PROFILE (Automatic Mapping) ---
-            # Fixes bug where private messages to "Miller" were not seen by "Miller (Product Mgr)"
-            resolved_audience = []
-            for aud in audience:
-                # 1. If it matches a strict Agent ID (or User), keep it.
-                if aud in agents or aud == "User":
-                    resolved_audience.append(aud)
-                    continue
-                
-                # 2. Try to find an Agent ID that links to this Profile Ref
-                found_match = False
-                for aid, adata in agents.items():
-                    if adata.get("profile_ref") == aud:
-                        resolved_audience.append(aid)
-                        found_match = True
-                        break # Link to the first agent with this profile
-                
-                if found_match and resolved_audience[-1] not in resolved_audience[:-1]:
-                    pass # Appended above
-                elif not found_match:
-                    # Keep original (for error handling by check_target)
-                    resolved_audience.append(aud)
-            
-            audience = resolved_audience
-            # ---------------------------------------------------------
-
             sender_info = agents.get(from_agent, {})
             sender_profile_name = sender_info.get("profile_ref")
             
@@ -318,37 +286,19 @@ class Engine:
             
             # Special bypass for "User" (Admin/Human)
             if from_agent == "User":
-                # User is always allowed, even without a profile
-                sender_profile = {"name": "User", "capabilities": ["public", "private", "audience", "open"], "connections": []}
+                sender_profile = {"name": "User", "capabilities": ["public", "private"], "connections": []}
             else:
                 if not sender_profile:
-                    # Fallback: If no profile found (e.g. manual/legacy), we block unless strictness is off?
-                    # User asked for strict enforcement.
-                    # However, let's allow if the system is bootstrapping (e.g. Role assignment phase? No, talk is later).
-                    # Let's BLOCK unknown agents to force proper config.
-                    import sys
-                    msg = f"🚫 ACTION DENIED: Agent '{from_agent}' has no valid profile configuration. Please ask Admin to configure you in the Cockpit."
-                    if self.logger: self.logger.log("SECURITY", "System", f"Blocked unregistered agent {from_agent}")
-                    else: print(f"[Logic] BLOCK: Agent '{from_agent}' has no profile.", file=sys.stderr)
-                    return msg
+                    return f"🚫 ACTION DENIED: Agent '{from_agent}' has no valid profile validation."
 
             caps = sender_profile.get("capabilities", [])
             connections = sender_profile.get("connections", [])
-            allowed_targets = {c["target"]: c["context"] for c in connections if c.get("authorized", True)} # Profile Names
-            
-            # DEBUG
-            import sys
-            print(f"[Logic DEBUG] From: {from_agent}", file=sys.stderr)
-            print(f"[Logic DEBUG] Profile: {sender_profile.get('name')} | Ref: {sender_profile_name}", file=sys.stderr)
-            print(f"[Logic DEBUG] Caps: {caps}", file=sys.stderr) 
-            print(f"[Logic DEBUG] Allowed Targets: {list(allowed_targets.keys())}", file=sys.stderr)
+            # Map of authorized targets (profiles or specific IDs)
+            allowed_targets = {c["target"]: c["context"] for c in connections if c.get("authorized", True)}
             
             # MERGE INSTANCE CONNECTIONS (Priority)
-            # This is critical for agents like MJ who get dynamic connections injected at setup
             instance_connections = sender_info.get("connections", [])
             for c in instance_connections:
-                # Instance connections target Agent IDs (e.g. "Habitant #1"), not Profile Names
-                # We add them to allowed_targets so check_target passes
                 if c.get("authorized", True):
                     allowed_targets[c["target"]] = c["context"]
             
@@ -362,143 +312,74 @@ class Engine:
                 if last_user > turn_start:
                      # 2. Fetch missed messages (Fix Silence)
                      missed = [m for m in state.get("messages", []) if m.get("from") == "User" and m.get("timestamp", 0) > turn_start]
-                     
-                     # Filter: Only interrupt if message is relevant to ME
-                     relevant = [m for m in missed if m.get("public") or m.get("target") == from_agent or from_agent in m.get("audience", [])]
+                     relevant = [m for m in missed if m.get("public") or m.get("target") == from_agent]
                      
                      if relevant:
                          # 1. Update Turn Start to unblock next attempt (Fix Deadlock)
                          state["turn"]["turn_start_time"] = time.time()
-                         
                          missed_text = "\n".join([f"- User: {m.get('content')}" for m in relevant])
-                         
-                         import sys
-                         print(f"[Anti-Ghost] BLOCK & RESET: Updated turn_start. User Msg Time {last_user}", file=sys.stderr)
                          return f"🚫 INTERACTION REJECTED: The User interrupted you with new messages:\n{missed_text}\n\nACTION: Core logic has reset your turn timer. Incorporate this new info and try again."
-
-            # A. Capability Checks
-            is_open = "open" in caps
 
             if next_agent == from_agent:
                  # Allow self-loop with limit
                  consecutive = state["turn"].get("consecutive_count", 0)
-                 # Note: This count is updated AFTER this check, so if current is 5, next will be 6
-                 # Example: 
-                 # Turn 1: count=0 -> OK (becomes 1)
-                 # Turn 5: count=4 -> OK (becomes 5)
-                 # Turn 6: count=5 -> BLOCK
-                 
-                 # Logic: We only care if we are ALREADY in a self-loop sequence
                  old_turn = state["turn"].get("current")
                  if old_turn == from_agent and consecutive >= 5:
-                     # Filter allowed targets to exclude self
-                     others = [k for k in allowed_targets.keys() if k != from_agent and k != "public"] 
-                     # (Assuming public is handled via capability, but allowed_targets usually has profile names)
-                     error_msg = f"🚫 PROHIBITED: Self-loop limit reached (5/5). You cannot speak 6 times in a row. Please yield the turn to another agent (e.g., {', '.join(others) if others else 'User'})."
-                     return error_msg
+                     return "🚫 PROHIBITED: Self-loop limit reached (5/5). You cannot speak 6 times in a row. Please yield the turn."
+
+            # A. Capability Checks
+            # User Rule: "Tous les agents ne doivent pouvoir parler qu'en public." (Implies preference, but logic supports private if cap exists)
+            
+            if public and "public" not in caps and "public" not in allowed_targets:
+                 # Note: allowed_targets usually lists generic "public" connection if explicit
+                 return f"🚫 ACTION DENIED: You do not have the 'public' capability."
+            
+            if not public:
+                 # Private Message
+                 if "private" not in caps:
+                      return f"🚫 ACTION DENIED: You do not have the 'private' capability. You can only speak publicly."
                  
-                 # return "🚫 ACTION DENIED: You cannot pass the turn to yourself. Please choose another agent."
-            
-            if from_agent in audience:
-                 return "🚫 ACTION DENIED: You cannot include yourself in the audience."
-            
-            # Prevent including Next Agent in Audience (Redundant/Confusing)
-            if next_agent and next_agent in audience:
-                return f"🚫 ACTION DENIED: '{next_agent}' is already the main recipient (next turn). Do not include them in the 'audience' list."
-
-            if public and not is_open and "public" not in caps and "public" not in allowed_targets:
-                return f"🚫 ACTION DENIED: You do not have the 'public' capability or authorized connection to 'public'. You must send a Private message to a specific target."
-            
-            if not public and "private" not in caps and not is_open:
-                 # Check if next_agent is an authorized connection
-                 # Handled by B. Connection Checks, but here we check capability
-                 pass 
-            
-            if audience and "audience" not in caps and not is_open:
-                 return f"🚫 ACTION DENIED: You do not have the 'audience' capability. You cannot cc additional agents."
-            
-            # B. Connection Checks (Skip if OPEN or sending to USER)
-            # Special bypass for "User" if checking connections? 
-            # Actually, we might want to enforce having a connection to "User" if we want to be strict.
-            # But the user request says: "Il devrait être absent du tableau des autres agents, sauf si sa relation est précisée."
-            # So implies connection is needed in profile to talk to User.
-            
-            if "open" not in caps:
-                # Helper to check one target
-                def check_target(t_name):
-                    # Handle "User" special case
+                 # Check connection to target
+                 # Helper to check one target
+                 def check_target(t_name):
                     if t_name == "User":
-                        # Must have a connection to "User" (profile or instance)
-                        # We check allowed_targets below
-                        if "User" in allowed_targets:
-                            return None
+                        if "User" in allowed_targets: return None
                         return "No established connection to 'User'"
-
-                    # target instance name (e.g. Wolf_1) -> profile (Wolf)
                     t_info = agents.get(t_name)
-                    if not t_info:
-                        return f"Unknown agent '{t_name}'"
+                    if not t_info: return f"Unknown agent '{t_name}'"
                     t_prof = t_info.get("profile_ref")
-                    
-                    # Check 1: Is the specific Agent ID allowed? (Instance Connection)
-                    if t_name in allowed_targets:
-                        return None
-                        
-                    # Check 2: Is the Profile allowed? (Profile Connection)
-                    if t_prof not in allowed_targets:
-                         return f"Not connected to '{t_prof}' or specific agent '{t_name}'"
-                    return None
-                    
-                # 1. Check Primary Target (Next Agent)
-                # Note: next_agent is mandatory in talk tool.
-                if next_agent:
-                    err = check_target(next_agent)
-                    if err:
-                        # Construct helpful table
-                        help_msg = "\nAllowed Connections:\n"
-                        for t, ctx in allowed_targets.items():
-                            help_msg += f"- {t}: {ctx}\n"
-                        return f"🚫 ACTION DENIED: You are not authorized to speak to '{next_agent}' ({err}).\n{help_msg}"
-                
-                # 2. Check Audience
-                for aud in audience:
-                    err = check_target(aud)
-                    if err:
-                        return f"🚫 ACTION DENIED: You are not authorized to include '{aud}' in audience ({err})."
+                    if t_name in allowed_targets: return None
+                    if t_prof in allowed_targets: return None
+                    return f"Not connected to '{t_prof}'"
+                 
+                 err = check_target(next_agent)
+                 if err:
+                     return f"🚫 ACTION DENIED: You are not authorized to speak privately to '{next_agent}' ({err})."
 
             # 1. Add message
             msg = {
                 "from": from_agent,
                 "content": content,
                 "public": public,
-                "target": next_agent,  # Explicit target for private filtering
-                "audience": audience,
+                "target": next_agent, 
                 "timestamp": time.time()
             }
             state.setdefault("messages", []).append(msg)
             
             # 2. Update Turn
-            # Special Case: If sending to 'User', we do NOT pass the turn. The agent keeps it.
-            # "Message bien envoyé à l'utilisateur... En attendant, continuez votre travail"
+            # Update Logic timestamps
+            current_time = time.time()
+            if from_agent == "User":
+                state["turn"]["last_user_message_time"] = current_time
             
-            # FIXED: Allow passing turn to User so UI Indicator works
-            # if next_agent == "User": ... (REMOVED)
-            if False: # Disabled explicit block
-                pass
-            else:
-                # Update Logic timestamps
-                current_time = time.time()
-                if from_agent == "User":
-                    state["turn"]["last_user_message_time"] = current_time
-                
-                # USE CENTRALIZED TRANSITION LOGIC
-                transition_msg = self._finalize_turn_transition(state, next_agent)
-                
-                base_msg = f"Message posted. {transition_msg}"
-                if state["turn"].get("current") == from_agent:
-                    base_msg += "\n[INFO] Il est possible de reprendre la parole après avoir envoyé un message. Celà permet d'enchainer plusieurs messages à la suite avec éventuellement différents destinataires. Ne pas en abuser et n'utiliser cette options que lorsqu'on doit adresser des messages précis à des personnes différentes ou si on souhaite effectuer des opérations entre plusieurs messages."
-                
-                return base_msg
+            # USE CENTRALIZED TRANSITION LOGIC
+            transition_msg = self._finalize_turn_transition(state, next_agent)
+            
+            base_msg = f"Message posted. {transition_msg}"
+            if state["turn"].get("current") == from_agent:
+                base_msg += "\n[INFO] Il est possible de reprendre la parole après avoir envoyé un message."
+            
+            return base_msg
         
         return self.state.update(_post)
 
@@ -567,22 +448,28 @@ class Engine:
                 recent_messages = messages[start_slice_index:]
 
                 # 3. Filter for Visibility on this Delta
-                # Visible = Public OR (Private AND (To Me OR From Me OR In Audience))
+                # Visible = Public OR (Private AND (Me==Sender OR Me==Target OR Me.Profile==Sender.Profile))
                 visible_messages = []
+                
+                agents_map = data.get("agents", {})
+                my_prof = agents_map.get(agent_name, {}).get("profile_ref")
+                
                 for m in recent_messages:
                     is_public = m.get("public", True)
                     sender = m.get("from")
                     target = m.get("target")
-                    audience = m.get("audience") or []
                     
-                    # Helper to safeguard message size
-                    def safe_msg(msg_obj):
-                            return msg_obj
-
                     if is_public:
-                        visible_messages.append(safe_msg(m))
-                    elif sender == agent_name or target == agent_name or agent_name in audience:
-                        visible_messages.append(safe_msg(m))
+                        visible_messages.append(m)
+                        continue
+                        
+                    # Private Logic
+                    if sender == agent_name or target == agent_name:
+                        visible_messages.append(m)
+                    elif my_prof:
+                         sender_prof = agents_map.get(sender, {}).get("profile_ref")
+                         if sender_prof and sender_prof == my_prof:
+                             visible_messages.append(m)
                 
                 # Build Strategic Advice from Connections
                 agents = data.get("agents", {})
@@ -694,21 +581,29 @@ class Engine:
                 recent_messages = messages[start_slice_index:]
 
                 # 3. Filter for Visibility
+                # 3. Filter for Visibility on this Delta
+                # Visible = Public OR (Private AND (Me==Sender OR Me==Target OR Me.Profile==Sender.Profile))
                 visible_messages = []
+                
+                agents_map = data.get("agents", {})
+                my_prof = agents_map.get(agent_name, {}).get("profile_ref")
+                
                 for m in recent_messages:
                     is_public = m.get("public", True)
                     sender = m.get("from")
                     target = m.get("target")
-                    audience = m.get("audience") or []
                     
-                    # Helper to safeguard message size
-                    def safe_msg(msg_obj):
-                         return msg_obj
-
                     if is_public:
-                        visible_messages.append(safe_msg(m))
-                    elif sender == agent_name or target == agent_name or agent_name in audience:
-                        visible_messages.append(safe_msg(m))
+                        visible_messages.append(m)
+                        continue
+                        
+                    # Private Logic
+                    if sender == agent_name or target == agent_name:
+                        visible_messages.append(m)
+                    elif my_prof:
+                         sender_prof = agents_map.get(sender, {}).get("profile_ref")
+                         if sender_prof and sender_prof == my_prof:
+                             visible_messages.append(m)
                 
                 agents = data.get("agents", {})
                 config = data.get("config", {})
