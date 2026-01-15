@@ -272,13 +272,13 @@ async def agent(ctx: Context) -> str:
              start_index = max(0, last_my_index - 3)
              visible_messages = visible_messages[start_index:]
              
-             # HARD CAP: Max 15 messages (Optimization)
-             if len(visible_messages) > 15:
-                 visible_messages = visible_messages[-15:]
+             # HARD CAP: Max 25 messages (Optimization)
+             if len(visible_messages) > 25:
+                 visible_messages = visible_messages[-25:]
         else:
-             # Default / New Agent: Keep last 15 to avoid overflow
-             if len(visible_messages) > 15:
-                visible_messages = visible_messages[-15:]
+             # Default / New Agent: Keep last 25 to avoid overflow
+             if len(visible_messages) > 25:
+                visible_messages = visible_messages[-25:]
     except Exception as e:
         logger.error(name, f"Error loading history: {e}")
 

@@ -1024,13 +1024,13 @@ if st.session_state.page == "Communication":
             stream_msgs.append((i, m))
     
     # Pagination
-    if "stream_limit" not in st.session_state: st.session_state.stream_limit = 15
+    if "stream_limit" not in st.session_state: st.session_state.stream_limit = 25
     total_stream = len(stream_msgs)
     limit_stream = st.session_state.stream_limit
     if total_stream > limit_stream:
             # UI Minimaliste (Tertiary)
             if st.button(f"🔃 Historique ({total_stream - limit_stream})", key="load_more_stream", type="tertiary"):
-                st.session_state.stream_limit += 15
+                st.session_state.stream_limit += 25
                 st.rerun()
     
     visible_stream = stream_msgs[max(0, total_stream - limit_stream):]
