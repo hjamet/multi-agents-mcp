@@ -752,22 +752,9 @@ with st.sidebar:
         </div>
     """, unsafe_allow_html=True)
     
-    active_agents = []
-    inactive_agents = []
+    # Maintain original order from agents dictionary
+    roster_list = [name for name in agents.keys()]
     
-    current_turn = turn.get("current")
-    
-    for name, d in agents.items():
-        # if name == "User": continue # SHOW USER IN ROSTER
-        if d.get("status") == "connected":
-            active_agents.append(name)
-        else:
-            inactive_agents.append(name)
-    
-    active_agents.sort()
-    inactive_agents.sort()
-    
-    roster_list = active_agents + inactive_agents
     # Explicitly add User to the top
     roster_list.insert(0, "User")
     
@@ -1126,8 +1113,8 @@ if st.session_state.page == "Communication":
             st.markdown("""<div style="background-color: #fff3cd; border: 2px solid #ff3d00; padding: 8px; border-radius: 8px; text-align: center; animation: pulse 2s infinite;"><span style="color: #bf360c; font-weight: 900; font-size: 0.9em; text-transform: uppercase;">⚡ À VOUS DE JOUER ⚡</span></div><style>@keyframes pulse {0% { box-shadow: 0 0 0 0 rgba(255, 61, 0, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(255, 61, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 61, 0, 0); }}</style>""", unsafe_allow_html=True)
 
     # --- OMNI-CHANNEL INPUT ---
-    # Target Selector (REPLACED BY MENTIONS)
-    connected_agents = sorted([name for name, d in agents.items() if d.get("status") == "connected" and name != "User"])
+    # Maintain original order for mention system
+    connected_agents = [name for name in agents.keys() if agents[name].get("status") == "connected" and name != "User"]
     
     # We still need this for the mention system to know the list, adding everyone
     # FIXED: Moved injection to bottom to ensure DOM readiness
@@ -1364,7 +1351,7 @@ elif st.session_state.page == "Cockpit":
                 s["config"]["total_agents"] = total_count
                 
                 pending_slots = []
-                import random
+                # Remove random shuffle to maintain profile order
                 for p in current_profiles:
                     for _ in range(int(p.get("count", 0))):
                         pending_slots.append({
@@ -1373,7 +1360,6 @@ elif st.session_state.page == "Cockpit":
                             "display_base": p.get("display_name") or p["name"],
                             "emoji": p.get("emoji", "🤖")
                         })
-                random.shuffle(pending_slots)
                 
                 new_agents = {}
                 counters = {}
@@ -1559,5 +1545,5 @@ elif st.session_state.page == "Editor":
 # --- GLOBAL INJECTION (Fixed by Anais) ---
 if st.session_state.page == "Communication":
     # Ensure mentions are injected even if logic flow was broken
-    active_names = sorted([name for name, d in agents.items() if d.get("status") == "connected" and name != "User"])
+    active_names = [name for name in agents.keys() if agents[name].get("status") == "connected" and name != "User"]
     inject_mention_system(["everyone"] + active_names)
