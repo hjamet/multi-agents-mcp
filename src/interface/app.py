@@ -203,6 +203,13 @@ def load_config():
         config["profiles"] = [
             {"name": "Agent", "description": "Generic Agent", "emoji": "🤖", "system_prompt": "You are a helpful assistant.", "connections": [], "count": 1, "capabilities": ["public", "private", "audience"]}
         ]
+    # Ensure reload_queue exists
+    if "reload_queue" not in state:
+        def init_queue(s):
+            s["reload_queue"] = []
+            return "Queue Init"
+        state_store.update(init_queue)
+        state["reload_queue"] = []
     return state, config
 
 def save_config(new_config):
@@ -215,38 +222,27 @@ def save_config(new_config):
 # --- DIALOGS ---
 def handle_disconnect_agent(agent_name):
     """
-    Sends a system signal to the agent to save memory and stop, 
-    effectively disconnecting them for a reload.
+    Adds the agent to the sequential reload queue.
+    The system will give them the turn at the next transition to allow a safe 'note()' call.
     """
     def update_fn(s):
-        # 1. Inject System Message (High Priority)
-        # We explicitly target the agent so they see it.
-        msg = {
-            "from": "System",
-            "content": f"🔁 **SYSTEM NOTIFICATION**: RELOAD REQUESTED.\n\nThe User has requested a context reset for you.\n\n**INSTRUCTIONS:**\n1. Synthesize your final state into a `note` (Critical).\n2. Stop speaking (do not call `talk`).\n\n(You will be disconnected shortly.)",
-            "public": False,
-            "target": agent_name,
-            "audience": [],
-            "timestamp": time.time()
-        }
-        s.setdefault("messages", []).append(msg)
+        q = s.setdefault("reload_queue", [])
+        if agent_name not in q:
+            q.append(agent_name)
         
-        # 2. Force Turn to Agent (Wake up call)
-        # This interrupts any waiting state or enables them to act immediately
-        s.setdefault("turn", {})
-        s["turn"]["current"] = agent_name
-        s["turn"]["turn_start_time"] = time.time()
-        s["turn"]["consecutive_count"] = 0 # Avoid anti-loop block
-        
-        # 3. Update Status
-        if "agents" in s and agent_name in s["agents"]:
-            # Set to 'pending_connection' so the slot is available for a new 'agent()' call
-            s["agents"][agent_name]["status"] = "pending_connection"
+        # If it's currently NO ONE's turn (e.g. startup) or if we want to kickstart 
+        # a transition if the system is idle, we could do it here. 
+        # But usually, it's safer to wait for the next transition or if it's currently User turn.
+        if s.get("turn", {}).get("current") == "User":
+            # We can start the reload chain immediately by hijacking the turn from User
+            # (User is technically 'idle' while waiting for input)
+            # However, _finalize_turn_transition needs an 'intended_next'
+            pass # We'll let the next User message or a transition handle it for simplicity
             
-        return f"Reload Signal -> {agent_name}"
+        return f"Ajouté à la file de rechargement : {agent_name}"
     
     state_store.update(update_fn)
-    st.toast(f"Signal de déconnexion envoyé à {agent_name} 🔁")
+    st.toast(f"{agent_name} ajouté à la file de rechargement 🔁")
 
 PRESET_DIR = GLOBAL_PRESET_DIR
 
@@ -826,69 +822,27 @@ with st.sidebar:
             
     st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
     if st.button("🔄 Reload All Agents", type="secondary", use_container_width=True, help="Déconnecter tous les agents pour une reconnexion, sans perdre l'historique."):
-        # 1. Identify Target Agents (Connected or Working)
+        # Identify Target Agents (Connected or Working)
         agents_to_reload = [
             n for n, d in agents.items() 
-            if d.get("status") in ["connected", "working"]
+            if d.get("status") in ["connected", "working", "pending_connection"] # Include pending just in case
         ]
         
         if not agents_to_reload:
-             st.toast("Aucun agent connecté à recharger.")
+             st.toast("Aucun agent à recharger.")
         else:
-             status_box = st.status("🔄 Séquence de Reload en cours...", expanded=True)
+             def reload_all_logic(s):
+                 q = s.setdefault("reload_queue", [])
+                 added = 0
+                 for agent_name in agents_to_reload:
+                     if agent_name not in q:
+                         q.append(agent_name)
+                         added += 1
+                 return added
              
-             for agent_name in agents_to_reload:
-                 status_box.write(f"🛑 Arrêt de **{agent_name}**...")
-                 
-                 # A. TRIGGER SIGNAL (Inject Message & Turn)
-                 def trigger_signal(s):
-                     # 1. Inject System Message (High Priority)
-                     msg = {
-                         "from": "System",
-                         "content": f"🔁 **SYSTEM NOTIFICATION**: RELOAD REQUESTED.\n\nThe User has requested a context reset for you.\n\n**INSTRUCTIONS:**\n1. Synthesize your final state into a `note` (Critical).\n2. Stop speaking (do not call `talk`).\n\n(You will be disconnected shortly.)",
-                         "public": False,
-                         "target": agent_name,
-                         "audience": [],
-                         "timestamp": time.time()
-                     }
-                     s.setdefault("messages", []).append(msg)
-                     
-                     # 2. Force Turn to Agent (Wake up call)
-                     s.setdefault("turn", {})
-                     s["turn"]["current"] = agent_name
-                     s["turn"]["turn_start_time"] = time.time()
-                     s["turn"]["consecutive_count"] = 0 
-                     
-                     return f"Signal sent to {agent_name}"
-                 
-                 state_store.update(trigger_signal)
-                 
-                 # B. WAIT FOR MEMORY UPDATE (Heartbeat)
-                 mem_file = MEMORY_DIR / f"{agent_name}.md"
-                 initial_mtime = 0
-                 if mem_file.exists():
-                     initial_mtime = mem_file.stat().st_mtime
-                 
-                 # Loop for max 3 seconds (Fast fail)
-                 # We don't want to wait too long if they are stuck
-                 for _ in range(30): 
-                     time.sleep(0.1)
-                     if mem_file.exists() and mem_file.stat().st_mtime > initial_mtime:
-                         status_box.write(f"✅ Mémoire de {agent_name} synchronisée.")
-                         break
-                 
-                 # C. KILL (Update Status)
-                 def kill_agent(s):
-                     if "agents" in s and agent_name in s["agents"]:
-                         s["agents"][agent_name]["status"] = "pending_connection"
-                     return f"{agent_name} disconnected."
-                 
-                 state_store.update(kill_agent)
-                 time.sleep(0.5) # Pace buffer
-                 
-             status_box.update(label="Reload Complete!", state="complete", expanded=False)
-             st.toast("Tous les agents ont été rechargés avec succès !")
-             time.sleep(1)
+             count = state_store.update(reload_all_logic)
+             st.toast(f"{count} agents ajoutés à la file de rechargement séquentiel 🔁")
+             time.sleep(0.5)
              st.rerun()
 
     st.divider()
@@ -1206,11 +1160,10 @@ if st.session_state.page == "Communication":
                             next_speaker = connected[0]
                 
                 if next_speaker:
-                    s["turn"]["current"] = next_speaker
-                    # System message removed as per User request
-                    # s.setdefault("messages", []).append({
-                    #     "from": "System", "content": f"Tour à : **{next_speaker}** (suite au message de l'utilisateur)", "public": True, "timestamp": time.time()
-                    # })
+                    # USE CENTRALIZED TRANSITION LOGIC FROM ENGINE
+                    from src.core.logic import Engine
+                    engine = Engine(state_store) # Use the global state_store
+                    engine._finalize_turn_transition(s, next_speaker)
 
             # Context Cleanup
             if reply_ref_id is not None:
@@ -1344,6 +1297,7 @@ elif st.session_state.page == "Cockpit":
                 s["messages"] = []
                 s["turn"] = {"current": "User", "next": None, "first_agent": first_speaker_choice}
                 s["config"]["context"] = global_context
+                s["reload_queue"] = [] # Clear reload queue
                 
                 # Use profiles from the state s for absolute consistency
                 current_profiles = s["config"].get("profiles", [])

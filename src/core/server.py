@@ -813,7 +813,22 @@ async def note(content: str, ctx: Context) -> str:
         # Log
         logger.log("MEMORY", agent_name, "Updated memory note.")
         
-        response_msg = f"✅ Note saved. PREVIOUS CONTENT:\n\n{old_content}"
+        # --- SEQUENTIAL RELOAD HANDLING ---
+        def finish_reload_step(s):
+            agent_info = s.get("agents", {}).get(agent_name, {})
+            if agent_info.get("reload_active"):
+                # Reset reload flag and status
+                s["agents"][agent_name]["reload_active"] = False
+                s["agents"][agent_name]["status"] = "pending_connection"
+                
+                # Advance to next reloader or pending next
+                next_speaker = s["turn"].get("pending_next") or "User"
+                res = engine._finalize_turn_transition(s, next_speaker)
+                return f"✅ Reload Step Finished for {agent_name}. {res}"
+            return "✅ Note saved."
+
+        response_msg = engine.state.update(finish_reload_step)
+        response_msg += f"\n\nPREVIOUS CONTENT:\n\n{old_content}"
         return _paginate_output(engine, agent_name, response_msg)
         
     except Exception as e:

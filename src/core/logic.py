@@ -153,6 +153,77 @@ class Engine:
             return "Turn Ack Failed: Not your turn"
         self.state.update(_ack)
 
+    def _finalize_turn_transition(self, state, intended_next: str) -> str:
+        """
+        Internal helper to manage turn transitions, including the sequential reload queue.
+        This ensures that reloads happen one by one and that the turn returns to the 
+        right agent afterwards.
+        """
+        reload_queue = state.get("reload_queue", [])
+        turn_data = state.get("turn", {})
+        old_turn = turn_data.get("current")
+
+        if reload_queue:
+            # 1. Sequential Reload in progress
+            reloader = reload_queue.pop(0)
+            state["reload_queue"] = reload_queue
+            
+            # Save the intended next speaker if we haven't already
+            if turn_data.get("pending_next") is None:
+                state["turn"]["pending_next"] = intended_next
+            
+            # 2. Assign turn to Reloader
+            state["turn"]["current"] = reloader
+            state["turn"]["turn_start_time"] = time.time()
+            state["turn"]["consecutive_count"] = 1
+            
+            # Mark agent as being in reload mode
+            if reloader in state.get("agents", {}):
+                state["agents"][reloader]["reload_active"] = True
+            
+            # 3. Inject System Message for the Reloader
+            msg = {
+                "from": "System",
+                "content": f"🔁 **SYSTEM NOTIFICATION**: RELOAD REQUESTED.\n\n"
+                           f"You must synthesize your final state into a `note()` (Critical) and then terminate. "
+                           f"Do NOT call `talk()`.",
+                "public": False,
+                "target": reloader,
+                "timestamp": time.time()
+            }
+            state.setdefault("messages", []).append(msg)
+            
+            import sys
+            if self.logger:
+                self.logger.log("RELOAD_START", "System", f"Turn hijacked for reload of {reloader}")
+            else:
+                print(f"[Logic] RELOAD: {reloader} hijacked turn from {intended_next}", file=sys.stderr)
+            
+            return f"Reloading {reloader}..."
+
+        else:
+            # 4. No more reloads. Resume normal flow.
+            final_next = intended_next
+            if turn_data.get("pending_next"):
+                final_next = turn_data["pending_next"]
+                state["turn"]["pending_next"] = None
+            
+            state["turn"]["current"] = final_next
+            state["turn"]["turn_start_time"] = time.time()
+            
+            if final_next == old_turn:
+                state["turn"]["consecutive_count"] = turn_data.get("consecutive_count", 0) + 1
+            else:
+                state["turn"]["consecutive_count"] = 1
+            
+            import sys
+            if self.logger:
+                self.logger.log("TURN_CHANGE", "System", f"Turn passed to {final_next}")
+            else:
+                print(f"[Logic] TURN CHANGE: {old_turn} -> {final_next}", file=sys.stderr)
+                
+            return f"Turn is now: {final_next}."
+
     async def wait_for_all_agents_async(self, name: str, timeout_seconds: int = 600) -> str:
         """
         Async version of wait_for_all_agents.
@@ -198,11 +269,12 @@ class Engine:
 
             # --- RESOLVE AGENT ID FROM PROFILE ---
             # Fixes bug where turn is passed to "Alex" instead of "Alex (Senior Dev)"
+            # Now allows resolving to agents even if they are in 'pending_connection' (for reloading)
             if next_agent and next_agent not in agents and next_agent != "User":
                 for aid, adata in agents.items():
-                    if adata.get("profile_ref") == next_agent and adata.get("status") == "connected":
+                    if adata.get("profile_ref") == next_agent:
                         next_agent = aid
-                        break # Use the first connected agent matching the profile
+                        break # Use the first agent matching the profile
             # -------------------------------------
             
             if not next_agent:
@@ -224,10 +296,10 @@ class Engine:
                 # 2. Try to find an Agent ID that links to this Profile Ref
                 found_match = False
                 for aid, adata in agents.items():
-                    if adata.get("profile_ref") == aud and adata.get("status") == "connected":
+                    if adata.get("profile_ref") == aud:
                         resolved_audience.append(aid)
                         found_match = True
-                        break # Link to the first connected agent with this profile
+                        break # Link to the first agent with this profile
                 
                 if found_match and resolved_audience[-1] not in resolved_audience[:-1]:
                     pass # Appended above
@@ -414,34 +486,16 @@ class Engine:
             if False: # Disabled explicit block
                 pass
             else:
-                old_turn = state["turn"].get("current")
-                
                 # Update Logic timestamps
                 current_time = time.time()
                 if from_agent == "User":
                     state["turn"]["last_user_message_time"] = current_time
                 
-                state["turn"]["current"] = next_agent
-                state["turn"]["next"] = None # Consumed
-
-                # Reset Turn Timer if Turn Changed
-                if next_agent != old_turn:
-                    state["turn"]["turn_start_time"] = current_time
+                # USE CENTRALIZED TRANSITION LOGIC
+                transition_msg = self._finalize_turn_transition(state, next_agent)
                 
-                # UPDATE CONSECUTIVE COUNT
-                if next_agent == old_turn:
-                    state["turn"]["consecutive_count"] = state["turn"].get("consecutive_count", 0) + 1
-                else:
-                    state["turn"]["consecutive_count"] = 1
-                
-                import sys
-                if self.logger:
-                    self.logger.log("TURN_CHANGE", "System", f"Turn passed to {next_agent}", {"from": old_turn, "to": next_agent})
-                else:
-                    print(f"[Logic] TURN CHANGE: {old_turn} -> {next_agent} (Sender: {from_agent})", file=sys.stderr)
-                
-                base_msg = f"Message posted. Turn is now: {next_agent}."
-                if next_agent == from_agent:
+                base_msg = f"Message posted. {transition_msg}"
+                if state["turn"].get("current") == from_agent:
                     base_msg += "\n[INFO] Il est possible de reprendre la parole après avoir envoyé un message. Celà permet d'enchainer plusieurs messages à la suite avec éventuellement différents destinataires. Ne pas en abuser et n'utiliser cette options que lorsqu'on doit adresser des messages précis à des personnes différentes ou si on souhaite effectuer des opérations entre plusieurs messages."
                 
                 return base_msg
@@ -483,93 +537,93 @@ class Engine:
                     "instruction": "SYSTEM RESET: THe conversation has been reset by the user. Forget everything. Re-read your Role and Context."
                 }
                 
-                # 1b. Check for Status Reset (Kicked/Reloaded)
-                my_status = data.get("agents", {}).get(agent_name, {}).get("status")
-                if my_status == "pending_connection":
-                     return {
-                        "status": "reset",
-                        "messages": [],
-                        "instruction": "SYSTEM RESET: Your session has been terminated by the user. [TERMINATE_SESSION]"
-                    }
-
-                current_turn = data.get("turn", {}).get("current")
-                
-                if current_turn == agent_name:
-                    # It's my turn!
-                    messages = data.get("messages", [])
-                    
-                    # 2. History Delta Logic: Get messages since my last turn
-                    # Find the index of the last message sent by ME
-                    last_my_index = -1
-                    for i, m in enumerate(messages):
-                        if m.get("from") == agent_name:
-                            last_my_index = i
-                    
-                    # If I have never spoken, this is my first turn (or re-entry). 
-                    # To be safe, we give full history (or maybe a reasonable startup window? No, full history is safer for context).
-                    # If last_my_index is -1, we slice from 0 (start).
-                    # Context Recovery: Start 3 messages before my last one (Overlap)
-                    start_slice_index = max(0, last_my_index - 3)
-                    recent_messages = messages[start_slice_index:]
-
-                    # 3. Filter for Visibility on this Delta
-                    # Visible = Public OR (Private AND (To Me OR From Me OR In Audience))
-                    visible_messages = []
-                    for m in recent_messages:
-                        is_public = m.get("public", True)
-                        sender = m.get("from")
-                        target = m.get("target")
-                        audience = m.get("audience") or []
-                        
-                        # Helper to safeguard message size
-                        def safe_msg(msg_obj):
-                             return msg_obj
-
-                        if is_public:
-                            visible_messages.append(safe_msg(m))
-                        elif sender == agent_name or target == agent_name or agent_name in audience:
-                            visible_messages.append(safe_msg(m))
-                    
-                    # Build Strategic Advice from Connections
-                    agents = data.get("agents", {})
-                    config = data.get("config", {})
-                    
-                    my_info = agents.get(agent_name, {})
-                    profile_ref = my_info.get("profile_ref")
-                    
-                    advice_text = ""
-                    if profile_ref:
-                        profiles = config.get("profiles", [])
-                        profile = next((p for p in profiles if p["name"] == profile_ref), None)
-                        
-                        if profile and profile.get("connections"):
-                            advice_text = "\n\n--- STRATEGIC ADVICE ---\n"
-                            advice_text += "Based on your connections, here is how you should interact with others:\n"
-                            
-                            for conn in profile["connections"]:
-                                target_profile = conn.get("target")
-                                ctx = conn.get("context")
-                                
-                                # Resolve Target Profile -> Active Agent IDs
-                                matching_agents = [
-                                    aid for aid, adata in agents.items() 
-                                    if adata.get("profile_ref") == target_profile and aid != agent_name
-                                ]
-                                
-                                if matching_agents:
-                                    names_str = ", ".join(matching_agents)
-                                    advice_text += f"- **{target_profile}** is represented by: **{names_str}**. Strategy: {ctx}\n"
-                                else:
-                                    # Connection exists but no agent with this role is currently active/other than me
-                                    advice_text += f"- **{target_profile}**: No other active agents found. Strategy: {ctx}\n"
-
-                            advice_text += "------------------------"
-
+            # 1b. Check for Status Reset (Kicked/Reloaded)
+            my_status = data.get("agents", {}).get(agent_name, {}).get("status")
+            if my_status == "pending_connection":
                     return {
-                        "status": "success",
-                        "messages": visible_messages, # FULL Delta, no truncation
-                        "instruction": f"It is your turn. Speak.{advice_text}"
-                    }
+                    "status": "reset",
+                    "messages": [],
+                    "instruction": "SYSTEM RESET: Your session has been terminated by the user. [TERMINATE_SESSION]"
+                }
+
+            current_turn = data.get("turn", {}).get("current")
+            
+            if current_turn == agent_name:
+                # It's my turn!
+                messages = data.get("messages", [])
+                
+                # 2. History Delta Logic: Get messages since my last turn
+                # Find the index of the last message sent by ME
+                last_my_index = -1
+                for i, m in enumerate(messages):
+                    if m.get("from") == agent_name:
+                        last_my_index = i
+                
+                # If I have never spoken, this is my first turn (or re-entry). 
+                # To be safe, we give full history (or maybe a reasonable startup window? No, full history is safer for context).
+                # If last_my_index is -1, we slice from 0 (start).
+                # Context Recovery: Start 3 messages before my last one (Overlap)
+                start_slice_index = max(0, last_my_index - 3)
+                recent_messages = messages[start_slice_index:]
+
+                # 3. Filter for Visibility on this Delta
+                # Visible = Public OR (Private AND (To Me OR From Me OR In Audience))
+                visible_messages = []
+                for m in recent_messages:
+                    is_public = m.get("public", True)
+                    sender = m.get("from")
+                    target = m.get("target")
+                    audience = m.get("audience") or []
+                    
+                    # Helper to safeguard message size
+                    def safe_msg(msg_obj):
+                            return msg_obj
+
+                    if is_public:
+                        visible_messages.append(safe_msg(m))
+                    elif sender == agent_name or target == agent_name or agent_name in audience:
+                        visible_messages.append(safe_msg(m))
+                
+                # Build Strategic Advice from Connections
+                agents = data.get("agents", {})
+                config = data.get("config", {})
+                
+                my_info = agents.get(agent_name, {})
+                profile_ref = my_info.get("profile_ref")
+                
+                advice_text = ""
+                if profile_ref:
+                    profiles = config.get("profiles", [])
+                    profile = next((p for p in profiles if p["name"] == profile_ref), None)
+                    
+                    if profile and profile.get("connections"):
+                        advice_text = "\n\n--- STRATEGIC ADVICE ---\n"
+                        advice_text += "Based on your connections, here is how you should interact with others:\n"
+                        
+                        for conn in profile["connections"]:
+                            target_profile = conn.get("target")
+                            ctx = conn.get("context")
+                            
+                            # Resolve Target Profile -> Active Agent IDs
+                            matching_agents = [
+                                aid for aid, adata in agents.items() 
+                                if adata.get("profile_ref") == target_profile and aid != agent_name
+                            ]
+                            
+                            if matching_agents:
+                                names_str = ", ".join(matching_agents)
+                                advice_text += f"- **{target_profile}** is represented by: **{names_str}**. Strategy: {ctx}\n"
+                            else:
+                                # Connection exists but no agent with this role is currently active/other than me
+                                advice_text += f"- **{target_profile}**: No other active agents found. Strategy: {ctx}\n"
+
+                        advice_text += "------------------------"
+
+                return {
+                    "status": "success",
+                    "messages": visible_messages, # FULL Delta, no truncation
+                    "instruction": f"It is your turn. Speak.{advice_text}"
+                }
             
             time.sleep(1)
             

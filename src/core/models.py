@@ -33,6 +33,7 @@ class AgentState(BaseSchema):
     profile_ref: str
     emoji: str = "🤖"
     connections: Optional[List[Connection]] = None
+    reload_active: bool = False
 
 class Turn(BaseSchema):
     current: Optional[str] = None
@@ -41,6 +42,7 @@ class Turn(BaseSchema):
     consecutive_count: int = 0
     turn_start_time: float = 0.0
     last_user_message_time: float = 0.0
+    pending_next: Optional[str] = None
 
 class Message(BaseSchema):
     from_: str = Field(..., alias="from")
@@ -56,3 +58,4 @@ class GlobalState(BaseSchema):
     turn: Turn = Field(default_factory=Turn)
     agents: Dict[str, AgentState] = Field(default_factory=dict)
     config: Config = Field(default_factory=Config)
+    reload_queue: List[str] = Field(default_factory=list)
