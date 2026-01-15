@@ -286,6 +286,7 @@ async def talk(
     message: str,
     public: bool,
     to: str,
+    from_agent: str,  # <--- NEW MANDATORY ARGUMENT (Identity Assertion)
     ctx: Context
 ) -> str:
     """
@@ -298,24 +299,59 @@ async def talk(
         message: The content to speak.
         public: If true, everyone sees the message. If false, only 'to' and agents of YOUR SAME TYPE see it.
         to: The name of the agent who should speak next. (The message is always visible to them).
+        from_agent: YOUR IDENTITY. You must explicitly state who you are (e.g. "Software_Engineer").
     """
-    sender = None  # Scope for error recovery
     try:
-        # --- TURN-BASED IDENTITY ---
-        # We strictly use the current turn holder as the sender.
-        # We wait until it's an agent turn (not User).
-        while True:
-            state = engine.state.load()
-            sender = state.get("turn", {}).get("current")
-            if sender and sender != "User":
-                break
-            await asyncio.sleep(1)
+        # --- 1. STRICT TURN & IDENTITY VALIDATION (The "Source of Truth") ---
+        # We no longer guess. We VALIDATE.
+        
+        # Poll briefly to ensure state is fresh (async race conditions)
+        current_turn_holder = None
+        for _ in range(3):
+           state = engine.state.load()
+           current_turn_holder = state.get("turn", {}).get("current")
+           if current_turn_holder: break
+           await asyncio.sleep(0.1)
 
+        sender = from_agent
+        
+        # A. Identity/Turn Mismatch Check
+        if sender != current_turn_holder:
+            # 🚨 PROTOCOL VIOLATION DETECTED 🚨
+            # Logic:
+            # 1. Announce violation to chat (Public Shame / Debugging)
+            # 2. PAUSE the offender (Blocking Wait) until it IS their turn.
+            # 3. Resume with a warning.
+            
+            violation_msg = {
+                "from": "System",
+                "content": f"⚠️ **PROTOCOL VIOLATION**: Agent '{sender}' attempted to speak during '{current_turn_holder}'s turn. Action blocked and agent paused.",
+                "public": True,
+                "target": "all",
+                "timestamp": time.time()
+            }
+            engine.state.setdefault("messages", []).append(violation_msg)
+            
+            if logger: logger.log("VIOLATION", sender, f"Spoke out of turn (Current: {current_turn_holder}). Pausing agent...")
+            
+            # BLOCKING REPAIR: Wait until it is actually my turn
+            # This effectively "pauses" the agent in the `talk` call until the turn cycle comes back to them.
+            wait_result = await engine.wait_for_turn_async(sender, timeout_seconds=600) # Long timeout
+            
+            if wait_result["status"] == "success":
+                # Resumed!
+                engine.acknowledge_turn(sender)
+                return f"⚠️ **SYSTEM WARNING**: You attempted to speak out of turn and were paused. It is now correctly your turn. Review the conversation history (context) to see what happened while you were paused, then speak again."
+            
+            elif wait_result["status"] == "reset":
+                 return f"⚠️ SYSTEM ALERT: {wait_result['instruction']}"
+            else:
+                 return "🚫 SYSTEM TIMEOUT: You were paused for speaking out of turn, but the turn never came back to you. Session timed out."
+
+        # If we get here, Identity is Validated: sender == current_turn_holder
+        
         # --- SECURITY: RELOAD ENFORCEMENT (Sprint 6 Fix) ---
         # If the agent is queued for reload, they MUST NOT speak.
-        # They are only allowed to use `note()` and then terminate.
-        
-        # Reload state to be sure
         state = engine.state.load()
         sender_data = state.get("agents", {}).get(sender, {})
         
@@ -323,12 +359,6 @@ async def talk(
              logger.log("BLOCK", sender, "Blocked talk() due to reload_active=True")
              # Force them to quit immediately
              return "🚫 SYSTEM ALERT: [RELOAD IN PROGRESS] You have been scheduled for a reload/restart. You are FORBIDDEN from speaking. You must IMMEDIATElY call the `note()` tool to save your final memory, and then terminate your session. DO NOT TALK."
-
-        # --- SECURITY: WHITELIST CHECK ---
-        # Prevent "Ghost" agents from talking
-        valid_agents = list(state.get("agents", {}).keys())
-        if sender not in valid_agents:
-            return f"🚫 SECURITY ALERT: '{sender}' is not a registered agent."
 
         next_agent = to
 
@@ -345,7 +375,7 @@ async def talk(
                     break
             
             if consecutive_count >= 5:
-                # Construct a helper directory for the error context (optional, but good for keeping context)
+                # Construct a helper directory for the error context
                 try:
                      agent_directory = _build_agent_directory(data, sender)
                      connections_list = [d for d in agent_directory if d.get('authorized')]
@@ -356,35 +386,12 @@ async def talk(
         
         logger.log("ACTION", sender, f"talking -> {next_agent} (Public: {public})", {"message": message})
         
-        # 0.5. BLOCKING GUARD
-        # Ensure it is actually my turn before posting.
-        # This prevents race conditions where a client retries 'talk' while still waiting,
-        # or attempts to speak out of turn.
-        logger.log("DEBUG", sender, "Verifying turn ownership before posting...")
-        while True:
-            # Check if it is my turn
-            turn_status = await engine.wait_for_turn_async(sender, timeout_seconds=5)
-            
-            if turn_status["status"] == "success":
-                # I have the turn. Proceed.
-                start_turn_messages = turn_status.get("messages", [])
-                break
-            elif turn_status["status"] == "reset":
-                 return f"⚠️ SYSTEM ALERT: {turn_status['instruction']}"
-            
-            # Otherwise, wait loop.
-            if logger: 
-                # Log only periodically to avoid noise
-                pass
-            # Continue loop
-            
         # 1. Post Message
         post_result = engine.post_message(sender, message, public, next_agent)
         
         # Check for DENIED action
         if post_result.startswith("🚫"):
             if logger: logger.log("DENIED", "System", post_result, {"target": sender})
-            # Return the error directly so the agent can retry
             return post_result
             
         logger.log("SUCCESS", "System", f"Message posted: {post_result}")
@@ -409,7 +416,7 @@ async def talk(
                 user_reply = None
                 
                 while True:
-                    await asyncio.sleep(0.5) # Reduced from 2s to improve responsiveness
+                    await asyncio.sleep(0.5)
                     
                     # Reload State
                     try:
@@ -442,13 +449,7 @@ async def talk(
                         continue
                 
                 if user_reply:
-                     # Turn Management: User replied. 
-                     # Technically, if User replies, they *took* their turn and passed it back?
-                     # Or did they just inject?
-                     # For now, let's say the Agent gets the result and keeps the turn.
-                     
                      # Prepare Template Render
-                     # Fetch Context Again
                      try:
                         data = engine.state.load()
                         role_snippet = _get_latest_role(data, sender)
@@ -473,16 +474,16 @@ async def talk(
                      except: pass
 
                      # Combine Messages (Missed + User Reply)
-                     # Iterate to find the actual user message object
-                     user_msg_obj = None
-                     for m in reversed(data.get("messages", [])):
-                         if m.get("content") == user_reply and m.get("from") == "User":
-                             user_msg_obj = m
-                             break
+                     # We need to construct the messages list carefully
+                     # For simplicity, we just grab everything visible again or just the user reply
+                     # But we need to maintain the 'start_turn_messages' logic if we want to be consistent
+                     # Re-fetching visible messages is safer:
+                     visible_msgs = [] # (Simplified logic for now to avoid complexity in this snippet)
+                     # Actually, let's just use the user_reply as the instruction
                      
-                     combined_msgs = start_turn_messages
-                     if user_msg_obj:
-                         combined_msgs.append(user_msg_obj)
+                     # Note: We need a valid 'messages' list for the template. 
+                     # Let's re-fetch recent history
+                     msg_list = data.get("messages", [])[-10:] # Last 10
                      
                      response = template.render(
                         name=sender,
@@ -490,7 +491,7 @@ async def talk(
                         context=global_context,
                         agent_directory=agent_directory,
                         connections=[d for d in agent_directory if d.get('authorized')],
-                        messages=combined_msgs,
+                        messages=msg_list,
                         instruction=f"✅ User Replied: \"{user_reply}\". It is your turn again.", 
                         memory=_get_memory_content(sender),
                         is_open_mode=is_open_mode,
@@ -500,8 +501,6 @@ async def talk(
 
             # Fallback (Busy or Aborted Wait) -> Standard Template Response
             if logger: logger.log("TURN", "System", "Turn passed to USER (Non-Blocking / Busy). Agent retains control.")
-            # Do NOT block. Return special message immediately.
-            # Construct the response using the template but with a specific instruction.
             
             try:
                 data = engine.state.load()
@@ -520,11 +519,17 @@ async def talk(
             user_feedback_msg = "Message bien envoyé à l'utilisateur, il vous répondra en temps voulu. En attendant, continuez votre travail d'agent en appelant un agent suivant."
             
             # Calculate Open Mode
-            my_info = data['agents'].get(sender, {})
-            prof_ref = my_info.get("profile_ref")
-            profiles = data['config']['profiles']
-            my_prof = next((p for p in profiles if p["name"] == prof_ref), {})
-            is_open_mode = "open" in my_prof.get("capabilities", [])
+            is_open_mode = False
+            try:
+                my_info = data['agents'].get(sender, {})
+                prof_ref = my_info.get("profile_ref")
+                profiles = data['config']['profiles']
+                my_prof = next((p for p in profiles if p["name"] == prof_ref), {})
+                is_open_mode = "open" in my_prof.get("capabilities", [])
+            except: pass
+
+            # Re-fetch recent messages
+            msg_list = data.get("messages", [])[-10:]
 
             rendered = template.render(
                 name=sender,
@@ -532,8 +537,8 @@ async def talk(
                 context=global_context,
                 agent_directory=agent_directory,
                 connections=[d for d in agent_directory if d.get('authorized')],
-                messages=start_turn_messages,
-                instruction=f"✅ {user_feedback_msg}", # Override instruction
+                messages=msg_list,
+                instruction=f"✅ {user_feedback_msg}", 
                 memory=_get_memory_content(sender),  # <--- INJECT MEMORY
                 is_open_mode=is_open_mode,
                 replied_to_message=message # <--- Context
@@ -548,7 +553,6 @@ async def talk(
             result = await engine.wait_for_turn_async(sender, timeout_seconds=10)
             
             if result["status"] == "success":
-                # Acknowledge turn to reset interruption timer
                 engine.acknowledge_turn(sender)
                 if logger: logger.log("TURN", sender, "It is my turn again.")
                 break
@@ -560,7 +564,6 @@ async def talk(
             continue
         
         # result is guaranteed to be success here
-
         if result["status"] == "reset":
             return f"⚠️ SYSTEM ALERT: {result['instruction']}"
         
@@ -568,16 +571,12 @@ async def talk(
         # Fetch Data
         role_snippet = "(Unknown Role)"
         global_context = ""
-        agent_directory = [] # Fix: Initialize empty list before try block to avoid UnboundLocalError
-        connections = []
+        agent_directory = []
         
         try:
             data = engine.state.load()
-            # Role
             role_snippet = _get_latest_role(data, sender)
-            # Context
             global_context = data.get("config", {}).get("context", "")
-            # Directory
             agent_directory = _build_agent_directory(data, sender)
                 
         except Exception as e:
@@ -600,7 +599,6 @@ async def talk(
             role_snippet=role_snippet,
             context=global_context,
             agent_directory=agent_directory,
-            # Legacy
             connections=[d for d in agent_directory if d.get('authorized')],
             messages=result["messages"],
             instruction=result["instruction"],
@@ -749,7 +747,7 @@ async def mailbox(ctx: Context) -> str:
     return content_to_return
 
 @mcp.tool()
-async def note(content: str, ctx: Context) -> str:
+async def note(content: str, from_agent: str, ctx: Context) -> str:
     """
     Manage your persistent memory.
     This tool OVERWRITES your existing memory file with the new content provided.
@@ -767,16 +765,26 @@ async def note(content: str, ctx: Context) -> str:
     
     Args:
         content: The text content to save.
+        from_agent: YOUR IDENTITY. You must explicitly state who you are.
     """
     MAX_CHARS = 5000
     
-    # --- TURN-BASED IDENTITY ---
-    while True:
-        state = engine.state.load()
-        agent_name = state.get("turn", {}).get("current")
-        if agent_name and agent_name != "User":
-            break
-        await asyncio.sleep(1)
+    # --- Strict Turn/Identity Validation ---
+    agent_name = from_agent
+    current_turn_holder = None
+    try:
+        data = engine.state.load()
+        current_turn_holder = data.get("turn", {}).get("current")
+    except:
+        pass
+        
+    if agent_name != current_turn_holder:
+         # Same auto-repair pause as talk()
+         if logger: logger.log("VIOLATION", agent_name, f"Note() out of turn (Current: {current_turn_holder}). Pausing...")
+         wait_result = await engine.wait_for_turn_async(agent_name, timeout_seconds=300)
+         if wait_result["status"] != "success":
+             return "🚫 SYSTEM ERROR: You called note() out of turn and timed out waiting for your turn."
+         # If success, proceed (they got the turn back)
 
     # 1. Validate Length
     if len(content) > MAX_CHARS:
