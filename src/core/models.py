@@ -58,4 +58,3 @@ class GlobalState(BaseSchema):
     turn: Turn = Field(default_factory=Turn)
     agents: Dict[str, AgentState] = Field(default_factory=dict)
     config: Config = Field(default_factory=Config)
-    reload_queue: List[str] = Field(default_factory=list)

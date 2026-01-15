@@ -204,13 +204,6 @@ def load_config():
         config["profiles"] = [
             {"name": "Agent", "description": "Generic Agent", "emoji": "🤖", "system_prompt": "You are a helpful assistant.", "connections": [], "count": 1, "capabilities": ["public", "private", "audience"]}
         ]
-    # Ensure reload_queue exists
-    if "reload_queue" not in state:
-        def init_queue(s):
-            s["reload_queue"] = []
-            return "Queue Init"
-        state_store.update(init_queue)
-        state["reload_queue"] = []
     return state, config
 
 def save_config(new_config):
@@ -223,27 +216,29 @@ def save_config(new_config):
 # --- DIALOGS ---
 def handle_disconnect_agent(agent_name):
     """
-    Adds the agent to the sequential reload queue.
-    The system will give them the turn at the next transition to allow a safe 'note()' call.
+    Sets the reload_active flag for the agent immediately.
+    The agent will be notified on its next interaction or wait.
     """
     def update_fn(s):
-        q = s.setdefault("reload_queue", [])
-        if agent_name not in q:
-            q.append(agent_name)
-        
-        # If it's currently NO ONE's turn (e.g. startup) or if we want to kickstart 
-        # a transition if the system is idle, we could do it here. 
-        # But usually, it's safer to wait for the next transition or if it's currently User turn.
-        if s.get("turn", {}).get("current") == "User":
-            # We can start the reload chain immediately by hijacking the turn from User
-            # (User is technically 'idle' while waiting for input)
-            # However, _finalize_turn_transition needs an 'intended_next'
-            pass # We'll let the next User message or a transition handle it for simplicity
+        if agent_name in s.get("agents", {}):
+            s["agents"][agent_name]["reload_active"] = True
             
-        return f"Ajouté à la file de rechargement : {agent_name}"
+            # Inject System Message for the Agent
+            msg = {
+                "from": "System",
+                "content": f"🔁 **SYSTEM NOTIFICATION**: RELOAD REQUESTED.\n\n"
+                           f"You must synthesize your final state into a `note()` (Critical) and then terminate. "
+                           f"Do NOT call `talk()`.",
+                "public": False,
+                "target": agent_name,
+                "timestamp": time.time()
+            }
+            s.setdefault("messages", []).append(msg)
+            
+        return f"Signal de rechargement envoyé à : {agent_name}"
     
     state_store.update(update_fn)
-    st.toast(f"{agent_name} ajouté à la file de rechargement 🔁")
+    st.toast(f"Reload signal sent to {agent_name} 🔁")
 
 PRESET_DIR = GLOBAL_PRESET_DIR
 
@@ -845,16 +840,24 @@ with st.sidebar:
              st.toast("Aucun agent à recharger.")
         else:
              def reload_all_logic(s):
-                 q = s.setdefault("reload_queue", [])
-                 added = 0
                  for agent_name in agents_to_reload:
-                     if agent_name not in q:
-                         q.append(agent_name)
-                         added += 1
-                 return added
+                     if agent_name in s.get("agents", {}):
+                         s["agents"][agent_name]["reload_active"] = True
+                         
+                         # Inject System Message
+                         msg = {
+                             "from": "System",
+                             "content": f"🔁 **SYSTEM NOTIFICATION**: GLOBAL RELOAD REQUESTED.\n\n"
+                                        f"You must synthesize your final state into a `note()` and then terminate.",
+                             "public": False,
+                             "target": agent_name,
+                             "timestamp": time.time()
+                         }
+                         s.setdefault("messages", []).append(msg)
+                 return len(agents_to_reload)
              
              count = state_store.update(reload_all_logic)
-             st.toast(f"{count} agents ajoutés à la file de rechargement séquentiel 🔁")
+             st.toast(f"{count} agents en cours de rechargement parallèle 🔁")
              time.sleep(0.5)
              st.rerun()
 
@@ -1307,7 +1310,6 @@ elif st.session_state.page == "Cockpit":
                 s["messages"] = []
                 s["turn"] = {"current": "User", "next": None, "first_agent": first_speaker_choice}
                 s["config"]["context"] = global_context
-                s["reload_queue"] = [] # Clear reload queue
                 
                 # Use profiles from the state s for absolute consistency
                 current_profiles = s["config"].get("profiles", [])

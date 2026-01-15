@@ -155,74 +155,32 @@ class Engine:
 
     def _finalize_turn_transition(self, state, intended_next: str) -> str:
         """
-        Internal helper to manage turn transitions, including the sequential reload queue.
-        This ensures that reloads happen one by one and that the turn returns to the 
-        right agent afterwards.
+        Internal helper to manage turn transitions.
         """
-        reload_queue = state.get("reload_queue", [])
         turn_data = state.get("turn", {})
         old_turn = turn_data.get("current")
 
-        if reload_queue:
-            # 1. Sequential Reload in progress
-            reloader = reload_queue.pop(0)
-            state["reload_queue"] = reload_queue
-            
-            # Save the intended next speaker if we haven't already
-            if turn_data.get("pending_next") is None:
-                state["turn"]["pending_next"] = intended_next
-            
-            # 2. Assign turn to Reloader
-            state["turn"]["current"] = reloader
-            state["turn"]["turn_start_time"] = time.time()
-            state["turn"]["consecutive_count"] = 1
-            
-            # Mark agent as being in reload mode
-            if reloader in state.get("agents", {}):
-                state["agents"][reloader]["reload_active"] = True
-            
-            # 3. Inject System Message for the Reloader
-            msg = {
-                "from": "System",
-                "content": f"🔁 **SYSTEM NOTIFICATION**: RELOAD REQUESTED.\n\n"
-                           f"You must synthesize your final state into a `note()` (Critical) and then terminate. "
-                           f"Do NOT call `talk()`.",
-                "public": False,
-                "target": reloader,
-                "timestamp": time.time()
-            }
-            state.setdefault("messages", []).append(msg)
-            
-            import sys
-            if self.logger:
-                self.logger.log("RELOAD_START", "System", f"Turn hijacked for reload of {reloader}")
-            else:
-                print(f"[Logic] RELOAD: {reloader} hijacked turn from {intended_next}", file=sys.stderr)
-            
-            return f"Reloading {reloader}..."
-
+        # 1. Resume normal flow.
+        final_next = intended_next
+        if turn_data.get("pending_next"):
+            final_next = turn_data["pending_next"]
+            state["turn"]["pending_next"] = None
+        
+        state["turn"]["current"] = final_next
+        state["turn"]["turn_start_time"] = time.time()
+        
+        if final_next == old_turn:
+            state["turn"]["consecutive_count"] = turn_data.get("consecutive_count", 0) + 1
         else:
-            # 4. No more reloads. Resume normal flow.
-            final_next = intended_next
-            if turn_data.get("pending_next"):
-                final_next = turn_data["pending_next"]
-                state["turn"]["pending_next"] = None
+            state["turn"]["consecutive_count"] = 1
+        
+        import sys
+        if self.logger:
+            self.logger.log("TURN_CHANGE", "System", f"Turn passed to {final_next}")
+        else:
+            print(f"[Logic] TURN CHANGE: {old_turn} -> {final_next}", file=sys.stderr)
             
-            state["turn"]["current"] = final_next
-            state["turn"]["turn_start_time"] = time.time()
-            
-            if final_next == old_turn:
-                state["turn"]["consecutive_count"] = turn_data.get("consecutive_count", 0) + 1
-            else:
-                state["turn"]["consecutive_count"] = 1
-            
-            import sys
-            if self.logger:
-                self.logger.log("TURN_CHANGE", "System", f"Turn passed to {final_next}")
-            else:
-                print(f"[Logic] TURN CHANGE: {old_turn} -> {final_next}", file=sys.stderr)
-                
-            return f"Turn is now: {final_next}."
+        return f"Turn is now: {final_next}."
 
     async def wait_for_all_agents_async(self, name: str, timeout_seconds: int = 600) -> str:
         """
@@ -419,12 +377,21 @@ class Engine:
                 }
                 
             # 1b. Check for Status Reset (Kicked/Reloaded)
-            my_status = data.get("agents", {}).get(agent_name, {}).get("status")
+            agent_data = data.get("agents", {}).get(agent_name, {})
+            my_status = agent_data.get("status")
             if my_status == "pending_connection":
                     return {
                     "status": "reset",
                     "messages": [],
                     "instruction": "SYSTEM RESET: Your session has been terminated by the user. [TERMINATE_SESSION]"
+                }
+            
+            # 1c. Check for RELOAD
+            if agent_data.get("reload_active"):
+                return {
+                    "status": "reset",
+                    "messages": [],
+                    "instruction": "SYSTEM ALERT: [RELOAD IN PROGRESS] You have been scheduled for a reload. You must IMMEDIATElY call the `note()` tool to save your final memory, and then terminate your session. DO NOT TALK."
                 }
 
             current_turn = data.get("turn", {}).get("current")
@@ -556,12 +523,21 @@ class Engine:
                 }
                 
             # 1b. Check for Status Reset (Kicked/Reloaded)
-            my_status = data.get("agents", {}).get(agent_name, {}).get("status")
+            agent_data = data.get("agents", {}).get(agent_name, {})
+            my_status = agent_data.get("status")
             if my_status == "pending_connection":
                  return {
                     "status": "reset",
                     "messages": [],
                     "instruction": "SYSTEM RESET: Your session has been terminated by the user. [TERMINATE_SESSION]"
+                }
+
+            # 1c. Check for RELOAD
+            if agent_data.get("reload_active"):
+                return {
+                    "status": "reset",
+                    "messages": [],
+                    "instruction": "SYSTEM ALERT: [RELOAD IN PROGRESS] You have been scheduled for a reload. You must IMMEDIATElY call the `note()` tool to save your final memory, and then terminate your session. DO NOT TALK."
                 }
 
             current_turn = data.get("turn", {}).get("current")

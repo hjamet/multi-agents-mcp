@@ -803,12 +803,16 @@ async def note(content: str, from_agent: str, ctx: Context) -> str:
         pass
         
     if agent_name != current_turn_holder:
-         # Same auto-repair pause as talk()
-         if logger: logger.log("VIOLATION", agent_name, f"Note() out of turn (Current: {current_turn_holder}). Pausing...")
-         wait_result = await engine.wait_for_turn_async(agent_name, timeout_seconds=300)
-         if wait_result["status"] != "success":
-             return "🚫 SYSTEM ERROR: You called note() out of turn and timed out waiting for your turn."
-         # If success, proceed (they got the turn back)
+         # Parallel Reload: Allow note() even if not their turn if reload_active is set
+         if data.get("agents", {}).get(agent_name, {}).get("reload_active"):
+             if logger: logger.log("RELOAD", agent_name, "Processing parallel reload note...")
+         else:
+             # Same auto-repair pause as talk()
+             if logger: logger.log("VIOLATION", agent_name, f"Note() out of turn (Current: {current_turn_holder}). Pausing...")
+             wait_result = await engine.wait_for_turn_async(agent_name, timeout_seconds=300)
+             if wait_result["status"] != "success":
+                 return "🚫 SYSTEM ERROR: You called note() out of turn and timed out waiting for your turn."
+             # If success, proceed (they got the turn back)
 
     # 1. Validate Length
     if len(content) > MAX_CHARS:
@@ -834,7 +838,7 @@ async def note(content: str, from_agent: str, ctx: Context) -> str:
         # Log
         logger.log("MEMORY", agent_name, "Updated memory note.")
         
-        # --- SEQUENTIAL RELOAD HANDLING ---
+        # --- PARALLEL RELOAD HANDLING ---
         def finish_reload_step(s):
             agent_info = s.get("agents", {}).get(agent_name, {})
             if agent_info.get("reload_active"):
@@ -842,10 +846,14 @@ async def note(content: str, from_agent: str, ctx: Context) -> str:
                 s["agents"][agent_name]["reload_active"] = False
                 s["agents"][agent_name]["status"] = "pending_connection"
                 
-                # Advance to next reloader or pending next
-                next_speaker = s["turn"].get("pending_next") or "User"
-                res = engine._finalize_turn_transition(s, next_speaker)
-                return f"✅ Reload Step Finished for {agent_name}. {res}"
+                # Advance turn ONLY if this agent currently has the turn
+                current_turn = s.get("turn", {}).get("current")
+                if current_turn == agent_name:
+                    next_speaker = s["turn"].get("pending_next") or "User"
+                    res = engine._finalize_turn_transition(s, next_speaker)
+                    return f"✅ Reload Finished (Turn Transferred). {res}"
+                else:
+                    return f"✅ Reload Finished (Background)."
             return "✅ Note saved."
 
         response_msg = engine.state.update(finish_reload_step)
