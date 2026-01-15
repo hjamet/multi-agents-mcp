@@ -1412,15 +1412,39 @@ elif st.session_state.page == "Editor":
         new_desc = st.text_input("Description", current_profile.get("description", ""), key=f"edit_desc_{selected_name}")
         new_prompt = st.text_area("System Prompt", current_profile.get("system_prompt", ""), height=300, key=f"edit_prompt_{selected_name}")
         
-        st.subheader("Capacités")
+        st.subheader("Capacités de Communication")
         caps = current_profile.get("capabilities", [])
-        cc1, cc2 = st.columns(2)
-        has_pub = cc1.checkbox("Public", "public" in caps, key=f"cap_pub_{selected_name}", help="Peut parler publiquement à tout le monde.")
-        has_priv = cc2.checkbox("Private", "private" in caps, key=f"cap_priv_{selected_name}", help="Peut envoyer des messages privés ciblés.")
         
-        new_caps = []
-        if has_pub: new_caps.append("public")
-        if has_priv: new_caps.append("private")
+        # Preserve other capabilities (e.g. shell_exec)
+        other_caps = [c for c in caps if c not in ["public", "private"]]
+        
+        has_pub = "public" in caps
+        has_priv = "private" in caps
+        
+        # Determine default index
+        default_idx = 0 # Public
+        if has_pub and has_priv:
+            default_idx = 2 # Both
+        elif has_priv and not has_pub:
+            default_idx = 1 # Private
+        
+        comm_mode = st.radio(
+            "Portée de Communication",
+            ["Public", "Privé", "Les Deux (Public & Privé)"],
+            index=default_idx,
+            key=f"comm_mode_{selected_name}",
+            horizontal=True,
+            help="Définit la portée de communication autorisée pour cet agent."
+        )
+        
+        new_caps = list(other_caps)
+        if comm_mode == "Public":
+            new_caps.append("public")
+        elif comm_mode == "Privé":
+            new_caps.append("private")
+        else:
+            new_caps.append("public")
+            new_caps.append("private")
 
         st.subheader("Connexions")
         st.info("Définissez qui cet agent peut contacter et dans quel but (contexte stratégique).")
