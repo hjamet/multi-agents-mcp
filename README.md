@@ -117,3 +117,4 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
     - 🔒 **Identity Leak Fix** : Correction fuite de tour lors du Reload (Ghost Agent) (v1.17.2).
     - 💬 **Messaging 2.0** : Simplification radicale (To/Public/Content), suppression Open Mode/Audience, et Privacy par équipe (v2.0.0).
     - 🔒 **Identity Enforcement** : Argument obligatoire `from_agent` et validation stricte du tour (Pause/Ban auto) (v2.2.0).
+    - 🚑 **Identity Hotfix** : Correction blocage infini sur typo de nom (Fail Fast au lieu de Pause) (v2.2.1).

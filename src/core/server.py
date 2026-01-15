@@ -284,10 +284,10 @@ async def agent(ctx: Context) -> str:
 @mcp.tool()
 async def talk(
     message: str,
-    public: bool,
     to: str,
     from_agent: str,  # <--- NEW MANDATORY ARGUMENT (Identity Assertion)
-    ctx: Context
+    ctx: Context,
+    private: bool = False
 ) -> str:
     """
     MAIN COMMUNICATION TOOL.
@@ -297,9 +297,9 @@ async def talk(
     
     Args:
         message: The content to speak.
-        public: If true, everyone sees the message. If false, only 'to' and agents of YOUR SAME TYPE see it.
         to: The name of the agent who should speak next. (The message is always visible to them).
         from_agent: YOUR IDENTITY. You must explicitly state who you are (e.g. "Software_Engineer").
+        private: If true, ONLY 'to' sees the message. If false (default), everyone sees it.
     """
     try:
         # --- 1. STRICT TURN & IDENTITY VALIDATION (The "Source of Truth") ---
@@ -314,6 +314,15 @@ async def talk(
            await asyncio.sleep(0.1)
 
         sender = from_agent
+        
+        # --- 0. EXISTENCE CHECK (Fix for Typos causing Infinite Loops) ---
+        # If the agent name doesn't exist, we can't 'wait for its turn'.
+        known_agents = state.get("agents", {})
+        if sender != "User" and sender not in known_agents:
+             # Helpful hint
+             likely = [k for k in known_agents.keys() if sender in k]
+             hint = f" Did you mean '{likely[0]}'?" if likely else ""
+             return f"🚫 IDENTITY ERROR: Name '{sender}' not found in registry.{hint} You must use your EXACT registered name."
         
         # A. Identity/Turn Mismatch Check
         if sender != current_turn_holder:
@@ -384,10 +393,13 @@ async def talk(
                      
                 return f"🚫 ANTI-SPAM: You have reached the limit of 5 consecutive messages. You MUST yield the floor to another agent or the User.\n\nAvailable Connections: {', '.join([c['name'] for c in connections_list])}"
         
-        logger.log("ACTION", sender, f"talking -> {next_agent} (Public: {public})", {"message": message})
+        # Logic Inversion
+        is_public = not private
+
+        logger.log("ACTION", sender, f"talking -> {next_agent} (Public: {is_public})", {"message": message})
         
         # 1. Post Message
-        post_result = engine.post_message(sender, message, public, next_agent)
+        post_result = engine.post_message(sender, message, is_public, next_agent)
         
         # Check for DENIED action
         if post_result.startswith("🚫"):
@@ -771,6 +783,15 @@ async def note(content: str, from_agent: str, ctx: Context) -> str:
     
     # --- Strict Turn/Identity Validation ---
     agent_name = from_agent
+    
+    # --- 0. EXISTENCE CHECK (Fix for Typos causing Infinite Loops) ---
+    data = engine.state.load()
+    known_agents = data.get("agents", {})
+    if agent_name != "User" and agent_name not in known_agents:
+         # Helpful hint
+         likely = [k for k in known_agents.keys() if agent_name in k]
+         hint = f" Did you mean '{likely[0]}'?" if likely else ""
+         return f"🚫 IDENTITY ERROR: Name '{agent_name}' not found in registry.{hint} You must use your EXACT registered name."
     current_turn_holder = None
     try:
         data = engine.state.load()
