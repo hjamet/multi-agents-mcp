@@ -50,7 +50,7 @@ class Message(BaseSchema):
     timestamp: float
     public: bool = False
     target: Optional[str] = None
-    audience: List[str] = Field(default_factory=list)
+
 
 class GlobalState(BaseSchema):
     conversation_id: str

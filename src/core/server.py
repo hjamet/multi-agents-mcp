@@ -305,8 +305,7 @@ async def talk(
     message: str,
     public: bool,
     to: str,
-    ctx: Context,
-    audience: List[str] = []
+    ctx: Context
 ) -> str:
     """
     MAIN COMMUNICATION TOOL.
@@ -316,9 +315,8 @@ async def talk(
     
     Args:
         message: The content to speak.
-        public: If true, everyone sees the message. If false, only 'to' and 'audience' see it.
+        public: If true, everyone sees the message. If false, only 'to' and agents of YOUR SAME TYPE see it.
         to: The name of the agent who should speak next. (The message is always visible to them).
-        audience: (Optional) List of other agents who can see a Private message.
     """
     sender = None  # Scope for error recovery
     try:
@@ -331,6 +329,19 @@ async def talk(
             if sender and sender != "User":
                 break
             await asyncio.sleep(1)
+
+        # --- SECURITY: RELOAD ENFORCEMENT (Sprint 6 Fix) ---
+        # If the agent is queued for reload, they MUST NOT speak.
+        # They are only allowed to use `note()` and then terminate.
+        
+        # Reload state to be sure
+        state = engine.state.load()
+        sender_data = state.get("agents", {}).get(sender, {})
+        
+        if sender_data.get("reload_active"):
+             logger.log("BLOCK", sender, "Blocked talk() due to reload_active=True")
+             # Force them to quit immediately
+             return "🚫 SYSTEM ALERT: [RELOAD IN PROGRESS] You have been scheduled for a reload/restart. You are FORBIDDEN from speaking. You must IMMEDIATElY call the `note()` tool to save your final memory, and then terminate your session. DO NOT TALK."
 
         # --- SECURITY: WHITELIST CHECK ---
         # Prevent "Ghost" agents from talking
@@ -362,7 +373,7 @@ async def talk(
                      
                 return f"🚫 ANTI-SPAM: You have reached the limit of 5 consecutive messages. You MUST yield the floor to another agent or the User.\n\nAvailable Connections: {', '.join([c['name'] for c in connections_list])}"
         
-        logger.log("ACTION", sender, f"talking -> {next_agent} (Public: {public})", {"message": message, "audience": audience})
+        logger.log("ACTION", sender, f"talking -> {next_agent} (Public: {public})", {"message": message})
         
         # 0.5. BLOCKING GUARD
         # Ensure it is actually my turn before posting.
@@ -383,14 +394,11 @@ async def talk(
             # Otherwise, wait loop.
             if logger: 
                 # Log only periodically to avoid noise
-                # import time
-                # if int(time.time()) % 10 == 0:
-                #      logger.log("WAIT", sender, "Blocking action until turn is acquired...")
                 pass
             # Continue loop
             
         # 1. Post Message
-        post_result = engine.post_message(sender, message, public, next_agent, audience)
+        post_result = engine.post_message(sender, message, public, next_agent)
         
         # Check for DENIED action
         if post_result.startswith("🚫"):
