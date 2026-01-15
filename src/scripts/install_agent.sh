@@ -82,62 +82,23 @@ if [ ! -f "\$CWD/.cursor/commands/start.md" ]; then
     cp "\$INSTALL_DIR/assets/ide/start_prompt.md" "\$CWD/.cursor/commands/start.md"
 fi
 
-# 3. Launch Streamlit from the global installation
+# 3. Configure/Update MCP for IDEs
+cd "\$INSTALL_DIR"
+uv run python src/scripts/utils/configure_mcp.py --name multi-agents-mcp --path "\$INSTALL_DIR"
+
+# 4. Launch Streamlit from the global installation
 # Unset VIRTUAL_ENV to avoid inheriting from the calling shell's env
 unset VIRTUAL_ENV
-cd "\$INSTALL_DIR"
 uv run --project "\$INSTALL_DIR" streamlit run src/interface/app.py
 EOF
 
 chmod +x "$MAMCP_PATH"
 echo -e "${GREEN}✅ 'mamcp' command installed to $MAMCP_PATH${NC}"
 
-# 5. Connect to MCP using Python script for JSON safety
-echo -e "${BLUE}🔌 Configuring MCP Server ID...${NC}"
-CONFIG_PATH="$HOME/.gemini/antigravity/mcp_config.json"
-REPO_ABS_PATH=$(realpath "$INSTALL_DIR")
-
-# We use a small python snippet to handle the JSON update safely
-python3 -c "
-import json
-import os
-import sys
-
-config_path = '$CONFIG_PATH'
-repo_path = '$REPO_ABS_PATH'
-server_script = os.path.join(repo_path, 'src', 'core', 'server.py')
-
-try:
-    if os.path.exists(config_path):
-        with open(config_path, 'r') as f:
-            data = json.load(f)
-    else:
-        # Check if parent dir exists
-        if not os.path.exists(os.path.dirname(config_path)):
-            os.makedirs(os.path.dirname(config_path), exist_ok=True)
-        data = {'mcpServers': {}}
-
-    # Define the new server config with shell wrapper for compatibility
-    command_str = f'cd {repo_path} && uv run python {server_script}'
-    
-    new_server = {
-        'command': 'sh',
-        'args': ['-c', command_str],
-        'env': {}
-    }
-
-    data.setdefault('mcpServers', {})
-    data['mcpServers']['multi-agents-mcp'] = new_server
-
-    with open(config_path, 'w') as f:
-        json.dump(data, f, indent=2)
-    
-    print('✅ MCP Config updated successfully.')
-
-except Exception as e:
-    print(f'Error updating JSON: {e}')
-    sys.exit(1)
-"
+# 5. Initial MCP Configuration
+echo -e "${BLUE}🔌 Configuring MCP Server...${NC}"
+cd "$INSTALL_DIR"
+uv run python src/scripts/utils/configure_mcp.py --name multi-agents-mcp --path "$INSTALL_DIR"
 
 echo -e "${GREEN}✅ Installation Complete!${NC}"
 echo -e "Make sure $BIN_DIR is in your PATH."

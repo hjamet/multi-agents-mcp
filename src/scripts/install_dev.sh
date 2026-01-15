@@ -57,63 +57,22 @@ echo "{\"cwd\": \"\$CWD\"}" > "\$DEV_DIR/current_working_dir.json"
 mkdir -p "\$CWD/.multi-agent-mcp/memory"
 mkdir -p "\$CWD/.multi-agent-mcp/logs"
 
-# 3. Lancer Streamlit depuis le dossier de dev
-unset VIRTUAL_ENV
+# 3. Configurer/Mettre à jour MCP pour les IDEs
 cd "\$DEV_DIR"
+uv run python src/scripts/utils/configure_mcp.py --name multi-agents-mcp-dev --path "\$DEV_DIR" --dev
+
+# 4. Lancer Streamlit depuis le dossier de dev
+unset VIRTUAL_ENV
 uv run streamlit run src/interface/app.py
 EOF
 
 chmod +x "$MAMCP_DEV_PATH"
 echo -e "${GREEN}✅ Commande 'mamcp-dev' installée dans $MAMCP_DEV_PATH${NC}"
 
-# 5. Configuration de l'extension MCP (Gemini/Cursor)
+# 5. Configuration initiale de l'extension MCP (Gemini/Cursor)
 echo -e "${BLUE}🔌 Configuration du serveur MCP pour le développement...${NC}"
-CONFIG_PATH="$HOME/.gemini/antigravity/mcp_config.json"
-SERVER_SCRIPT="$REPO_ROOT/src/core/server.py"
-
-# Utilisation de Python pour une manipulation JSON sûre
-python3 -c "
-import json
-import os
-import sys
-
-config_path = '$CONFIG_PATH'
-dev_dir = '$REPO_ROOT'
-server_script = '$SERVER_SCRIPT'
-
-try:
-    if os.path.exists(config_path):
-        with open(config_path, 'r') as f:
-            data = json.load(f)
-    else:
-        if not os.path.exists(os.path.dirname(config_path)):
-            os.makedirs(os.path.dirname(config_path), exist_ok=True)
-        data = {'mcpServers': {}}
-
-    # On utilise 'uv run python' pour être sûr d'utiliser l'environnement du projet
-    command_str = f'cd {dev_dir} && uv run python {server_script}'
-    
-    dev_server = {
-        'command': 'sh',
-        'args': ['-c', command_str],
-        'env': {}
-    }
-
-    if 'mcpServers' not in data:
-        data['mcpServers'] = {}
-    
-    # On utilise un nom spécifique pour la version dev pour éviter les conflits
-    data['mcpServers']['multi-agents-mcp-dev'] = dev_server
-
-    with open(config_path, 'w') as f:
-        json.dump(data, f, indent=2)
-    
-    print('✅ Configuration MCP mise à jour (multi-agents-mcp-dev).')
-
-except Exception as e:
-    print(f'❌ Erreur lors de la mise à jour du JSON: {e}')
-    sys.exit(1)
-"
+cd "$REPO_ROOT"
+uv run python src/scripts/utils/configure_mcp.py --name multi-agents-mcp-dev --path "$REPO_ROOT" --dev
 
 echo -e "\n${GREEN}✨ Installation Dev terminée !${NC}"
 echo -e "Vous pouvez maintenant :"
