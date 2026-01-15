@@ -8,6 +8,8 @@ Installation rapide (Global & MCP) :
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/hjamet/multi-agents-mcp/main/src/scripts/install_agent.sh | bash
+# (Facultatif) Nettoyer les anciens presets :
+# rm ~/.multi-agent-mcp/presets/*
 ```
 
 Le script configure :

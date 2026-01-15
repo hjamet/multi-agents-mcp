@@ -26,6 +26,7 @@ from src.config import (
     TEMPLATE_DIR, 
     LOCAL_DATA_DIR, 
     GLOBAL_PRESET_DIR, 
+    ASSETS_DIR,
     CODE_ROOT as CONFIG_CODE_ROOT
 )
 from src.core.state import StateStore
@@ -256,6 +257,18 @@ def save_scenario_dialog(current_config):
             path = PRESET_DIR / f"{filename}.json"
             with open(path, "w") as f:
                 json.dump(current_config, f, indent=2)
+            
+            # --- PERSISTENCE TO REPO (DEV MODE) ---
+            repo_presets = ASSETS_DIR / "presets"
+            if repo_presets.exists() and repo_presets.is_dir():
+                repo_path = repo_presets / f"{filename}.json"
+                try:
+                    with open(repo_path, "w") as f:
+                        json.dump(current_config, f, indent=2)
+                    st.toast(f"💾 Synced to Repo: {filename}")
+                except Exception as e:
+                    # Non-blocking, just dev convenience
+                    print(f"Failed to sync to repo: {e}")
             st.success(f"Sauvegardé : {filename}")
             time.sleep(1)
             st.rerun()
