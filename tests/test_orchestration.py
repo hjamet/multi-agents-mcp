@@ -305,8 +305,8 @@ def test_features_single_agent(server_single):
     # No try/finally needed as fixture handles teardown (proc2 is server_single)
     resp_rejoin = proc2.call_tool("agent", {})
     
-    # Verify History in Prompt
-    assert "Hello History" in resp_rejoin
+    # Verify Context Instruction in Prompt
+    assert "CONVERSATION.md" in resp_rejoin
     
     # Verify Memory in Prompt?
     # Note tool saves to memory. Memory is injected where?

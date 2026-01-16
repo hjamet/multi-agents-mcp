@@ -389,7 +389,7 @@ class Engine:
                     return {
                     "status": "reset",
                     "messages": [],
-                    "instruction": "SYSTEM RESET: Your session has been terminated by the user. [TERMINATE_SESSION]"
+                    "instruction": "SYSTEM RESET: Your session has been terminated by the user. [TERMINATE_SESSION]\nThe loop has ended. You will be reloaded.\n1. Update memory via the `note` tool.\n2. STOP COMPLETELY. Do not call talk, agent, or sleep. Just terminate the conversation."
                 }
             
             # 1c. Check for RELOAD
@@ -397,7 +397,7 @@ class Engine:
                 return {
                     "status": "reset",
                     "messages": [],
-                    "instruction": "SYSTEM ALERT: [RELOAD IN PROGRESS] You have been scheduled for a reload. You must IMMEDIATElY call the `note()` tool to save your final memory, and then terminate your session. DO NOT TALK."
+                    "instruction": "SYSTEM ALERT: [RELOAD IN PROGRESS] You have been scheduled for a reload.\nThe loop has ended. You will be reloaded.\n1. Update memory via the `note` tool.\n2. STOP COMPLETELY. Do not call talk, agent, or sleep. Just terminate the conversation."
                 }
 
             current_turn = data.get("turn", {}).get("current")
@@ -535,7 +535,7 @@ class Engine:
                  return {
                     "status": "reset",
                     "messages": [],
-                    "instruction": "SYSTEM RESET: Your session has been terminated by the user. [TERMINATE_SESSION]"
+                    "instruction": "SYSTEM RESET: Your session has been terminated by the user. [TERMINATE_SESSION]\nThe loop has ended. You will be reloaded.\n1. Update memory via the `note` tool.\n2. STOP COMPLETELY. Do not call talk, agent, or sleep. Just terminate the conversation."
                 }
 
             # 1c. Check for RELOAD
@@ -543,7 +543,7 @@ class Engine:
                 return {
                     "status": "reset",
                     "messages": [],
-                    "instruction": "SYSTEM ALERT: [RELOAD IN PROGRESS] You have been scheduled for a reload. You must IMMEDIATElY call the `note()` tool to save your final memory, and then terminate your session. DO NOT TALK."
+                    "instruction": "SYSTEM ALERT: [RELOAD IN PROGRESS] You have been scheduled for a reload.\nThe loop has ended. You will be reloaded.\n1. Update memory via the `note` tool.\n2. STOP COMPLETELY. Do not call talk, agent, or sleep. Just terminate the conversation."
                 }
 
             current_turn = data.get("turn", {}).get("current")

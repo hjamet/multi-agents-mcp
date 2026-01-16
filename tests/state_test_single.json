@@ -6,14 +6,15 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768482250.1752796
+      "timestamp": 1768554917.8099334
     },
     {
       "from": "Agent1",
       "content": "Hello History",
       "public": true,
       "target": "User",
-      "timestamp": 1768482250.3813303
+      "audience": [],
+      "timestamp": 1768554918.013484
     },
     {
       "from": "System",
@@ -21,21 +22,22 @@
       "public": true,
       "target": "all",
       "audience": [],
-      "timestamp": 1768482251.302289
+      "timestamp": 1768554918.6215875
     }
   ],
   "conversation_id": "test-uuid-single",
   "turn": {
     "current": "Agent1",
     "next": null,
-    "turn_start_time": 1768482251.3208926,
+    "turn_start_time": 1768554918.6284888,
     "consecutive_count": 1
   },
   "agents": {
     "Agent1": {
       "status": "connected",
       "role": "Test Role 1",
-      "profile_ref": "TestProfile"
+      "profile_ref": "TestProfile",
+      "reload_active": false
     }
   },
   "config": {

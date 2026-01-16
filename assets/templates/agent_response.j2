@@ -13,15 +13,14 @@ You are now connected to the Multi-Agent System.
 2. **Waiting**: The system handles turn-taking. You do not need to poll.
 3. **Turn**: When it is your turn, you will receive messages and instructions.
 4. **Action**: You must then THINK, ACT, and finally call `talk(...)` to pass the turn.
-5. **SHUTDOWN**: If you receive a 'TERMINATE' or 'STOP_ROUTINE' instruction (from User or System), you must STOP immediately. Do NOT call `talk` OR `agent`. Only call `note()` if needed, then terminate your execution sequence. DO NOT LOOP. DO NOT RECONNECT.
+--- 📨 CONTEXT & MEMORY ---
+Your context (Message History) is located in `CONVERSATION.md`.
+Your memory (Personal Notes) is located in `MEMORY.md`.
 
-{% if messages %}
---- 📨 PREVIOUS MESSAGES (CONTEXT) ---
-{% for m in messages %}
-- **{{ m.from }}** -> {{ m.target }}: "{{ m.content }}"
-{% endfor %}
----------------------------------------
-{% endif %}
+**CRITICAL:**
+1. You MUST read these files to understand the state.
+2. **STRICT PROHIBITION**: You must NOT modify these files. Any changes will be ignored.
+---------------------------
 
 --- 🔗 YOUR CONNECTIONS & STRATEGY ---
 ### 👥 POPULATION & CONNECTIONS

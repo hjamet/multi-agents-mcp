@@ -13,7 +13,9 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from src.core.logic import Engine
-from src.config import TEMPLATE_DIR, MEMORY_DIR
+from src.core.logic import Engine
+from src.config import TEMPLATE_DIR, MEMORY_DIR, EXECUTION_DIR
+
 
 # Initialize
 mcp = FastMCP("MultiAgent-Hub", dependencies=["portalocker", "streamlit", "jinja2"])
@@ -28,31 +30,42 @@ logger = get_logger()
 jinja_env = Environment(loader=FileSystemLoader(str(TEMPLATE_DIR)))
 
 
-def _paginate_output(engine, agent_name: str, text: str) -> str:
+def _write_context_files(agent_name: str, memory_content: str, messages: List[dict]):
     """
-    Splits text if it exceeds the limit (e.g. 3000 chars) and stores remainder in state.mailbox.
-    Returns the chunk + instruction if truncated.
+    Writes context to MEMORY.md and CONVERSATION.md in EXECUTION_DIR.
     """
-    LIMIT = 10000
-    if len(text) <= LIMIT:
-        return text
-        
-    chunk = text[:LIMIT]
-    remainder = text[LIMIT:]
-    
-    def save_mail(state):
-        if "mailbox" not in state:
-            state["mailbox"] = {}
-        state["mailbox"][agent_name] = remainder
-        return "Mail Saved"
-    
+    # 1. Write Memory
+    mem_path = EXECUTION_DIR / "MEMORY.md"
     try:
-        engine.state.update(save_mail)
-        logger.log("MAILBOX", agent_name, f"Output truncated ({len(text)} chars). Remainder saved.")
-        return chunk + "\n\n[SYSTEM] ⚠️ OUTPUT TRUNCATED. To receive the rest, IMMEDIATELY call the `mailbox()` tool (with NO arguments). DO NOT THINK. DO NOT ANALYZE. CALL IT NOW."
+        with open(mem_path, "w", encoding="utf-8") as f:
+            if memory_content:
+                f.write(memory_content)
+            else:
+                f.write("(No memory found.)")
     except Exception as e:
-        logger.error(agent_name, f"Failed to save mailbox: {e}")
-        return chunk + "\n[SYSTEM] Error saving remainder."
+        logger.error(agent_name, f"Failed to write MEMORY.md: {e}")
+
+    # 2. Write Conversation
+    conv_path = EXECUTION_DIR / "CONVERSATION.md"
+    try:
+        with open(conv_path, "w", encoding="utf-8") as f:
+            if not messages:
+                f.write("(No messages.)")
+            else:
+                for m in messages:
+                    sender = m.get("from", "Unknown")
+                    content = m.get("content", "")
+                    target = m.get("target", "all")
+                    
+                    if m.get("public"):
+                        line = f"- **{sender}** -> All: {content}\n"
+                    else:
+                        line = f"- **{sender}** -> {target}: {content}\n"
+                    f.write(line)
+                    
+    except Exception as e:
+        logger.error(agent_name, f"Failed to write CONVERSATION.md: {e}")
+
 
 def _get_agent_connections(state, agent_name):
     """
@@ -270,16 +283,19 @@ async def agent(ctx: Context) -> str:
     my_prof = next((p for p in profiles if p["name"] == prof_ref), {})
     is_open_mode = "open" in my_prof.get("capabilities", [])
 
+    # Write Context Files
+    _write_context_files(name, _get_memory_content(name), visible_messages)
+
     response = template.render(
         name=name,
         role=_get_latest_role(data, name),
         context=result["context"],
         agent_directory=agent_dir,
         connections=[d for d in agent_dir if d.get('authorized')],
-        messages=visible_messages,
+        # messages removed
         is_open_mode=is_open_mode
     )
-    return _paginate_output(engine, name, response)
+    return response
 
 @mcp.tool()
 async def talk(
@@ -518,19 +534,22 @@ async def talk(
                      # Let's re-fetch recent history
                      msg_list = data.get("messages", [])[-10:] # Last 10
                      
+                     # Write Context Files
+                     _write_context_files(sender, _get_memory_content(sender), msg_list)
+
                      response = template.render(
                         name=sender,
                         role_snippet=role_snippet,
                         context=global_context,
                         agent_directory=agent_directory,
                         connections=[d for d in agent_directory if d.get('authorized')],
-                        messages=msg_list,
+                        # messages removed
                         instruction=f"✅ User Replied: \"{user_reply}\". It is your turn again.", 
-                        memory=_get_memory_content(sender),
+                        # memory removed
                         is_open_mode=is_open_mode,
                         replied_to_message=message  # <--- Context
                      )
-                     return _paginate_output(engine, sender, response)
+                     return response
 
             # Fallback (Busy or Aborted Wait) -> Standard Template Response
             if logger: logger.log("TURN", "System", "Turn passed to USER (Non-Blocking / Busy). Agent retains control.")
@@ -564,19 +583,22 @@ async def talk(
             # Re-fetch recent messages
             msg_list = data.get("messages", [])[-10:]
 
+            # Write Context Files
+            _write_context_files(sender, _get_memory_content(sender), msg_list)
+
             rendered = template.render(
                 name=sender,
                 role_snippet=role_snippet,
                 context=global_context,
                 agent_directory=agent_directory,
                 connections=[d for d in agent_directory if d.get('authorized')],
-                messages=msg_list,
+                # messages removed
                 instruction=f"✅ {user_feedback_msg}", 
-                memory=_get_memory_content(sender),  # <--- INJECT MEMORY
+                # memory removed
                 is_open_mode=is_open_mode,
                 replied_to_message=message # <--- Context
             )
-            return _paginate_output(engine, sender, rendered)
+            return rendered
 
         # 2. Smart Block (Wait for Turn)
         # The turn has passed to next_agent. We now wait until it comes back to 'sender'.
@@ -627,18 +649,21 @@ async def talk(
             is_open_mode = "open" in my_prof.get("capabilities", [])
         except: pass
         
+        # Write Context Files
+        _write_context_files(sender, _get_memory_content(sender), result["messages"])
+        
         response = template.render(
             name=sender,
             role_snippet=role_snippet,
             context=global_context,
             agent_directory=agent_directory,
             connections=[d for d in agent_directory if d.get('authorized')],
-            messages=result["messages"],
+            # messages removed
             instruction=result["instruction"],
-            memory=_get_memory_content(sender),  # <--- INJECT MEMORY
+            # memory removed
             is_open_mode=is_open_mode
         )
-        return _paginate_output(engine, sender, response)
+        return response
 
     except Exception as e:
         # Logging
@@ -727,57 +752,6 @@ def _get_memory_content(agent_name: str) -> str:
             logger.error(agent_name, f"Error reading memory: {e}")
             return ""
     return ""
-
-@mcp.tool()
-async def mailbox(ctx: Context) -> str:
-    """
-    Retrieves the pending content from your mailbox.
-    USE THIS ONLY if you received a '⚠️ OUTPUT TRUNCATED' valid system message.
-    """
-    # Identify Agent (Turn-based)
-    # We loop briefly to find turn, but mailbox is usually called immediately after truncation
-    sender = None
-    for _ in range(3):
-        try:
-            state = engine.state.load()
-            sender = state.get("turn", {}).get("current")
-            if sender and sender != "User":
-                break
-        except:
-            pass
-        await asyncio.sleep(0.5)
-        
-    if not sender:
-        return "🚫 ERROR: Could not identify agent turn."
-        
-    # Retrieve Mail
-    # We need to atomically read and potentially clear/update the mailbox
-    content_to_return = "No pending mail."
-    
-    def fetch_mail(state):
-        nonlocal content_to_return
-        mbox = state.get("mailbox", {})
-        if sender in mbox:
-            full_text = mbox[sender]
-            
-            # Paginate again (Recursive-like)
-            # Use same helper logic inline
-            LIMIT = 10000
-            if len(full_text) <= LIMIT:
-                content_to_return = full_text
-                del mbox[sender] # Clear
-            else:
-                chunk = full_text[:LIMIT]
-                remainder = full_text[LIMIT:]
-                mbox[sender] = remainder # Update
-                content_to_return = chunk + "\n\n[SYSTEM] ⚠️ OUTPUT TRUNCATED. To receive the rest, IMMEDIATELY call the `mailbox()` tool again. DO NOT THINK. DO NOT ANALYZE. CALL IT NOW."
-            
-            return "Mailbox Read"
-        else:
-            return "No Mail"
-
-    engine.state.update(fetch_mail)
-    return content_to_return
 
 @mcp.tool()
 async def note(content: str, from_agent: str, ctx: Context) -> str:
