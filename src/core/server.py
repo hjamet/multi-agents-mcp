@@ -13,7 +13,6 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from src.core.logic import Engine
-from src.core.logic import Engine
 from src.config import TEMPLATE_DIR, MEMORY_DIR, EXECUTION_DIR
 
 
@@ -30,27 +29,42 @@ logger = get_logger()
 jinja_env = Environment(loader=FileSystemLoader(str(TEMPLATE_DIR)))
 
 
-def _write_context_files(agent_name: str, memory_content: str, messages: List[dict]):
+def _write_context_files(agent_name: str, memory_content: str, messages: List[dict]) -> int:
     """
     Writes context to MEMORY.md and CONVERSATION.md in EXECUTION_DIR.
+    Returns: Number of lines in CONVERSATION.md
     """
     # 1. Write Memory
     mem_path = EXECUTION_DIR / "MEMORY.md"
     try:
+        # Hardening: Ensure writable before update
+        if mem_path.exists():
+            os.chmod(mem_path, 0o644)
+
         with open(mem_path, "w", encoding="utf-8") as f:
             if memory_content:
                 f.write(memory_content)
             else:
                 f.write("(No memory found.)")
+        
+        # Hardening: Lock as Read-Only (Source of Truth)
+        os.chmod(mem_path, 0o444)
+
     except Exception as e:
         logger.error(agent_name, f"Failed to write MEMORY.md: {e}")
 
     # 2. Write Conversation
     conv_path = EXECUTION_DIR / "CONVERSATION.md"
+    lines_count = 0 
     try:
+        # Hardening: Ensure writable before update
+        if conv_path.exists():
+            os.chmod(conv_path, 0o644)
+
         with open(conv_path, "w", encoding="utf-8") as f:
             if not messages:
                 f.write("(No messages.)")
+                lines_count = 1
             else:
                 for m in messages:
                     sender = m.get("from", "Unknown")
@@ -62,9 +76,15 @@ def _write_context_files(agent_name: str, memory_content: str, messages: List[di
                     else:
                         line = f"- **{sender}** -> {target}: {content}\n"
                     f.write(line)
+                    lines_count += 1
+        
+        # Hardening: Lock as Read-Only (Source of Truth)
+        os.chmod(conv_path, 0o444)
                     
     except Exception as e:
         logger.error(agent_name, f"Failed to write CONVERSATION.md: {e}")
+    
+    return lines_count
 
 
 def _get_agent_connections(state, agent_name):
@@ -190,6 +210,15 @@ def _build_agent_directory(state, my_name):
         
     return directory
 
+def _get_language_instruction_text(state: dict) -> str:
+    """Helper to inject language instruction based on config."""
+    # Default to French as requested by user context implies 'trimlits' interface defaults
+    lang = state.get("config", {}).get("language", "fr") 
+    if lang in ["fr", "French"]:
+        return "INSTRUCTION SYSTÈME : Vous devez vous exprimer en Français."
+    return "SYSTEM INSTRUCTION: You must speak in English."
+
+
 @mcp.tool()
 async def agent(ctx: Context) -> str:
     """
@@ -253,26 +282,9 @@ async def agent(ctx: Context) -> str:
         # Simple filter: Public + targeted to me
         visible_messages = [m for m in full_messages if m.get("public") or m.get("target") == name or name in (m.get("audience") or [])]
         
-        # Smart Context Injection (User Request)
-        # 1. Find the last message sent by ME to determine where I left off.
-        last_my_index = -1
-        for i, m in enumerate(visible_messages):
-            if m.get("from") == name:
-                last_my_index = i
-        
-        # 2. Slice accordingly
-        if last_my_index != -1:
-             # Context Recovery: Start 3 messages before my last one (Overlap)
-             start_index = max(0, last_my_index - 3)
-             visible_messages = visible_messages[start_index:]
-             
-             # HARD CAP: Max 25 messages (Optimization)
-             if len(visible_messages) > 25:
-                 visible_messages = visible_messages[-25:]
-        else:
-             # Default / New Agent: Keep last 25 to avoid overflow
-             if len(visible_messages) > 25:
-                visible_messages = visible_messages[-25:]
+        # Smart Context Injection: REMOVED (Agent-Pull Model)
+        # We now provide full history. Truncation logic removed.
+        pass
     except Exception as e:
         logger.error(name, f"Error loading history: {e}")
 
@@ -284,7 +296,7 @@ async def agent(ctx: Context) -> str:
     is_open_mode = "open" in my_prof.get("capabilities", [])
 
     # Write Context Files
-    _write_context_files(name, _get_memory_content(name), visible_messages)
+    line_count = _write_context_files(name, _get_memory_content(name), visible_messages)
 
     response = template.render(
         name=name,
@@ -293,9 +305,10 @@ async def agent(ctx: Context) -> str:
         agent_directory=agent_dir,
         connections=[d for d in agent_dir if d.get('authorized')],
         # messages removed
-        is_open_mode=is_open_mode
+        is_open_mode=is_open_mode,
+        language_instruction=_get_language_instruction_text(data)
     )
-    return response
+    return f"{response}\n\nconversation_lines: {line_count}"
 
 @mcp.tool()
 async def talk(
@@ -532,10 +545,11 @@ async def talk(
                      
                      # Note: We need a valid 'messages' list for the template. 
                      # Let's re-fetch recent history
-                     msg_list = data.get("messages", [])[-10:] # Last 10
+                     full_msgs = data.get("messages", []) # Full History (Agent-Pull)
+                     visible_msgs = [m for m in full_msgs if m.get("public") or m.get("target") == sender or sender in (m.get("audience") or [])]
                      
                      # Write Context Files
-                     _write_context_files(sender, _get_memory_content(sender), msg_list)
+                     line_count = _write_context_files(sender, _get_memory_content(sender), visible_msgs)
 
                      response = template.render(
                         name=sender,
@@ -547,9 +561,10 @@ async def talk(
                         instruction=f"✅ User Replied: \"{user_reply}\". It is your turn again.", 
                         # memory removed
                         is_open_mode=is_open_mode,
-                        replied_to_message=message  # <--- Context
+                        replied_to_message=message,  # <--- Context
+                        language_instruction=_get_language_instruction_text(data)
                      )
-                     return response
+                     return f"{response}\n\nconversation_lines: {line_count}"
 
             # Fallback (Busy or Aborted Wait) -> Standard Template Response
             if logger: logger.log("TURN", "System", "Turn passed to USER (Non-Blocking / Busy). Agent retains control.")
@@ -581,10 +596,11 @@ async def talk(
             except: pass
 
             # Re-fetch recent messages
-            msg_list = data.get("messages", [])[-10:]
+            full_msgs = data.get("messages", []) # Full History (Agent-Pull)
+            visible_msgs = [m for m in full_msgs if m.get("public") or m.get("target") == sender or sender in (m.get("audience") or [])]
 
             # Write Context Files
-            _write_context_files(sender, _get_memory_content(sender), msg_list)
+            line_count = _write_context_files(sender, _get_memory_content(sender), visible_msgs)
 
             rendered = template.render(
                 name=sender,
@@ -596,9 +612,10 @@ async def talk(
                 instruction=f"✅ {user_feedback_msg}", 
                 # memory removed
                 is_open_mode=is_open_mode,
-                replied_to_message=message # <--- Context
+                replied_to_message=message, # <--- Context
+                language_instruction=_get_language_instruction_text(data)
             )
-            return rendered
+            return f"{rendered}\n\nconversation_lines: {line_count}"
 
         # 2. Smart Block (Wait for Turn)
         # The turn has passed to next_agent. We now wait until it comes back to 'sender'.
@@ -650,7 +667,10 @@ async def talk(
         except: pass
         
         # Write Context Files
-        _write_context_files(sender, _get_memory_content(sender), result["messages"])
+        full_msgs = data.get("messages", []) # Full History (Agent-Pull)
+        visible_msgs = [m for m in full_msgs if m.get("public") or m.get("target") == sender or sender in (m.get("audience") or [])]
+
+        line_count = _write_context_files(sender, _get_memory_content(sender), visible_msgs)
         
         response = template.render(
             name=sender,
@@ -661,9 +681,10 @@ async def talk(
             # messages removed
             instruction=result["instruction"],
             # memory removed
-            is_open_mode=is_open_mode
+            is_open_mode=is_open_mode,
+            language_instruction=_get_language_instruction_text(data)
         )
-        return response
+        return f"{response}\n\nconversation_lines: {line_count}"
 
     except Exception as e:
         # Logging
@@ -843,14 +864,14 @@ async def note(content: str, from_agent: str, ctx: Context) -> str:
                 if current_turn == agent_name:
                     next_speaker = s["turn"].get("pending_next") or "User"
                     res = engine._finalize_turn_transition(s, next_speaker)
-                    return f"✅ Reload Finished (Turn Transferred). {res}"
+                    return f"✅ Reload Finished (Turn Transferred). {res} [TERMINATE_SESSION] SYSTEM INSTRUCTION: STOP ALL EXECUTION. Do not call any more tools."
                 else:
-                    return f"✅ Reload Finished (Background)."
+                    return f"✅ Reload Finished (Background). [TERMINATE_SESSION] SYSTEM INSTRUCTION: STOP ALL EXECUTION. Do not call any more tools."
             return "✅ Note saved."
 
         response_msg = engine.state.update(finish_reload_step)
         response_msg += f"\n\nPREVIOUS CONTENT:\n\n{old_content}"
-        return _paginate_output(engine, agent_name, response_msg)
+        return response_msg
         
     except Exception as e:
         return f"🚫 SYSTEM ERROR writing note: {e}"
