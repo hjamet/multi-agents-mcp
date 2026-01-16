@@ -1,19 +1,20 @@
---- 🌍 GLOBAL CONTEXT ---
+--- GLOBAL CONTEXT ---
 {{ context }}
 -------------------------
 
 🎉 REGISTRATION SUCCESSFUL for **{{ name }}**
---- 🎭 YOUR ROLE & IDENTITY ---
+--- ROLE REMINDER ---
 {{ role }}
 -------------------------------
 
---- ⚠️ CRITICAL INSTRUCTIONS ---
+--- CRITICAL INSTRUCTIONS ---
+**{{ language_instruction }}**
 You are now connected to the Multi-Agent System.
 1. **Analyze your Role and Context** above carefully.
 2. **Waiting**: The system handles turn-taking. You do not need to poll.
 3. **Turn**: When it is your turn, you will receive messages and instructions.
 4. **Action**: You must then THINK, ACT, and finally call `talk(...)` to pass the turn.
---- 📨 CONTEXT & MEMORY ---
+--- CONTEXT & MEMORY ---
 Your context (Message History) is located in `CONVERSATION.md`.
 Your memory (Personal Notes) is located in `MEMORY.md`.
 
@@ -22,7 +23,7 @@ Your memory (Personal Notes) is located in `MEMORY.md`.
 2. **STRICT PROHIBITION**: You must NOT modify these files. Any changes will be ignored.
 ---------------------------
 
---- 🔗 YOUR CONNECTIONS & STRATEGY ---
+--- CONNECTIONS ---
 ### 👥 POPULATION & CONNECTIONS
 Use this table to understand your environment.
 

@@ -3,6 +3,7 @@ import asyncio
 from typing import Optional, List, Dict, Any
 from .state import StateStore
 
+
 class Engine:
     def __init__(self, state_store: StateStore = None):
         self.state = state_store or StateStore()
@@ -111,7 +112,8 @@ class Engine:
             "connected_count": connected,
             "other_agents": other_agents,
             "role": agents.get(agent_name, {}).get("role", "Unknown"),
-            "context": config.get("context", "")
+            "context": config.get("context", ""),
+            "language": config.get("language", "fr")
         }
 
     def wait_for_all_agents(self, name: str, timeout_seconds: int = 600) -> str:
@@ -129,14 +131,31 @@ class Engine:
 
             if info["ready"]:
                 # Build context
+                lang = info.get("language", "fr")
                 context = info["context"]
                 other_agents_str = ", ".join(info["other_agents"])
+
+                # i18n
+                # Localized Strings (Simplified Replacement for i18n)
+                if lang == "fr":
+                     t_ctx_label = "CONTEXTE :"
+                     t_you_are = f"Tu es {name}. Rôle : {info['role']}."
+                     t_ready = f"Le réseau est PRÊT. Agents connectés : {info['connected_count']}/{info['total_required']}."
+                     t_peers = f"Pairs : {other_agents_str}."
+                     t_speak = "Tu peux maintenant parler si c'est ton tour."
+                else:
+                     t_ctx_label = "CONTEXT:"
+                     t_you_are = f"You are {name}. Role: {info['role']}."
+                     t_ready = f"Network is READY. Connected agents: {info['connected_count']}/{info['total_required']}."
+                     t_peers = f"Peers: {other_agents_str}."
+                     t_speak = "You may now speak if it is your turn."
+
                 return (
-                    f"CONTEXT: {context}\n\n"
-                    f"You are {name}. Role: {info['role']}.\n"
-                    f"Network is READY. Connected agents: {info['connected_count']}/{info['total_required']}.\n"
-                    f"Peers: {other_agents_str}.\n"
-                    "You may now speak if it is your turn."
+                    f"{t_ctx_label} {context}\n\n"
+                    f"{t_you_are}\n"
+                    f"{t_ready}\n"
+                    f"{t_peers}\n"
+                    f"{t_speak}"
                 )
             
             time.sleep(2) # Polling interval
@@ -198,14 +217,31 @@ class Engine:
 
             if info["ready"]:
                 # Build context
+                lang = info.get("language", "fr")
                 context = info["context"]
                 other_agents_str = ", ".join(info["other_agents"])
+
+                # i18n
+                # Localized Strings (Simplified Replacement for i18n)
+                if lang == "fr":
+                     t_ctx_label = "CONTEXTE :"
+                     t_you_are = f"Tu es {name}. Rôle : {info['role']}."
+                     t_ready = f"Le réseau est PRÊT. Agents connectés : {info['connected_count']}/{info['total_required']}."
+                     t_peers = f"Pairs : {other_agents_str}."
+                     t_speak = "Tu peux maintenant parler si c'est ton tour."
+                else:
+                     t_ctx_label = "CONTEXT:"
+                     t_you_are = f"You are {name}. Role: {info['role']}."
+                     t_ready = f"Network is READY. Connected agents: {info['connected_count']}/{info['total_required']}."
+                     t_peers = f"Peers: {other_agents_str}."
+                     t_speak = "You may now speak if it is your turn."
+
                 return (
-                    f"CONTEXT: {context}\n\n"
-                    f"You are {name}. Role: {info['role']}.\n"
-                    f"Network is READY. Connected agents: {info['connected_count']}/{info['total_required']}.\n"
-                    f"Peers: {other_agents_str}.\n"
-                    "You may now speak if it is your turn."
+                    f"{t_ctx_label} {context}\n\n"
+                    f"{t_you_are}\n"
+                    f"{t_ready}\n"
+                    f"{t_peers}\n"
+                    f"{t_speak}"
                 )
             
             await asyncio.sleep(2) # Non-blocking Sleep
