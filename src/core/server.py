@@ -219,6 +219,40 @@ def _get_language_instruction_text(state: dict) -> str:
     return "SYSTEM INSTRUCTION: You must speak in English."
 
 
+def _get_new_messages_notification(agent_name: str, messages: List[dict]) -> str:
+    """
+    Analyzes messages to count new ones since agent's last message.
+    """
+    last_my_index = -1
+    for i, m in enumerate(messages):
+        if m.get("from") == agent_name:
+            last_my_index = i
+            
+    new_messages = messages[last_my_index + 1:]
+    
+    senders = set()
+    count = 0
+    for m in new_messages:
+        sender = m.get("from")
+        # Exclude System unless it's a real notification? No, user said "de Y, Z et W"
+        if sender and sender != agent_name and sender != "System":
+            # Map 'User' to 'l'utilisateur' if in French context? 
+            # For now, just use the name.
+            senders.add(sender)
+            count += 1
+            
+    if count == 0:
+        return f"Aucun nouveau message. Pensez tout de même à consulter CONVERSATION et MEMORY pour rester parfaitement synchronisé."
+    
+    senders_list = sorted(list(senders))
+    if len(senders_list) > 1:
+        senders_str = ", ".join(senders_list[:-1]) + f" et {senders_list[-1]}"
+    else:
+        senders_str = senders_list[0]
+        
+    return f"Vous avez reçu {count} nouveaux messages de {senders_str} depuis votre dernière consultation. Consultez CONVERSATION et MEMORY pour mettre à jour votre contexte."
+
+
 @mcp.tool()
 async def agent(ctx: Context) -> str:
     """
@@ -298,6 +332,9 @@ async def agent(ctx: Context) -> str:
     # Write Context Files
     line_count = _write_context_files(name, _get_memory_content(name), visible_messages)
 
+    # Calculate Notifications
+    notification = _get_new_messages_notification(name, visible_messages)
+
     response = template.render(
         name=name,
         role=_get_latest_role(data, name),
@@ -306,7 +343,8 @@ async def agent(ctx: Context) -> str:
         connections=[d for d in agent_dir if d.get('authorized')],
         # messages removed
         is_open_mode=is_open_mode,
-        language_instruction=_get_language_instruction_text(data)
+        language_instruction=_get_language_instruction_text(data),
+        notification=notification
     )
     return f"{response}\n\nconversation_lines: {line_count}"
 
@@ -555,6 +593,9 @@ async def talk(
                      # Write Context Files
                      line_count = _write_context_files(sender, _get_memory_content(sender), visible_msgs)
 
+                     # Calculate Notifications
+                     notification = _get_new_messages_notification(sender, visible_msgs)
+
                      response = template.render(
                         name=sender,
                         role_snippet=role_snippet,
@@ -566,7 +607,8 @@ async def talk(
                         # memory removed
                         is_open_mode=is_open_mode,
                         replied_to_message=message,  # <--- Context
-                        language_instruction=_get_language_instruction_text(data)
+                        language_instruction=_get_language_instruction_text(data),
+                        notification=notification
                      )
                      return f"{response}\n\nconversation_lines: {line_count}"
 
@@ -606,6 +648,9 @@ async def talk(
             # Write Context Files
             line_count = _write_context_files(sender, _get_memory_content(sender), visible_msgs)
 
+            # Calculate Notifications
+            notification = _get_new_messages_notification(sender, visible_msgs)
+
             rendered = template.render(
                 name=sender,
                 role_snippet=role_snippet,
@@ -617,7 +662,8 @@ async def talk(
                 # memory removed
                 is_open_mode=is_open_mode,
                 replied_to_message=message, # <--- Context
-                language_instruction=_get_language_instruction_text(data)
+                language_instruction=_get_language_instruction_text(data),
+                notification=notification
             )
             return f"{rendered}\n\nconversation_lines: {line_count}"
 
@@ -676,6 +722,9 @@ async def talk(
 
         line_count = _write_context_files(sender, _get_memory_content(sender), visible_msgs)
         
+        # Calculate Notifications
+        notification = _get_new_messages_notification(sender, visible_msgs)
+
         response = template.render(
             name=sender,
             role_snippet=role_snippet,
@@ -686,7 +735,8 @@ async def talk(
             instruction=result["instruction"],
             # memory removed
             is_open_mode=is_open_mode,
-            language_instruction=_get_language_instruction_text(data)
+            language_instruction=_get_language_instruction_text(data),
+            notification=notification
         )
         return f"{response}\n\nconversation_lines: {line_count}"
 
