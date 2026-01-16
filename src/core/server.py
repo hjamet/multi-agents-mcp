@@ -13,7 +13,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from src.core.logic import Engine
-from src.config import TEMPLATE_DIR, MEMORY_DIR, EXECUTION_DIR
+from src.config import TEMPLATE_DIR, MEMORY_DIR, EXECUTION_DIR, STOP_INSTRUCTION
 
 
 # Initialize
@@ -244,6 +244,8 @@ async def agent(ctx: Context) -> str:
 
     # BLOCKING: Wait for everyone before returning the initial prompt
     wait_msg = await engine.wait_for_all_agents_async(name)
+    if wait_msg == "RELOAD_REQUIRED":
+         return f"⚠️ SYSTEM ALERT: [RELOAD IN PROGRESS]\n{STOP_INSTRUCTION}"
     if wait_msg.startswith("TIMEOUT"):
          return wait_msg
 
@@ -353,8 +355,22 @@ async def talk(
              hint = f" Did you mean '{likely[0]}'?" if likely else ""
              return f"🚫 IDENTITY ERROR: Name '{sender}' not found in registry.{hint} You must use your EXACT registered name."
         
+        # --- IDEMPOTENCY CHECK (Fix for Timeout/Retry) ---
+        # Check if this is a retry of the very last successful action.
+        # This handles cases where the client timed out waiting for the turn, but the message was posted.
+        is_retry = False
+        messages = state.get("messages", [])
+        if messages:
+            last_msg = messages[-1]
+            # Check strictly if sender, content AND target match the last recorded message
+            if (last_msg.get("from") == sender and 
+                last_msg.get("content") == message and 
+                last_msg.get("target") == to):
+                is_retry = True
+                if logger: logger.log("IDEMPOTENCY", sender, "Detected duplicate call (retry). Resuming wait logic.")
+
         # A. Identity/Turn Mismatch Check
-        if sender != current_turn_holder:
+        if sender != current_turn_holder and not is_retry:
             # 🚨 PROTOCOL VIOLATION DETECTED 🚨
             # Logic:
             # 1. Announce violation to chat (Public Shame / Debugging)
@@ -399,11 +415,8 @@ async def talk(
         if sender_data.get("reload_active"):
              logger.log("BLOCK", sender, "Blocked talk() due to reload_active=True")
              # Force them to quit immediately
-             return ("🔁 **SYSTEM NOTIFICATION**: RELOAD REQUESTED.\n"
-                     "You must synthesize your final state into a `note()` and then terminate.\n"
-                     "⛔ **PROHIBITED Tools**: `talk()`, `sleep()`, `agent()`.\n"
-                     "✅ **ALLOWED**: `note()` ONLY.\n"
-                     "🏁 **ACTION**: Terminate process immediately after `note()`.")
+             return (f"🔁 **SYSTEM NOTIFICATION**: RELOAD REQUESTED.\n"
+                     f"{STOP_INSTRUCTION}")
 
         next_agent = to
 
@@ -432,35 +445,38 @@ async def talk(
         # Logic Inversion
         is_public = not private
 
-        logger.log("ACTION", sender, f"talking -> {next_agent} (Public: {is_public})", {"message": message})
-        
-        # 1. Post Message
-        post_result = engine.post_message(sender, message, is_public, next_agent)
-        
-        # Check for DENIED action
-        if post_result.startswith("🚫"):
-            if post_result.startswith("🚫 TARGET_NOT_FOUND:"):
-                target_tried = post_result.split(":", 1)[1].strip()
-                data = engine.state.load()
-                agent_dir = _build_agent_directory(data, sender)
-                connections_list = [d for d in agent_dir if d.get('authorized')]
-                
-                # Format a nice table-like list for the agent
-                dir_str = "\n".join([f"- **{c['name']}** ({c['public_desc']}): {c['note']}" for c in connections_list])
-                
-                error_msg = f"🚫 ACTION DENIED: Target agent '{target_tried}' does not exist.\n\n"
-                error_msg += "### 📋 YOUR AUTHORIZED CONNECTIONS:\n"
-                error_msg += "You must use the EXACT name from this list:\n"
-                error_msg += dir_str
-                error_msg += "\n\nAction rejected. You retain your turn. Please correct the 'to' argument and try again."
-                
-                if logger: logger.log("DENIED", "System", error_msg, {"target": sender})
-                return error_msg
-
-            if logger: logger.log("DENIED", "System", post_result, {"target": sender})
-            return post_result
+        if not is_retry:
+            logger.log("ACTION", sender, f"talking -> {next_agent} (Public: {is_public})", {"message": message})
             
-        logger.log("SUCCESS", "System", f"Message posted: {post_result}")
+            # 1. Post Message
+            post_result = engine.post_message(sender, message, is_public, next_agent)
+            
+            # Check for DENIED action
+            if post_result.startswith("🚫"):
+                if post_result.startswith("🚫 TARGET_NOT_FOUND:"):
+                    target_tried = post_result.split(":", 1)[1].strip()
+                    data = engine.state.load()
+                    agent_dir = _build_agent_directory(data, sender)
+                    connections_list = [d for d in agent_dir if d.get('authorized')]
+                    
+                    # Format a nice table-like list for the agent
+                    dir_str = "\n".join([f"- **{c['name']}** ({c['public_desc']}): {c['note']}" for c in connections_list])
+                    
+                    error_msg = f"🚫 ACTION DENIED: Target agent '{target_tried}' does not exist.\n\n"
+                    error_msg += "### 📋 YOUR AUTHORIZED CONNECTIONS:\n"
+                    error_msg += "You must use the EXACT name from this list:\n"
+                    error_msg += dir_str
+                    error_msg += "\n\nAction rejected. You retain your turn. Please correct the 'to' argument and try again."
+                    
+                    if logger: logger.log("DENIED", "System", error_msg, {"target": sender})
+                    return error_msg
+
+                if logger: logger.log("DENIED", "System", post_result, {"target": sender})
+                return post_result
+                
+            logger.log("SUCCESS", "System", f"Message posted: {post_result}")
+        else:
+             logger.log("SKIP", sender, "Skipped duplicate message post (retry detected).")
         
         # SPECIAL: User Turn Handling
         if next_agent == "User":
@@ -868,9 +884,9 @@ async def note(content: str, from_agent: str, ctx: Context) -> str:
                 if current_turn == agent_name:
                     next_speaker = s["turn"].get("pending_next") or "User"
                     res = engine._finalize_turn_transition(s, next_speaker)
-                    return f"✅ Reload Finished (Turn Transferred). {res} [TERMINATE_SESSION] SYSTEM INSTRUCTION: STOP ALL EXECUTION. Do not call any more tools."
+                    return f"✅ Reload Finished (Turn Transferred). {res} [TERMINATE_SESSION]\n{STOP_INSTRUCTION}"
                 else:
-                    return f"✅ Reload Finished (Background). [TERMINATE_SESSION] SYSTEM INSTRUCTION: STOP ALL EXECUTION. Do not call any more tools."
+                    return f"✅ Reload Finished (Background). [TERMINATE_SESSION]\n{STOP_INSTRUCTION}"
             return "✅ Note saved."
 
         response_msg = engine.state.update(finish_reload_step)

@@ -2,6 +2,7 @@ import time
 import asyncio
 from typing import Optional, List, Dict, Any
 from .state import StateStore
+from ..config import STOP_INSTRUCTION
 
 
 class Engine:
@@ -129,6 +130,16 @@ class Engine:
             if info.get("error"):
                 return f"ERROR: {info['error']}"
 
+            # --- RELOAD/RESET CHECK ---
+            try:
+                data = self.state.load()
+                agent_data = data.get("agents", {}).get(name, {})
+                if agent_data.get("reload_active") or agent_data.get("status") == "pending_connection":
+                    return "RELOAD_REQUIRED"
+            except:
+                pass
+            # --------------------------
+
             if info["ready"]:
                 # Build context
                 lang = info.get("language", "fr")
@@ -214,6 +225,16 @@ class Engine:
             
             if info.get("error"):
                 return f"ERROR: {info['error']}"
+
+            # --- RELOAD/RESET CHECK ---
+            try:
+                data = await asyncio.to_thread(self.state.load)
+                agent_data = data.get("agents", {}).get(name, {})
+                if agent_data.get("reload_active") or agent_data.get("status") == "pending_connection":
+                    return "RELOAD_REQUIRED"
+            except:
+                pass
+            # --------------------------
 
             if info["ready"]:
                 # Build context
@@ -415,7 +436,7 @@ class Engine:
                 return {
                     "status": "reset",
                     "messages": [],
-                    "instruction": "SYSTEM RESET: THe conversation has been reset by the user. Forget everything. Re-read your Role and Context."
+                    "instruction": "SYSTEM RESET: The conversation has been reset by the user. Forget everything. Re-read your Role and Context."
                 }
                 
             # 1b. Check for Status Reset (Kicked/Reloaded)
@@ -425,7 +446,7 @@ class Engine:
                     return {
                     "status": "reset",
                     "messages": [],
-                    "instruction": "SYSTEM RESET: Your session has been terminated by the user. [TERMINATE_SESSION]\nThe loop has ended. You will be reloaded.\n1. Update memory via the `note` tool.\n2. STOP COMPLETELY. Do not call talk, agent, or sleep. Just terminate the conversation."
+                    "instruction": f"SYSTEM RESET: [TERMINATE_SESSION]\n{STOP_INSTRUCTION}"
                 }
             
             # 1c. Check for RELOAD
@@ -433,7 +454,7 @@ class Engine:
                 return {
                     "status": "reset",
                     "messages": [],
-                    "instruction": "SYSTEM ALERT: [RELOAD IN PROGRESS] You have been scheduled for a reload.\nThe loop has ended. You will be reloaded.\n1. Update memory via the `note` tool.\n2. STOP COMPLETELY. Do not call talk, agent, or sleep. Just terminate the conversation."
+                    "instruction": f"SYSTEM ALERT: [RELOAD IN PROGRESS]\n{STOP_INSTRUCTION}"
                 }
 
             current_turn = data.get("turn", {}).get("current")
@@ -561,7 +582,7 @@ class Engine:
                 return {
                     "status": "reset",
                     "messages": [],
-                    "instruction": "SYSTEM RESET: THe conversation has been reset by the user. Forget everything. Re-read your Role and Context."
+                    "instruction": "SYSTEM RESET: The conversation has been reset by the user. Forget everything. Re-read your Role and Context."
                 }
                 
             # 1b. Check for Status Reset (Kicked/Reloaded)
@@ -571,7 +592,7 @@ class Engine:
                  return {
                     "status": "reset",
                     "messages": [],
-                    "instruction": "SYSTEM RESET: Your session has been terminated by the user. [TERMINATE_SESSION]\nThe loop has ended. You will be reloaded.\n1. Update memory via the `note` tool.\n2. STOP COMPLETELY. Do not call talk, agent, or sleep. Just terminate the conversation."
+                    "instruction": f"SYSTEM RESET: [TERMINATE_SESSION]\n{STOP_INSTRUCTION}"
                 }
 
             # 1c. Check for RELOAD
@@ -579,7 +600,7 @@ class Engine:
                 return {
                     "status": "reset",
                     "messages": [],
-                    "instruction": "SYSTEM ALERT: [RELOAD IN PROGRESS] You have been scheduled for a reload.\nThe loop has ended. You will be reloaded.\n1. Update memory via the `note` tool.\n2. STOP COMPLETELY. Do not call talk, agent, or sleep. Just terminate the conversation."
+                    "instruction": f"SYSTEM ALERT: [RELOAD IN PROGRESS]\n{STOP_INSTRUCTION}"
                 }
 
             current_turn = data.get("turn", {}).get("current")
