@@ -399,7 +399,11 @@ async def talk(
         if sender_data.get("reload_active"):
              logger.log("BLOCK", sender, "Blocked talk() due to reload_active=True")
              # Force them to quit immediately
-             return "🚫 SYSTEM ALERT: [RELOAD IN PROGRESS] You have been scheduled for a reload/restart. You are FORBIDDEN from speaking. You must IMMEDIATElY call the `note()` tool to save your final memory, and then terminate your session. DO NOT TALK."
+             return ("🔁 **SYSTEM NOTIFICATION**: RELOAD REQUESTED.\n"
+                     "You must synthesize your final state into a `note()` and then terminate.\n"
+                     "⛔ **PROHIBITED Tools**: `talk()`, `sleep()`, `agent()`.\n"
+                     "✅ **ALLOWED**: `note()` ONLY.\n"
+                     "🏁 **ACTION**: Terminate process immediately after `note()`.")
 
         next_agent = to
 

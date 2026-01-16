@@ -226,9 +226,11 @@ def handle_disconnect_agent(agent_name):
             # Inject System Message for the Agent
             msg = {
                 "from": "System",
-                "content": f"🔁 **SYSTEM NOTIFICATION**: RELOAD REQUESTED.\n\n"
-                           f"You must synthesize your final state into a `note()` (Critical) and then terminate. "
-                           f"Do NOT call `talk()`.",
+                "content": "🔁 **SYSTEM NOTIFICATION**: RELOAD REQUESTED.\n"
+                           "You must synthesize your final state into a `note()` and then terminate.\n"
+                           "⛔ **PROHIBITED Tools**: `talk()`, `sleep()`, `agent()`.\n"
+                           "✅ **ALLOWED**: `note()` ONLY.\n"
+                           "🏁 **ACTION**: Terminate process immediately after `note()`.",
                 "public": False,
                 "target": agent_name,
                 "timestamp": time.time()
