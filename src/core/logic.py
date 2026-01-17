@@ -277,6 +277,13 @@ class Engine:
         def _post(state):
             # 0. VALIDATION
             agents = state.get("agents", {})
+            
+            # --- SECURITY HOTFIX: STRICT TURN CHECK ---
+            current_turn = state.get("turn", {}).get("current")
+            if from_agent != "User" and current_turn != from_agent:
+                 return f"🚫 SECURITY VIOLATION: Write Access Denied. It is '{current_turn}'s turn, not yours."
+            # ------------------------------------------
+
             config = state.get("config", {})
             profiles = config.get("profiles", [])
             
