@@ -1,4 +1,7 @@
-- Task 1: HOTFIX Security `src/core/logic.py` -> COMPLETED & VERIFIED.
-- Task 2 (V2): Update Preset `software_development.json` -> COMPLETED.
-- Task 3 (V3): Update Preset `scientific_research_group.json` -> COMPLETED STRICT.
-- Status: V3 DEPLOYMENT COMPLETE. Reporting to Miller.
+- Task 11 (Current): Implement Critical Mode.
+  - Action 1: Updated `app.py` (added checkbox).
+  - Action 2: Updated `server.py` (injection logic + bugfix).
+  - Action 3: Updated Templates (added `{{ critical_instruction }}`).
+  - Action 4: Updated Presets (default true).
+  - Action 5: Hotpatched `state.json` (immediate activation).
+- Status: VERIFICATION. Adopting [CRITIQUE] format in next message.

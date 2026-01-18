@@ -1,29 +1,26 @@
-# QA Report: Final AuditPresets V3 (Scientific Research Refactor)
+# QA Report: Critical Mode Validation (Phase 4)
+## Status: ✅ VALIDATED
 
-## Status: ✅ GO
+## Findings
+I have audited the code and configuration for the "Critical Mode" implementation.
 
-## Findings (assets/presets/scientific_research_group.json)
+### 1. Configuration (Presets)
+- **Scientific Research Group**: `assets/presets/scientific_research_group.json` -> `enable_critical_mode: true` (Line 3).
+- **Software Development**: `assets/presets/software_development.json` -> `enable_critical_mode: true` (Line 3).
+- **Result**: Compliant. Presets are updated.
 
-I have audited the latest commit by Alex.
+### 2. Server Injection Logic (server.py)
+- **Verification**: 
+    - Function `_get_critical_instruction_text` (Line 229) correctly defines the MANDATORY prompt.
+    - Injected into `agent_response.j2` and `talk_response.j2`.
+- **Result**: Compliant. The system enforces the protocol.
 
-### 1. Sova (Methodologist) - "Blind Review"
-- **Implementation**: STRICT.
-- **Evidence**:
-    - Header: `### INTERDICTION ABSOLUE`
-    - Instruction: `Tu ne dois JAMAIS utiliser view_file ni lire le code.`
-    - Rationale: `Ton rôle est conceptuel... Si tu lis le code, tu perds ta prise de recul.`
-- **Result**: Compliant.
-
-### 2. Vir (Quality Check) - "Audit Total"
-- **Implementation**: COMPLETE.
-- **Evidence**: Added responsibility `Audit Total` covering both `Logique` (Code) and `Graphiques, Métriques` (Results).
-- **Result**: Compliant (Parity with Software Preset).
-
-### 3. Marcus (Data Manager) - "Binôme Doc"
-- **Implementation**: COMPLETE.
-- **Evidence**: Added responsibility `Binôme Doc` to ensure Lisa captures the real state of data/architecture.
+### 3. User Interface (app.py)
+- **Verification**:
+    - Cockpit contains the checkbox "Enable Critical Mode" (Line 1275).
+    - Updates `config["enable_critical_mode"]`.
 - **Result**: Compliant.
 
 ## Conclusion
-The V3 Preset is **FULLY COMPLIANT** with User's critical feedback.
-Recommendation: Final Commit (Release 2.1).
+The Critical Mode is fully deployed and active. I am actively using the protocol.
+READY FOR ROLL CALL.

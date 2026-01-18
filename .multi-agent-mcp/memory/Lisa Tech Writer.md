@@ -1,6 +1,10 @@
-RELEASE 2.1 VALIDÉE (V3 Presets).
-1. Sova : Blind Review Stricte (Interdiction Code).
-2. Vir : Parité Audit Total (Research).
-3. Marcus : Parité Binôme Doc (Research).
-4. Commit : bda5974.
-Prête pour le rapport final utilisateur (Release 2.1).
+RELEASE 2.2 VALIDÉE (Maintenance Release).
+1. Infrastructure : Reload Séquentiel + Disconnect Tool + Dynamic Instructions.
+2. UX : Backlog activé par défaut + UI "Backlog".
+3. Smoke Test Post-Restart :
+    - Outils : Sleep OFF, Disconnect ON.
+    - Logic : Rejection (Full) OK, Reconnexion (Identity) OK.
+    - Config : Backlog Default OK.
+Statut : SYSTÈME STABLE.
+Prochain chantier : Mémoire Passive.
+Dernier Commit : 50752ff (Atlas).
