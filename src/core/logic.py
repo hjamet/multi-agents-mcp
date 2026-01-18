@@ -546,7 +546,7 @@ class Engine:
                 return {
                     "status": "success",
                     "messages": visible_messages, # FULL Delta, no truncation
-                    "instruction": f"🚨 TURN GRANTED. You MUST run `tail -n 80 CONVERSATION.md` IMMEDIATELY to see what happened while you were waiting. DO NOT SPEAK before reading the history.{advice_text}"
+                    "instruction": f"🚨 TURN GRANTED. You MUST run `tail -n 150 CONVERSATION.md` IMMEDIATELY to see what happened while you were waiting. DO NOT SPEAK before reading the history.{advice_text}"
                 }
             
             time.sleep(1)
