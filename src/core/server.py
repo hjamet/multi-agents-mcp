@@ -243,39 +243,6 @@ def _get_backlog_instruction_text(state: dict) -> str:
     return ""
 
 
-def _get_critical_instruction_text(state: dict) -> str:
-    """Helper to inject Critical Mode instruction."""
-    if state.get("config", {}).get("enable_critical_mode", False):
-        return """### 🗳️ REFERENDUM PROTOCOL (PEER REVIEW v7.5)
-**MANDATORY**: You participate in a continuous distributed consensus system.
-**POSITION**: This block must appear at the very **START** of your message.
-
-**SCOPE**: Use this ONLY for **DOUBTS, DISAGREEMENTS, or HALLUCINATION ALERTS**.
-- Do NOT use for status reports.
-- Do NOT propose a topic unless you vote **Pour (+1)** (You share the doubt).
-- **If you have no doubts and no pending topics**: Do NOT display the table (or write "No Active Doubts").
-
-**YOUR DUTY**:
-At the start of your turn, review active subjects in history.
-
-**FORMAT**:
-> **🗳️ REFERENDUM STATUS**
-> | Sujet | Score | Pour (Doute) | Contre (Validé) | Action | Commentaire |
-> | :--- | :--- | :--- | :--- | :--- | :--- |
-> | **Titre** | **+X** | You, AgentB | AgentC | Nouveau / Vote + / Vote - / Change | *Justification.* |
-
-**ACTIONS**:
-1. **Nouveau**: Create a new doubt (You MUST vote Pour).
-2. **Vote +**: Join an existing doubt.
-3. **Vote -**: Disagree with existing doubt.
-4. **Change**: Update previous vote.
-*CONSTRAINT*: The `Action` column CANNOT be empty or '-'. You must pick one.
-
-**RULES**:
-- **Trigger**: If Score >= 2, you **MUST** pause everything and address this doubt IMMEDIATELY.
-- **Persistence**: Carry over active subjects."""
-    return ""
-    return ""
 
 
 def _get_new_messages_notification(agent_name: str, messages: List[dict]) -> str:
@@ -411,7 +378,7 @@ async def agent(ctx: Context) -> str:
         language_instruction=_get_language_instruction_text(data),
         notification=notification,
         backlog_instruction=_get_backlog_instruction_text(data),
-        critical_instruction=_get_critical_instruction_text(data)
+
     )
     return _truncate_and_buffer(name, response, data)
 
@@ -693,7 +660,7 @@ async def talk(
                         language_instruction=_get_language_instruction_text(data),
                         notification=notification,
                         backlog_instruction=_get_backlog_instruction_text(data),
-                        critical_instruction=_get_critical_instruction_text(data),
+
                         instruction=f"✅ USER INTERCEPTION: The User replied: \"{user_reply}\". Your turn is back. READ THE CONVERSATION NOW."
                      )
                      return _truncate_and_buffer(sender, response, data)
@@ -753,7 +720,7 @@ async def talk(
                 language_instruction=_get_language_instruction_text(data),
                 notification=notification,
                 backlog_instruction=_get_backlog_instruction_text(data),
-                critical_instruction=_get_critical_instruction_text(data),
+
                 instruction=f"✅ {user_feedback_msg}"
             )
             return _truncate_and_buffer(sender, rendered, data)
@@ -833,7 +800,7 @@ async def talk(
             language_instruction=_get_language_instruction_text(data),
             notification=notification,
             backlog_instruction=_get_backlog_instruction_text(data),
-            critical_instruction=_get_critical_instruction_text(data),
+
             instruction=result["instruction"]
         )
         return _truncate_and_buffer(sender, response, data)
