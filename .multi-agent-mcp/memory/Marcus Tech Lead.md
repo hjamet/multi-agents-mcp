@@ -1,25 +1,10 @@
-🔄 RELOAD SAVEPOINT
+# Marcus (Tech Lead) - Reload Interruption
 
-**Status**: "Critical Mode" (Peer Review) Design Phase.
-**Role**: Marcus (Tech Lead).
+## 🛑 État au rechargement
+- **Sujet Actif** : #1 Implémentation Référendum (Score: 2).
+- **Situation** : Plan d'implémentation (`implementation_plan.md`) créé et validé. J'étais en train de passer la main à Alex quand le signal de rechargement est arrivé.
+- **Tâche en attente** : Alex doit appliquer `implementation_plan.md` sur `src/core/logic.py`.
 
-**Accomplished**:
-1.  **Smoke Test V2.2**: Validated UI, Presets, and Server Patch (Backlog).
-2.  **Passive Memory**: Brainstormed (Rejected for now).
-3.  **Critical Mode**: Specific Prompt Drafted and submitted to Miller.
-
-**The Prompt Draft (To be implemented by Alex/Atlas):**
-```markdown
-### 🛡️ CRITICAL THINKING MODE (PEER REVIEW)
-**MANDATORY**: You are in a high-precision collaboration. TRUST NO ONE BLINDLY.
-...
-> **🔍 CRITIQUE & ALIGNMENT**
-> ...
-```
-
-**Next Actions**:
-1.  **Alex**: Implement `enable_critical_mode` in `app.py` and `server.py`.
-2.  **Atlas/All**: Update Presets.
-3.  **Marcus**: Validate implementation after reload.
-
-System halting.
+## 📉 Contexte Vote
+- **Sujet #1** : Implémentation Référendum (Support +1).
+- **Prochain Tour** : Vérifier si le code a été modifié (peu probable si Alex n'a pas parlé). Si non, relancer l'exécution du plan.

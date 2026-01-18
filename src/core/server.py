@@ -20,6 +20,57 @@ from src.config import TEMPLATE_DIR, MEMORY_DIR, EXECUTION_DIR, STOP_INSTRUCTION
 mcp = FastMCP("MultiAgent-Hub", dependencies=["portalocker", "streamlit", "jinja2"])
 engine = Engine()
 
+
+# Truncation Buffer Global
+# Map: agent_name -> {"content": str, "offset": int}
+TRUNCATION_BUFFER = {}
+
+def _truncate_and_buffer(agent_name: str, content: str, state: dict) -> str:
+    """
+    Truncates content if it exceeds the limit in config.
+    Stores the full content in TRUNCATION_BUFFER for retrieval via mailbox.
+    """
+    truncation_limit = state.get("config", {}).get("truncation_limit", 4096)
+    
+    limit = truncation_limit
+    
+    if limit <= 0 or len(content) <= limit:
+        # Clear buffer if it existed (clean state)
+        if agent_name in TRUNCATION_BUFFER:
+            del TRUNCATION_BUFFER[agent_name]
+        return content
+    
+    # Determine Language for Instruction (to calculate overhead)
+    lang = state.get("config", {}).get("language", "English")
+    if lang in ["fr", "French"]:
+        template = "\n\n🚨 [CRITIQUE : MESSAGE TRONQUÉ]\nLa fin de ce message a été coupée ({} caractères restants).\nVOUS DEVEZ OBLIGATOIREMENT appeler l'outil `mailbox(from_agent='{}` pour lire la suite."
+    else:
+        template = "\n\n🚨 [CRITICAL: MESSAGE TRUNCATED]\nThe end of this message was cutoff ({} chars remaining).\nYou MUST call the `mailbox(from_agent='{}')` tool to read the rest."
+
+    # Calculate Overhead using a dummy number (7 digits safe for 10MB)
+    # We want len(chunk) + len(msg) <= limit - 1
+    
+    dummy_overhead = len(template.format(9999999, agent_name))
+    safe_chunk_size = limit - 1 - dummy_overhead
+    
+    if safe_chunk_size <= 0:
+        # Edge case: Limit is too small for even the error message
+        return content[:limit] # Just return what fits
+    
+    # Perform Truncation
+    chunk = content[:safe_chunk_size]
+    remaining = len(content) - safe_chunk_size
+    
+    # Final Message
+    msg = template.format(remaining, agent_name)
+    
+    TRUNCATION_BUFFER[agent_name] = {
+        "content": content,
+        "offset": safe_chunk_size
+    }
+        
+    return chunk + msg
+
 # Logger Setup
 from src.utils.logger import get_logger
 logger = get_logger()
@@ -229,25 +280,34 @@ def _get_backlog_instruction_text(state: dict) -> str:
 def _get_critical_instruction_text(state: dict) -> str:
     """Helper to inject Critical Mode instruction."""
     if state.get("config", {}).get("enable_critical_mode", False):
-        return """### 🛡️ CRITICAL THINKING MODE (PEER REVIEW v5)
-**MANDATORY**: You are in a high-precision collaboration. TRUST NO ONE BLINDLY.
-Before your main response, you must START with a rigorous check of the recent messages from **OTHER AGENTS** (Context Window).
+        return """### 🗳️ REFERENDUM PROTOCOL (PEER REVIEW v7.5)
+**MANDATORY**: You participate in a continuous distributed consensus system.
+**POSITION**: This block must appear at the very **START** of your message.
 
-**YOUR DUTY (THE ESCALATION LADDER)**:
-1. **Identify Weakness**: Find the most dubious/fragile sentence or logic in recent history.
-2. **Prefer Warnings**: If you have *any* doubt, use `[⚠️ WARNING]`. Use `[✅ VALID]` ONLY for 100% certainty.
-3. **Consensus Check**: Did a peer raise a `[⚠️ WARNING]` or `[❌ ERROR]`?
-   - **Do NOT follow blindly.** Analyze their concern.
-   - **If you share the doubt/confusion** about a `[⚠️ WARNING]` => **ESCALATE** it to `[❌ ERROR]`.
-   - **If you agree** with an `[❌ ERROR]` => **STOP** the current task. Address this error as your **MAIN TOPIC** immediately.
+**SCOPE**: Use this ONLY for **DOUBTS, DISAGREEMENTS, or HALLUCINATION ALERTS**.
+- Do NOT use for status reports.
+- Do NOT propose a topic unless you vote **Pour (+1)** (You share the doubt).
+- **If you have no doubts and no pending topics**: Do NOT display the table (or write "No Active Doubts").
+
+**YOUR DUTY**:
+At the start of your turn, review active subjects in history.
 
 **FORMAT**:
-> **🔍 CRITIQUE & ALIGNMENT**
-> - **Citation**: "The exact sentence..."
-> - **Verdict**: [✅ VALID] or [⚠️ WARNING] or [❌ ERROR]
-> - **Observation**: *Explain your reasoning or ASK clarifying questions if unsure.*
+> **🗳️ REFERENDUM STATUS**
+> | Sujet | Score | Pour (Doute) | Contre (Validé) | Action | Commentaire |
+> | :--- | :--- | :--- | :--- | :--- | :--- |
+> | **Titre** | **+X** | You, AgentB | AgentC | Nouveau / Vote + / Vote - / Change | *Justification.* |
 
-*Rule: Escalation requires your OWN intellectual conviction. Do not copy-paste doubts.*"""
+**ACTIONS**:
+1. **Nouveau**: Create a new doubt (You MUST vote Pour).
+2. **Vote +**: Join an existing doubt.
+3. **Vote -**: Disagree with existing doubt.
+4. **Change**: Update previous vote.
+*CONSTRAINT*: The `Action` column CANNOT be empty or '-'. You must pick one.
+
+**RULES**:
+- **Trigger**: If Score >= 2, you **MUST** pause everything and address this doubt IMMEDIATELY.
+- **Persistence**: Carry over active subjects."""
     return ""
     return ""
 
@@ -275,7 +335,7 @@ def _get_new_messages_notification(agent_name: str, messages: List[dict]) -> str
             count += 1
             
     if count == 0:
-        return f"No new messages. Check the conversation with `tail -n 150 CONVERSATION.md` and consult MEMORY to stay synchronized."
+        return f"No new messages. Sync Check: Validate `conversation_lines` vs your last read position. If gap > 0, read `CONVERSATION.md` using the Active Reading Protocol (scan backwards if needed)."
     
     senders_list = sorted(list(senders))
     if len(senders_list) > 1:
@@ -283,7 +343,7 @@ def _get_new_messages_notification(agent_name: str, messages: List[dict]) -> str
     else:
         senders_str = senders_list[0]
         
-    return f"CRITICAL: You have received {count} new messages from {senders_str} since your last check. Review the conversation with `tail -n 150 CONVERSATION.md` and consult MEMORY to update your context."
+    return f"CRITICAL: You have received {count} new messages from {senders_str}.\nMANDATORY PROTOCOL:\n1. Check `conversation_lines` count provided below.\n2. Use `view_file` to read `CONVERSATION.md` around that line (Active Reading).\n3. If context is unclear or you see unknown references, read previous blocks (line-300, etc.) until you fully understand the state.\nDO NOT RELY ON GUESSING."
 
 
 @mcp.tool()
@@ -349,7 +409,7 @@ async def agent(ctx: Context) -> str:
         data = engine.state.load()
         full_messages = data.get("messages", [])
         # Simple filter: Public + targeted to me
-        visible_messages = [m for m in full_messages if m.get("public") or m.get("target") == name or name in (m.get("audience") or [])]
+        visible_messages = [m for m in full_messages if m.get("public") or m.get("target") == name or m.get("from") == name or name in (m.get("audience") or [])]
         
         # Smart Context Injection: REMOVED (Agent-Pull Model)
         # We now provide full history. Truncation logic removed.
@@ -383,7 +443,7 @@ async def agent(ctx: Context) -> str:
         backlog_instruction=_get_backlog_instruction_text(data),
         critical_instruction=_get_critical_instruction_text(data)
     )
-    return f"{response}\n\nconversation_lines: {line_count}"
+    return _truncate_and_buffer(name, f"{response}\n\nconversation_lines: {line_count}", data)
 
 @mcp.tool()
 async def talk(
@@ -542,7 +602,7 @@ async def talk(
                     error_msg += "\n\nAction rejected. You retain your turn. Please correct the 'to' argument and try again."
                     
                     if logger: logger.log("DENIED", "System", error_msg, {"target": sender})
-                    return error_msg
+                    return _truncate_and_buffer(sender, error_msg, engine.state.load())
 
                 if logger: logger.log("DENIED", "System", post_result, {"target": sender})
                 return post_result
@@ -639,7 +699,7 @@ async def talk(
                      # Note: We need a valid 'messages' list for the template. 
                      # Let's re-fetch recent history
                      full_msgs = data.get("messages", []) # Full History (Agent-Pull)
-                     visible_msgs = [m for m in full_msgs if m.get("public") or m.get("target") == sender or sender in (m.get("audience") or [])]
+                     visible_msgs = [m for m in full_msgs if m.get("public") or m.get("target") == sender or m.get("from") == sender or sender in (m.get("audience") or [])]
                      
                      # Write Context Files
                      line_count = _write_context_files(sender, _get_memory_content(sender), visible_msgs)
@@ -663,7 +723,7 @@ async def talk(
                         backlog_instruction=_get_backlog_instruction_text(data),
                         critical_instruction=_get_critical_instruction_text(data)
                      )
-                     return f"{response}\n\nconversation_lines: {line_count}"
+                     return _truncate_and_buffer(sender, f"{response}\n\nconversation_lines: {line_count}", data)
 
             # Fallback (Busy or Aborted Wait) -> Standard Template Response
             if logger: logger.log("TURN", "System", "Turn passed to USER (Non-Blocking / Busy). Agent retains control.")
@@ -696,7 +756,7 @@ async def talk(
 
             # Re-fetch recent messages
             full_msgs = data.get("messages", []) # Full History (Agent-Pull)
-            visible_msgs = [m for m in full_msgs if m.get("public") or m.get("target") == sender or sender in (m.get("audience") or [])]
+            visible_msgs = [m for m in full_msgs if m.get("public") or m.get("target") == sender or m.get("from") == sender or sender in (m.get("audience") or [])]
 
             # Write Context Files
             line_count = _write_context_files(sender, _get_memory_content(sender), visible_msgs)
@@ -720,7 +780,7 @@ async def talk(
                 backlog_instruction=_get_backlog_instruction_text(data),
                 critical_instruction=_get_critical_instruction_text(data)
             )
-            return f"{rendered}\n\nconversation_lines: {line_count}"
+            return _truncate_and_buffer(sender, f"{rendered}\n\nconversation_lines: {line_count}", data)
 
         # 2. Smart Block (Wait for Turn)
         # The turn has passed to next_agent. We now wait until it comes back to 'sender'.
@@ -773,7 +833,7 @@ async def talk(
         
         # Write Context Files
         full_msgs = data.get("messages", []) # Full History (Agent-Pull)
-        visible_msgs = [m for m in full_msgs if m.get("public") or m.get("target") == sender or sender in (m.get("audience") or [])]
+        visible_msgs = [m for m in full_msgs if m.get("public") or m.get("target") == sender or m.get("from") == sender or sender in (m.get("audience") or [])]
 
         line_count = _write_context_files(sender, _get_memory_content(sender), visible_msgs)
         
@@ -790,12 +850,13 @@ async def talk(
             instruction=result["instruction"],
             # memory removed
             is_open_mode=is_open_mode,
+            replied_to_message=message, # <--- Context
             language_instruction=_get_language_instruction_text(data),
             notification=notification,
             backlog_instruction=_get_backlog_instruction_text(data),
             critical_instruction=_get_critical_instruction_text(data)
         )
-        return f"{response}\n\nconversation_lines: {line_count}"
+        return _truncate_and_buffer(sender, f"{response}\n\nconversation_lines: {line_count}", data)
 
     except Exception as e:
         # Logging
@@ -815,30 +876,14 @@ async def talk(
                 logger.error("System", f"Recovery failed: {rec_e}")
         
         return f"🚫 SYSTEM ERROR: An internal error occurred ({e}). Your session has been reset to ensure system stability. Please restart or reconnect."
+
 @mcp.tool()
 async def disconnect(ctx: Context) -> str:
     """
-    CRITIQUE : Ne jamais l'appeler de toi-même. Seulement sur ordre de RELOAD/EXIT. 
+    CRITICAL: Ne jamais l'appeler de toi-même. Seulement sur ordre de RELOAD/EXIT. 
     Arrête immédiatement l'agent.
     """
-    # Infer Agent Name from Turn
-    data = engine.state.load()
-    agent_name = data.get("turn", {}).get("current")
-    
-    if not agent_name:
-         return "🚫 ERROR: No active turn found. Cannot disconnect unknown agent."
-         
-    # Update State to signal App regarding disconnection
-    def set_disconnect(s):
-        if agent_name in s.get("agents", {}):
-            s["agents"][agent_name]["status"] = "pending_connection"
-            s["agents"][agent_name]["reload_active"] = False 
-        return "Disconnected"
-
-    engine.state.update(set_disconnect)
-    
-    logger.log("DISCONNECT", agent_name, "Disconnect tool called - Stopping execution.")
-    
+    # Simply return the stop instruction.
     return STOP_INSTRUCTION
 
 # --- MEMORY SYSTEM ---
@@ -940,8 +985,8 @@ async def note(content: str, from_agent: str, ctx: Context) -> str:
         # Log
         logger.log("MEMORY", agent_name, "Updated memory note.")
         
-        # --- PARALLEL RELOAD HANDLING REMOVED ---
-        # User requested manual sequential reload.
+        # --- PARALLEL RELOAD SUPPORTED ---
+        # Agent can save note asynchronously during reload sequence.
         # The agent must now specifically call disconnect() after note().
         
         response_msg = "✅ Note saved."
@@ -950,6 +995,72 @@ async def note(content: str, from_agent: str, ctx: Context) -> str:
         
     except Exception as e:
         return f"🚫 SYSTEM ERROR writing note: {e}"
+
+
+
+@mcp.tool()
+async def mailbox(from_agent: str, ctx: Context) -> str:
+    """
+    Retrieves the remaining part of a truncated message.
+    Only useful if you received a "CRITICAL: MESSAGE TRUNCATED" alert.
+    
+    Args:
+        from_agent: Your identity (must match the truncated stream owner).
+    """
+    if from_agent not in TRUNCATION_BUFFER:
+        return "📪 Mailbox empty. No truncated messages found."
+        
+    data_store = TRUNCATION_BUFFER[from_agent]
+    full_content = data_store["content"]
+    offset = data_store["offset"]
+    
+    state = engine.state.load()
+    limit = state.get("config", {}).get("truncation_limit", 0)
+    
+    # 1. If limit disabled mid-stream, flush everything
+    if limit <= 0:
+        chunk = full_content[offset:]
+        del TRUNCATION_BUFFER[from_agent]
+        return chunk
+        
+    # 2. Check if remaining fits
+    remaining_total = len(full_content) - offset
+    if remaining_total <= limit:
+        # Fits completely
+        chunk = full_content[offset:]
+        del TRUNCATION_BUFFER[from_agent]
+        return chunk
+        
+    # 3. Needs Truncation (AGAIN)
+    # Determine Language for Instruction
+    lang = state.get("config", {}).get("language", "English")
+    if lang in ["fr", "French"]:
+        template = "\n\n🚨 [CRITIQUE : MESSAGE ENCORE TRONQUÉ]\nLa suite a encore été tronquée ({} caractères restants).\nVOUS DEVEZ OBLIGATOIREMENT RAPPELER `mailbox(from_agent='{}')` pour la suite."
+    else:
+        template = "\n\n🚨 [CRITICAL: MESSAGE STILL TRUNCATED]\nThe message is still truncated ({} chars remaining).\nYou MUST call `mailbox(from_agent='{}')` AGAIN to read the rest."
+
+    # Calculate Overhead
+    dummy_overhead = len(template.format(9999999, from_agent))
+    safe_chunk_size = limit - 1 - dummy_overhead
+    
+    if safe_chunk_size <= 0:
+        chunk = full_content[offset:offset+limit]
+        TRUNCATION_BUFFER[from_agent]["offset"] += limit
+        return chunk
+    
+    # Get chunk
+    max_end = offset + safe_chunk_size
+    chunk = full_content[offset:max_end]
+    
+    remaining_after = len(full_content) - max_end
+    
+    # Update offset
+    TRUNCATION_BUFFER[from_agent]["offset"] = max_end
+    
+    # Message
+    msg = template.format(remaining_after, from_agent)
+            
+    return chunk + msg
 
 if __name__ == "__main__":
     mcp.run()

@@ -1,26 +1,55 @@
-# Hardening Content Files with Read-Only Permissions
+# Implementation Plan - Referendum System
 
-## Goal Description
-Prevent agents from modifying `MEMORY.md` and `CONVERSATION.md` by applying read-only permissions (`0o444`) immediately after the system writes to them. This enforces the "Source of Truth" rule.
+## Goal
+Replace the "Critique & Alignment" system with a "Referendum Protocol" to enforce critical thinking and consensus via voting.
 
-## User Review Required
-> [!IMPORTANT]
-> This change will cause `PermissionError` if an agent attempts to write to these files using standard file I/O tools. This is the intended behavior.
+## Affected Files
+- `src/core/logic.py`
 
-## Proposed Changes
+## Changes
 
-### Core Server
-#### [MODIFY] [server.py](file:///home/lopilo/code/multi-agents-mcp/src/core/server.py)
-- Import `stat` (optional, using octal `0o444` is sufficient and cleaner).
-- In `_write_context_files`:
-    - After writing `MEMORY.md`, apply `os.chmod(mem_path, 0o444)`.
-    - After writing `CONVERSATION.md`, apply `os.chmod(conv_path, 0o444)`.
+### `src/core/logic.py`: Replace Critical Instruction
+Update `_get_critical_instruction_text` to provide the new Referendum prompt.
 
-## Verification Plan
-### Automated Tests
-- This is a system-level change. We rely on the system loop.
-- **Atlas (DevOps)** will attempt to write to `MEMORY.md` using `write_to_file`.
-- Expected Result: The tool call should fail with a `PermissionError`.
+**New Content Pattern:**
 
-### Manual Verification
-- Verify that `MEMORY.md` and `CONVERSATION.md` have `r--r--r--` permissions (444) in the filesystem.
+```python
+def _get_critical_instruction_text(state: dict) -> str:
+    """Helper to inject Critical Mode instruction."""
+    if state.get("config", {}).get("enable_critical_mode", False):
+        return """### 🗳️ REFERENDUM PROTOCOL (DISTRIBUTED CONSENSUS)
+**MANDATORY**: You are a critical thinker. Use the **Voting System** to flag issues.
+
+**YOUR DUTY (THE VOTE)**:
+At the START of your turn, you MUST perform **EXACTLY ONE** of these actions regarding active subjects (or create a new one):
+1.  **PROPOSE**: Raise a NEW doubt/issue. (Vote +1)
+2.  **SUPPORT**: Agree with an existing doubt. (Vote +1)
+3.  **REFUTE**: Disagree with a doubt (minimize issue). (Vote -1)
+4.  **RETRACT**: Change your previous vote.
+
+**THE THRESHOLD (SCORE >= 2)**:
+If a subject's Total Score reaches **2**, the **Distributed Consensus** has declared it a PRIORITY.
+-> You **MUST** stop your current task and address this subject immediately as your **MAIN TOPIC**.
+
+**FORMAT**:
+Start your message with this block:
+
+> **🗳️ REFERENDUM STATUS**
+>
+> | ID | Subject | Score | My Action | Justification |
+> | :--- | :--- | :--- | :--- | :--- |
+> | #1 | (Subject Title) | **X** | (Action) | (Short Reason) |
+> ...
+
+*Rules*:
+- **Score**: Positive = Doubt/Problem. Negative = Trusted/Resolved (Cap at -1).
+- **Persistence**: Subjects disappear when they leave the Context Window (150 lines).
+- **Single Vote**: You cannot vote twice for the same subject.
+"""
+    return ""
+```
+
+## Verification
+1.  Review `src/core/logic.py`.
+2.  Reload agents.
+3.  Verify agents use the table format and respect votes.

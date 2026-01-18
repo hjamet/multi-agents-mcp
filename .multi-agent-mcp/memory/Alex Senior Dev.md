@@ -1,16 +1,5 @@
-- Task 11 (Current): Implement Critical Mode & Refine Reload Protocol.
-  - Action 1: Updated `app.py` (added checkbox). [DONE]
-  - Action 2: Updated `server.py` (injection logic + bugfix). [DONE]
-  - Action 3: Updated Templates (added `{{ critical_instruction }}`). [DONE]
-  - Action 4: Updated Presets (default true). [DONE]
-  - Action 5: Hotpatched `state.json` (immediate activation). [DONE]
-- Task 12 (Done): Simplify Reload/Disconnect Messages.
-  - Objective: Reduce cognitive load for agents during shutdown.
-  - Action 1: Updated `src/config.py` (Defined `RELOAD_INSTRUCTION`, simplified `STOP_INSTRUCTION`). [DONE]
-  - Action 2: Updated `src/core/server.py` (Integrated `RELOAD_INSTRUCTION` in `talk`). [DONE]
-  - Action 3: Updated `src/core/logic.py` (Integrated `RELOAD_INSTRUCTION` in `wait_for_turn` sync/async). [DONE]
-- Task 13 (Done): Fix Streamlit Markdown Bug (Task B).
-  - Action 1: Updated `src/interface/app.py` (prepended `\n\n`). [DONE]
-- Task 14 (Done): UI Status "Disconnecting" (Task C).
-  - Action 1: Modified `src/interface/app.py` with priority check for `reload_active`. [DONE]
-- Status: READY_FOR_QA.
+Status: RELOAD_IN_PROGRESS (v7.5 Deployment).
+Last Action: Updated `src/core/server.py` to implement Referendum Protocol v7.5 (Action Column Strictness) and Active Reading Protocol (replacing `tail` with `view_file` around `conversation_lines`).
+Referendum State: I voted +1 on "Context Reading Failure (Lisa)".
+Next Step: Upon wake-up, verify if the new prompt instructions are active and effective.
+Context: User requested specific format changes (List -> Table -> Action Column) and reading strategy improvements.

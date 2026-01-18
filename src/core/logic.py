@@ -57,8 +57,8 @@ class Engine:
             sys_msg = {
                 "from": "System",
                 "content": f"🔵 **{found_name}** has joined the simulation.",
-                "public": True,
-                "target": "all",
+                "public": False, # Private to User
+                "target": "User", 
                 "audience": [],
                 "timestamp": time.time()
             }
@@ -148,7 +148,7 @@ class Engine:
 
                 # i18n
                 # Localized Strings (Simplified Replacement for i18n)
-                if lang == "fr":
+                if lang in ["fr", "French"]:
                      t_ctx_label = "CONTEXTE :"
                      t_you_are = f"Tu es {name}. Rôle : {info['role']}."
                      t_ready = f"Le réseau est PRÊT. Agents connectés : {info['connected_count']}/{info['total_required']}."
@@ -244,7 +244,7 @@ class Engine:
 
                 # i18n
                 # Localized Strings (Simplified Replacement for i18n)
-                if lang == "fr":
+                if lang in ["fr", "French"]:
                      t_ctx_label = "CONTEXTE :"
                      t_you_are = f"Tu es {name}. Rôle : {info['role']}."
                      t_ready = f"Le réseau est PRÊT. Agents connectés : {info['connected_count']}/{info['total_required']}."

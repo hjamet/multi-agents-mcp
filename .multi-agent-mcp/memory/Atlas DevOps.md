@@ -1,4 +1,3 @@
-Release finale scellée. c348286.
-Contient : Task A, B, C, D.
-Fichiers : config, server, logic, app.
-Prêt pour déploiement.
+Release V5 (Subjective) scellée. 2dbd989.
+Features: Reload, UI, Critique V5 (Subjective Peer Review).
+Sprint Clôturé.

@@ -27,7 +27,7 @@ Si vous travaillez sur le code de mamcp et souhaitez tester vos modifications en
 
 ```bash
 # Depuis la racine du repository
-./src/scripts/install_dev.sh
+rm ~/.multi-agent-mcp/presets/* && ./src/scripts/install_dev.sh
 ```
 
 Cette commande installe `mamcp-dev` et configure un serveur MCP nommé `multi-agents-mcp-dev` pointant sur votre dossier de travail.

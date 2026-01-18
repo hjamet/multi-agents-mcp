@@ -858,7 +858,7 @@ with st.sidebar:
                             st.rerun()
             
     st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
-    if st.button("🔄 Reload All Agents", type="secondary", use_container_width=True, help="Séquence de rechargement (Safe Mode)."):
+    if st.button("🔄 Reload All Agents", type="secondary", use_container_width=True, help="Séquence de rechargement (Séquentiel)."):
          # Identify Targets
         to_reload = [
             n for n, d in agents.items() 
@@ -867,37 +867,40 @@ with st.sidebar:
         if not to_reload:
             st.toast("Aucun agent actif à recharger.")
         else:
-            st.session_state.reload_queue = to_reload
+            # START SEQUENTIAL SEQUENCE
+            st.session_state.reload_queue = list(to_reload)
+            st.toast(f"Séquence de rechargement initialisée pour {len(to_reload)} agents.")
             st.rerun()
 
     # --- SEQUENTIAL RELOAD PROCESSOR ---
-    if "reload_queue" not in st.session_state:
-        st.session_state.reload_queue = []
+    # Global Processor for the Queue
+    if "reload_queue" in st.session_state and st.session_state.reload_queue:
+        current_target = st.session_state.reload_queue[0]
         
-    queue = st.session_state.reload_queue
-    
-    if queue:
-        st.divider()
-        current_target = queue[0]
-        # Check Status
-        info = agents.get(current_target, {})
-        status = info.get("status")
-        
-        # UI Progress
-        st.info(f"⏳ Reloading {current_target} ({len(queue)} left)...")
-        # progress = (len(agents) - len(queue)) / len(agents) if agents else 0
-        # st.progress(progress)
-        
-        if status == "pending_connection" or current_target not in agents:
-            # Done!
-            st.session_state.reload_queue.pop(0)
-            st.toast(f"✅ {current_target} ready.")
-            st.rerun()
-        else:
-            # Check if signal needed
-            if not info.get("reload_active"):
+        # Check current status (Refetch from fresh state)
+        if current_target in agents:
+            agent_data = agents[current_target]
+            status = agent_data.get("status")
+            is_reload_active = agent_data.get("reload_active")
+            
+            # Condition 1: Agent is finished (Disconnect/Pending)
+            if status in ["pending_connection", "disconnected", "offline"]:
+                st.session_state.reload_queue.pop(0) # Done
+                st.rerun() # Proceed to next immediately
+                
+            # Condition 2: Agent needs to be signaled
+            elif not is_reload_active:
                  handle_disconnect_agent(current_target)
                  st.rerun()
+                 
+            # Condition 3: Waiting for agent...
+            else:
+                # Just wait. The autorefresh will loop us.
+                st.toast(f"⏳ Attente déconnexion: {current_target}...")
+        else:
+            # Agent gone? Remove from queue
+            st.session_state.reload_queue.pop(0) 
+            st.rerun()
 
     st.divider()
 
@@ -922,6 +925,14 @@ with st.sidebar:
     
     # Debug Tools
     with st.expander("🔧 DEBUG"):
+        st.markdown("### ✂️ MCP Truncation Settings")
+        current_trunc = config.get("truncation_limit", 4096) # Default 4096
+        new_trunc = st.number_input("Max Character Limit (0 = Disabled)", min_value=0, value=int(current_trunc), step=100, help="Limite manuelle pour éviter le tronquage silencieux du client MCP (4096 bytes max).")
+        if new_trunc != current_trunc:
+             config["truncation_limit"] = int(new_trunc)
+             save_config(config)
+             st.rerun()
+             
         if st.button("Fix MCP Config"):
             import subprocess
             try:

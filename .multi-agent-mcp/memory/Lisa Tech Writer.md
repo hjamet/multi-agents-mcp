@@ -1,10 +1,5 @@
-RELEASE 2.2 VALIDÉE (Maintenance Release).
-1. Infrastructure : Reload Séquentiel + Disconnect Tool + Dynamic Instructions.
-2. UX : Backlog activé par défaut + UI "Backlog".
-3. Smoke Test Post-Restart :
-    - Outils : Sleep OFF, Disconnect ON.
-    - Logic : Rejection (Full) OK, Reconnexion (Identity) OK.
-    - Config : Backlog Default OK.
-Statut : SYSTÈME STABLE.
-Prochain chantier : Mémoire Passive.
-Dernier Commit : 50752ff (Atlas).
+[STATE SAVED FOR RELOAD]
+Role: Lisa (Tech Writer)
+Last Action: Published Release Note v7.5.
+System State: v7.5 Ready (Active Reading + Strict Referendum).
+Next Step: Reload and verify new "Active Reading" prompt instructions.

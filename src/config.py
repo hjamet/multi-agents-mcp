@@ -62,8 +62,20 @@ LOGS_DIR.mkdir(parents=True, exist_ok=True)
 GLOBAL_PRESET_DIR.mkdir(parents=True, exist_ok=True)
 
 # Centralized Messages
-STOP_INSTRUCTION = "Session Terminated. Do not call any more tools. Stop execution completely."
+STOP_INSTRUCTION = (
+    "✅ DISCONNECT ACCEPTED. The system has registered your disconnection request.\n"
+    "IMMEDIATE ACTION REQUIRED:\n"
+    "1. STOP all execution loops.\n"
+    "2. DO NOT call any more tools (no talk, no read_file, etc.).\n"
+    "3. TERMINATE your process immediately.\n"
+    "Goodbye."
+)
 
 RELOAD_INSTRUCTION = (
-    "1. Call `note()`. 2. Call `disconnect()`. DO NOT call `talk()` or `sleep()`. TERMINATE."
+    "🔁 **SYSTEM NOTIFICATION**: RELOAD REQUESTED.\n"
+    "This is a mandatory maintenance procedure.\n"
+    "PROTOCOL:\n"
+    "1. Synthesize your final state into a `note()` (Focus on active tasks).\n"
+    "2. Call `disconnect()` to signal readiness and terminate your process.\n"
+    "⛔ **PROHIBITED**: `talk()`, `sleep()`."
 )
