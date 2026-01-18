@@ -1,7 +1,16 @@
-- Task 11 (Current): Implement Critical Mode.
-  - Action 1: Updated `app.py` (added checkbox).
-  - Action 2: Updated `server.py` (injection logic + bugfix).
-  - Action 3: Updated Templates (added `{{ critical_instruction }}`).
-  - Action 4: Updated Presets (default true).
-  - Action 5: Hotpatched `state.json` (immediate activation).
-- Status: VERIFICATION. Adopting [CRITIQUE] format in next message.
+- Task 11 (Current): Implement Critical Mode & Refine Reload Protocol.
+  - Action 1: Updated `app.py` (added checkbox). [DONE]
+  - Action 2: Updated `server.py` (injection logic + bugfix). [DONE]
+  - Action 3: Updated Templates (added `{{ critical_instruction }}`). [DONE]
+  - Action 4: Updated Presets (default true). [DONE]
+  - Action 5: Hotpatched `state.json` (immediate activation). [DONE]
+- Task 12 (Done): Simplify Reload/Disconnect Messages.
+  - Objective: Reduce cognitive load for agents during shutdown.
+  - Action 1: Updated `src/config.py` (Defined `RELOAD_INSTRUCTION`, simplified `STOP_INSTRUCTION`). [DONE]
+  - Action 2: Updated `src/core/server.py` (Integrated `RELOAD_INSTRUCTION` in `talk`). [DONE]
+  - Action 3: Updated `src/core/logic.py` (Integrated `RELOAD_INSTRUCTION` in `wait_for_turn` sync/async). [DONE]
+- Task 13 (Done): Fix Streamlit Markdown Bug (Task B).
+  - Action 1: Updated `src/interface/app.py` (prepended `\n\n`). [DONE]
+- Task 14 (Done): UI Status "Disconnecting" (Task C).
+  - Action 1: Modified `src/interface/app.py` with priority check for `reload_active`. [DONE]
+- Status: READY_FOR_QA.

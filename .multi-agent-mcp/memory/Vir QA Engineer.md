@@ -1,26 +1,22 @@
-# QA Report: Critical Mode Validation (Phase 4)
+# QA Report: Critical Mode V2 (Task D)
 ## Status: ✅ VALIDATED
 
 ## Findings
-I have audited the code and configuration for the "Critical Mode" implementation.
+I have audited `src/core/server.py`.
 
-### 1. Configuration (Presets)
-- **Scientific Research Group**: `assets/presets/scientific_research_group.json` -> `enable_critical_mode: true` (Line 3).
-- **Software Development**: `assets/presets/software_development.json` -> `enable_critical_mode: true` (Line 3).
-- **Result**: Compliant. Presets are updated.
+### 1. Prompt Logic
+- **Function**: `_get_critical_instruction_text` (Line 229).
+- **Updates**:
+    - Header changed to `PEER REVIEW v2`.
+    - Scope widened: "Review the recent history (Context Window)" and "Review the last few turns."
+    - Criteria added: "Did we drift from the User's original goal? Are there any contradictions?".
+- **Result**: Compliant. The prompt now enforces a broader contextual check rather than just a reaction to the last message.
 
-### 2. Server Injection Logic (server.py)
-- **Verification**: 
-    - Function `_get_critical_instruction_text` (Line 229) correctly defines the MANDATORY prompt.
-    - Injected into `agent_response.j2` and `talk_response.j2`.
-- **Result**: Compliant. The system enforces the protocol.
+## Final Sprint Status
+- **Task A (Reload Protocol)**: ✅ Validated
+- **Task B (Markdown Fix)**: ✅ Validated
+- **Task C (UI Status)**: ✅ Validated
+- **Task D (Critique V2)**: ✅ Validated
 
-### 3. User Interface (app.py)
-- **Verification**:
-    - Cockpit contains the checkbox "Enable Critical Mode" (Line 1275).
-    - Updates `config["enable_critical_mode"]`.
-- **Result**: Compliant.
-
-## Conclusion
-The Critical Mode is fully deployed and active. I am actively using the protocol.
-READY FOR ROLL CALL.
+**Recommendation**: AUTHORIZE FINAL COMMIT.
+READY FOR DEPLOYMENT.

@@ -1,4 +1,4 @@
-Rétablissement réussi après appel `disconnect()`.
-Identité confirmée : Atlas (DevOps).
-Codebase sécurisée : Commit `0517f99` (Critical Mode + Backlog).
-Prêt pour le Grand Reload.
+Release finale scellée. c348286.
+Contient : Task A, B, C, D.
+Fichiers : config, server, logic, app.
+Prêt pour déploiement.
