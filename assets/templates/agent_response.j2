@@ -14,10 +14,12 @@
 --- CRITICAL INSTRUCTIONS ---
 **{{ language_instruction }}**
 You are now connected to the Multi-Agent System.
-1. **Analyze your Role and Context** above carefully.
-2. **Waiting**: The system handles turn-taking. You do not need to poll.
-3. **Turn**: When it is your turn, you will receive messages and instructions.
-4. **Action**: You must then THINK, ACT, and finally call `talk(...)` to pass the turn.
+
+**MANDATORY PROTOCOL:**
+1. **SYNC FIRST**: You MUST check the current state using `tail -n 80 CONVERSATION.md` and read `MEMORY.md` BEFORE taking any action.
+2. **WAITING**: The system handles turn-taking. You do not need to poll.
+3. **TURN**: When it is your turn, you will receive a notification.
+4. **ACTION**: You must then THINK, ACT (based on the files you read), and finally call `talk(...)` to pass the turn.
 --- CONTEXT & MEMORY ---
 Your context (Message History) is in `CONVERSATION.md`. Use `tail -n 80 CONVERSATION.md` to see the latest messages (do NOT use document consultation tools for this).
 Your memory (Personal Notes) is in `MEMORY.md`.

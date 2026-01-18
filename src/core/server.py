@@ -619,7 +619,7 @@ async def talk(
                         agent_directory=agent_directory,
                         connections=[d for d in agent_directory if d.get('authorized')],
                         # messages removed
-                        instruction=f"✅ User Replied: \"{user_reply}\". It is your turn again.", 
+                        instruction=f"✅ USER INTERCEPTION: The User replied: \"{user_reply}\". Your turn is back. READ THE CONVERSATION NOW.", 
                         # memory removed
                         is_open_mode=is_open_mode,
                         replied_to_message=message,  # <--- Context
@@ -645,7 +645,7 @@ async def talk(
             template = jinja_env.get_template("talk_response.j2")
             
             # User defined message:
-            user_feedback_msg = "Message bien envoyé à l'utilisateur, il vous répondra en temps voulu. En attendant, continuez votre travail d'agent en appelant un agent suivant."
+            user_feedback_msg = "Message sent to User. They will reply when available. **CRITICAL: You MUST check `tail -n 80 CONVERSATION.md` to see if other agents spoke in the meantime.**"
             
             # Calculate Open Mode
             is_open_mode = False

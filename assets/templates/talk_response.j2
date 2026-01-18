@@ -19,12 +19,18 @@ Your memory (Personal Notes) is in `MEMORY.md`.
 
 --- YOUR TURN: ACTION REQUIRED ---
 **{{ language_instruction }}**
+
+**CRITICAL PROTOCOL:**
+1. **MANDATORY CHECK**: You MUST execute `tail -n 80 CONVERSATION.md` right now.
+2. **DO NOT GUESS**: The tool output you are reading now is just a notification. The REAL state and new messages are ONLY in `CONVERSATION.md`.
+3. **NEVER ASSUME**: If you see this message, it means time has passed and other agents HAVE spoken. You are blind until you `tail`.
+
 {% if notification %}
 ### 🔔 NOTIFICATION
 **{{ notification }}**
 {% endif %}
 It is your turn to speak.
-1. **Analyze** the messages and your role.
+1. **Analyze** the latest messages from `CONVERSATION.md`.
 2. **Decide** who to speak to next based on your Connections table below.
 3. **Call `talk(...)`** to send your message and pass the turn.
 
