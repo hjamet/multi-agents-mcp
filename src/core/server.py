@@ -1069,10 +1069,11 @@ async def note(content: str, from_agent: str, ctx: Context) -> str:
         # The agent must now specifically call disconnect() after note().
         
         # Render Note Response Template
-        return jinja_env.from_string(NOTE_RESPONSE).render(
+        response = jinja_env.from_string(NOTE_RESPONSE).render(
             agent_name=agent_name,
             old_content=old_content
         )
+        return _truncate_and_buffer(agent_name, response, engine.state.load())
         
     except Exception as e:
         return f"🚫 SYSTEM ERROR writing note: {e}"
@@ -1096,61 +1097,22 @@ async def mailbox(from_agent: str, ctx: Context) -> str:
     offset = data_store["offset"]
     
     state = engine.state.load()
-    limit = state.get("config", {}).get("truncation_limit", 4096)
     
-    # 1. If limit disabled mid-stream, flush everything
-    if limit <= 0:
-        chunk = full_content[offset:]
-        del TRUNCATION_BUFFER[from_agent]
-        return chunk
-        
-    # 2. Check if remaining fits
-    remaining_total = len(full_content) - offset
-    if remaining_total <= limit:
-        # Fits completely
-        chunk = full_content[offset:]
-        del TRUNCATION_BUFFER[from_agent]
-        return chunk
-        
-    # 3. Needs Truncation (AGAIN)
-    # Determine Language for Instruction
-    lang = state.get("config", {}).get("language", "English")
-    if lang in ["fr", "French"]:
-        template = "\n\n🚨 [CRITIQUE : MESSAGE ENCORE TRONQUÉ]\nLa suite a encore été tronquée ({} caractères restants).\nVOUS DEVEZ OBLIGATOIREMENT RAPPELER `mailbox(from_agent='{}')` pour la suite."
-    else:
-        template = "\n\n🚨 [CRITICAL: MESSAGE STILL TRUNCATED]\nThe message is still truncated ({} chars remaining).\nYou MUST call `mailbox(from_agent='{}')` AGAIN to read the rest."
-
-    # Calculate Overhead
-    dummy_overhead = len(template.format(9999999, from_agent))
-    safe_chunk_size = limit - 1 - dummy_overhead
+    # Logic Refactor: Use unified truncation
+    # we take the remaining content and treat it as a new stream to be truncated
+    remaining_content = full_content[offset:]
     
-    if safe_chunk_size <= 0:
-        chunk = full_content[offset:offset+limit]
-        TRUNCATION_BUFFER[from_agent]["offset"] += limit
-        return chunk
-    
-    # Get chunk
-    max_end = offset + safe_chunk_size
-    chunk = full_content[offset:max_end]
-    
-    remaining_after = len(full_content) - max_end
-    
-    # Update offset
-    TRUNCATION_BUFFER[from_agent]["offset"] = max_end
-    
-    # Message
-    msg = template.format(remaining_after, from_agent)
-            
-    return chunk + msg
+    return _truncate_and_buffer(from_agent, remaining_content, state)
 
 @mcp.tool()
-async def search(query: str, glob: str = None, ctx: Context = None) -> str:
+async def search(query: str, from_agent: str, glob: str = None, ctx: Context = None) -> str:
     """
     Search the codebase using semantic vector search.
     Returns the most relevant code snippets.
     
     Args:
         query: The natural language query.
+        from_agent: Your identity.
         glob: Optional glob pattern (e.g. "*.py", "src/*").
     """
     try:
@@ -1171,7 +1133,8 @@ async def search(query: str, glob: str = None, ctx: Context = None) -> str:
             output.append(r['content'])
             output.append("--------------------------------------------------\n")
             
-        return "\n".join(output)
+        full_response = "\n".join(output)
+        return _truncate_and_buffer(from_agent, full_response, state)
     except Exception as e:
         return f"Error executing search: {e}"
 
