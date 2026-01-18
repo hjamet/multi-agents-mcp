@@ -1311,12 +1311,7 @@ elif st.session_state.page == "Cockpit":
             save_config(config)
             st.rerun()
 
-        enable_critical_mode = st.checkbox("Enable Critical Mode", value=config.get("enable_critical_mode", False), help="Force les agents à commencer par une analyse [CRITIQUE] du tour précédent.")
-        if enable_critical_mode != config.get("enable_critical_mode", False):
-            config["enable_critical_mode"] = enable_critical_mode
-            save_config(config)
-            st.rerun()
-            
+
         global_context = st.text_area("Narratif / Contexte Partagé", config.get("context", ""), height=215)
         if global_context != config.get("context", ""):
             if st.button("Mettre à jour le Contexte", use_container_width=True):
