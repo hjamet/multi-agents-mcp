@@ -1,12 +1,13 @@
-Phase: Stabilization
-Status: Handling Disconnection Bugs
-Current Objective: Fix "Reload All Agents" bugs (Infinite Loop & Sleep Misuse).
+Phase: Idle
+Status: Waiting for User (Release 2.1 Complete)
+Current Objective: Awaiting new mission.
+
 Roadmap:
-1. Agent-Pull Context Model (Done)
-2. Disconnection Protocol (BUGGY - NEEDS FIX)
-   - [ ] Locate Disconnection Instruction text.
-   - [ ] Update to explicitly FORBID `sleep`, `talk`, `agent`.
-   - [ ] Update to MANDATE `note` only, then EXIT.
-3. Internationalization (ABANDONED)
-4. Language Injection (Fixed & Committed)
-5. System Stabilization (Committed)
+1. **Analyze User Feedback**: DONE.
+2. **Plan V3**: DONE.
+3. **Execution**: DONE.
+4. **Validation**: DONE.
+5. **Commit V3**: DONE (`bda5974`).
+
+Priority:
+- User decision.
