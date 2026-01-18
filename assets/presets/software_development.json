@@ -1,6 +1,6 @@
 {
     "enable_backlog": true,
-    "enable_critical_mode": true,
+    "enable_critical_mode": false,
     "profiles": [
         {
             "name": "Miller",
