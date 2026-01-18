@@ -772,9 +772,7 @@ with st.sidebar:
         save_config(config)
         st.rerun()
 
-        config["language"] = new_lang
-        save_config(config)
-        st.rerun()
+
 
     st.divider()
     

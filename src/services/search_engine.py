@@ -75,7 +75,7 @@ class SearchEngine(FileSystemEventHandler):
         # Load Model
         try:
             self.model = SentenceTransformer(MODEL_NAME, device='cuda') # Try CUDA
-            self.device = "cuda”"
+            self.device = "cuda"
         except:
             try:
                 self.model = SentenceTransformer(MODEL_NAME, device='cpu')

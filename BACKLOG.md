@@ -6,9 +6,15 @@ This file tracks the tasks, features, and bugs for the project. Agents are encou
 - [ ] Initial project setup
 - [ ] Sécuriser l'attente utilisateur (gestion des timeouts MCP)
 
+
+
+
 ## 🏗️ In Progress
+- [ ] Déplacer paramètres Search vers Menu Debug (User Request)
 
 ## ✅ Done
+- [x] Ajustement seuils recherche passive (Feedback Vir)
+- [x] Vérification du système de recherche passif et actif (User Request)
 - [x] **DÉMANTÈLEMENT COMPLET DU RÉFÉRENDUM v7.5 (User Directive)**
     - [x] Phase 1 : Désactivation dans les Presets
     - [x] Phase 2 : Suppression de l'interface Streamlit

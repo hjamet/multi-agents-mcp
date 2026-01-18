@@ -204,12 +204,6 @@ class Engine:
             state["turn"]["consecutive_count"] = turn_data.get("consecutive_count", 0) + 1
         else:
             state["turn"]["consecutive_count"] = 1
-        
-        import sys
-        if self.logger:
-            self.logger.log("TURN_CHANGE", "System", f"Turn passed to {final_next}")
-        else:
-            print(f"[Logic] TURN CHANGE: {old_turn} -> {final_next}", file=sys.stderr)
             
         return f"Turn is now: {final_next}."
 
