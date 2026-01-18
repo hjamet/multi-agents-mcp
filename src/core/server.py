@@ -80,62 +80,28 @@ logger = get_logger()
 jinja_env = Environment(loader=FileSystemLoader(str(TEMPLATE_DIR)))
 
 
-def _write_context_files(agent_name: str, memory_content: str, messages: List[dict]) -> int:
+def _format_conversation_history(messages: List[dict]) -> str:
     """
-    Writes context to MEMORY.md and CONVERSATION.md in EXECUTION_DIR.
-    Returns: Number of lines in CONVERSATION.md
+    Formats the last 10 messages for context injection.
     """
-    # 1. Write Memory
-    mem_path = EXECUTION_DIR / "MEMORY.md"
-    try:
-        # Hardening: Ensure writable before update
-        if mem_path.exists():
-            os.chmod(mem_path, 0o644)
-
-        with open(mem_path, "w", encoding="utf-8") as f:
-            if memory_content:
-                f.write(memory_content)
-            else:
-                f.write("(No memory found.)")
+    if not messages:
+        return "(No messages yet)"
         
-        # Hardening: Lock as Read-Only (Source of Truth)
-        os.chmod(mem_path, 0o444)
-
-    except Exception as e:
-        logger.error(agent_name, f"Failed to write MEMORY.md: {e}")
-
-    # 2. Write Conversation
-    conv_path = EXECUTION_DIR / "CONVERSATION.md"
-    lines_count = 0 
-    try:
-        # Hardening: Ensure writable before update
-        if conv_path.exists():
-            os.chmod(conv_path, 0o644)
-
-        with open(conv_path, "w", encoding="utf-8") as f:
-            if not messages:
-                f.write("(No messages.)")
-                lines_count = 1
-            else:
-                for m in messages:
-                    sender = m.get("from", "Unknown")
-                    content = m.get("content", "")
-                    target = m.get("target", "all")
-                    
-                    if m.get("public"):
-                        line = f"- **{sender}** -> All: {content}\n"
-                    else:
-                        line = f"- **{sender}** -> {target}: {content}\n"
-                    f.write(line)
-                    lines_count += 1
-        
-        # Hardening: Lock as Read-Only (Source of Truth)
-        os.chmod(conv_path, 0o444)
-                    
-    except Exception as e:
-        logger.error(agent_name, f"Failed to write CONVERSATION.md: {e}")
+    # Take last 10
+    recent = messages[-10:]
+    output = []
     
-    return lines_count
+    for m in recent:
+        sender = m.get("from", "Unknown")
+        content = m.get("content", "")
+        # Calculate Target for display
+        target_display = "All"
+        if not m.get("public"):
+             target_display = m.get("target", "Unknown")
+             
+        output.append(f"- **{sender}** -> {target_display}: {content}")
+        
+    return "\n".join(output)
 
 
 def _get_agent_connections(state, agent_name):
@@ -335,7 +301,7 @@ def _get_new_messages_notification(agent_name: str, messages: List[dict]) -> str
             count += 1
             
     if count == 0:
-        return f"No new messages. Sync Check: Validate `conversation_lines` vs your last read position. If gap > 0, read `CONVERSATION.md` using the Active Reading Protocol (scan backwards if needed)."
+        return f"No new messages. Review the Conversation History above to refresh your context."
     
     senders_list = sorted(list(senders))
     if len(senders_list) > 1:
@@ -343,7 +309,7 @@ def _get_new_messages_notification(agent_name: str, messages: List[dict]) -> str
     else:
         senders_str = senders_list[0]
         
-    return f"CRITICAL: You have received {count} new messages from {senders_str}.\nMANDATORY PROTOCOL:\n1. Check `conversation_lines` count provided below.\n2. Use `view_file` to read `CONVERSATION.md` around that line (Active Reading).\n3. If context is unclear or you see unknown references, read previous blocks (line-300, etc.) until you fully understand the state.\nDO NOT RELY ON GUESSING."
+    return f"CRITICAL: You have received {count} new messages from {senders_str}.\nMANDATORY PROTOCOL:\n1. READ the 'LATEST CONVERSATION HISTORY' section above carefully.\n2. If you need more context, you may use `read_file` on logs, but usually the last 10 messages are enough."
 
 
 @mcp.tool()
@@ -424,8 +390,11 @@ async def agent(ctx: Context) -> str:
     my_prof = next((p for p in profiles if p["name"] == prof_ref), {})
     is_open_mode = "open" in my_prof.get("capabilities", [])
 
-    # Write Context Files
-    line_count = _write_context_files(name, _get_memory_content(name), visible_messages)
+    # Prepare Context Data
+    mem_content = _get_memory_content(name)
+    if not mem_content: mem_content = "(No personal memory yet. Use `note()` to write one.)"
+    
+    conv_history_str = _format_conversation_history(visible_messages)
 
     # Calculate Notifications
     notification = _get_new_messages_notification(name, visible_messages)
@@ -436,14 +405,15 @@ async def agent(ctx: Context) -> str:
         context=result["context"],
         agent_directory=agent_dir,
         connections=[d for d in agent_dir if d.get('authorized')],
-        # messages removed
+        conversation_history=conv_history_str,
+        memory_content=mem_content,
         is_open_mode=is_open_mode,
         language_instruction=_get_language_instruction_text(data),
         notification=notification,
         backlog_instruction=_get_backlog_instruction_text(data),
         critical_instruction=_get_critical_instruction_text(data)
     )
-    return _truncate_and_buffer(name, f"{response}\n\nconversation_lines: {line_count}", data)
+    return _truncate_and_buffer(name, response, data)
 
 @mcp.tool()
 async def talk(
@@ -701,8 +671,11 @@ async def talk(
                      full_msgs = data.get("messages", []) # Full History (Agent-Pull)
                      visible_msgs = [m for m in full_msgs if m.get("public") or m.get("target") == sender or m.get("from") == sender or sender in (m.get("audience") or [])]
                      
-                     # Write Context Files
-                     line_count = _write_context_files(sender, _get_memory_content(sender), visible_msgs)
+                     # Prepare Context Data
+                     mem_content = _get_memory_content(sender)
+                     if not mem_content: mem_content = "(No personal memory yet. Use `note()` to write one.)"
+                     
+                     conv_history_str = _format_conversation_history(visible_msgs)
 
                      # Calculate Notifications
                      notification = _get_new_messages_notification(sender, visible_msgs)
@@ -713,17 +686,17 @@ async def talk(
                         context=global_context,
                         agent_directory=agent_directory,
                         connections=[d for d in agent_directory if d.get('authorized')],
-                        # messages removed
-                        instruction=f"✅ USER INTERCEPTION: The User replied: \"{user_reply}\". Your turn is back. READ THE CONVERSATION NOW.", 
-                        # memory removed
+                        conversation_history=conv_history_str,
+                        memory_content=mem_content,
                         is_open_mode=is_open_mode,
                         replied_to_message=message,  # <--- Context
                         language_instruction=_get_language_instruction_text(data),
                         notification=notification,
                         backlog_instruction=_get_backlog_instruction_text(data),
-                        critical_instruction=_get_critical_instruction_text(data)
+                        critical_instruction=_get_critical_instruction_text(data),
+                        instruction=f"✅ USER INTERCEPTION: The User replied: \"{user_reply}\". Your turn is back. READ THE CONVERSATION NOW."
                      )
-                     return _truncate_and_buffer(sender, f"{response}\n\nconversation_lines: {line_count}", data)
+                     return _truncate_and_buffer(sender, response, data)
 
             # Fallback (Busy or Aborted Wait) -> Standard Template Response
             if logger: logger.log("TURN", "System", "Turn passed to USER (Non-Blocking / Busy). Agent retains control.")
@@ -742,7 +715,7 @@ async def talk(
             template = jinja_env.get_template("talk_response.j2")
             
             # User defined message:
-            user_feedback_msg = "Message sent to User. They will reply when available. **CRITICAL: You MUST check `tail -n 150 CONVERSATION.md` to see if other agents spoke in the meantime.**"
+            user_feedback_msg = "Message sent to User. They will reply when available. **CRITICAL: Review the 'LATEST CONVERSATION HISTORY' above to see if other agents spoke in the meantime.**"
             
             # Calculate Open Mode
             is_open_mode = False
@@ -758,8 +731,11 @@ async def talk(
             full_msgs = data.get("messages", []) # Full History (Agent-Pull)
             visible_msgs = [m for m in full_msgs if m.get("public") or m.get("target") == sender or m.get("from") == sender or sender in (m.get("audience") or [])]
 
-            # Write Context Files
-            line_count = _write_context_files(sender, _get_memory_content(sender), visible_msgs)
+            # Prepare Context Data
+            mem_content = _get_memory_content(sender)
+            if not mem_content: mem_content = "(No personal memory yet. Use `note()` to write one.)"
+            
+            conv_history_str = _format_conversation_history(visible_msgs)
 
             # Calculate Notifications
             notification = _get_new_messages_notification(sender, visible_msgs)
@@ -770,17 +746,17 @@ async def talk(
                 context=global_context,
                 agent_directory=agent_directory,
                 connections=[d for d in agent_directory if d.get('authorized')],
-                # messages removed
-                instruction=f"✅ {user_feedback_msg}", 
-                # memory removed
+                conversation_history=conv_history_str,
+                memory_content=mem_content,
                 is_open_mode=is_open_mode,
                 replied_to_message=message, # <--- Context
                 language_instruction=_get_language_instruction_text(data),
                 notification=notification,
                 backlog_instruction=_get_backlog_instruction_text(data),
-                critical_instruction=_get_critical_instruction_text(data)
+                critical_instruction=_get_critical_instruction_text(data),
+                instruction=f"✅ {user_feedback_msg}"
             )
-            return _truncate_and_buffer(sender, f"{rendered}\n\nconversation_lines: {line_count}", data)
+            return _truncate_and_buffer(sender, rendered, data)
 
         # 2. Smart Block (Wait for Turn)
         # The turn has passed to next_agent. We now wait until it comes back to 'sender'.
@@ -835,7 +811,11 @@ async def talk(
         full_msgs = data.get("messages", []) # Full History (Agent-Pull)
         visible_msgs = [m for m in full_msgs if m.get("public") or m.get("target") == sender or m.get("from") == sender or sender in (m.get("audience") or [])]
 
-        line_count = _write_context_files(sender, _get_memory_content(sender), visible_msgs)
+        # Prepare Context Data
+        mem_content = _get_memory_content(sender)
+        if not mem_content: mem_content = "(No personal memory yet. Use `note()` to write one.)"
+        
+        conv_history_str = _format_conversation_history(visible_msgs)
         
         # Calculate Notifications
         notification = _get_new_messages_notification(sender, visible_msgs)
@@ -846,17 +826,17 @@ async def talk(
             context=global_context,
             agent_directory=agent_directory,
             connections=[d for d in agent_directory if d.get('authorized')],
-            # messages removed
-            instruction=result["instruction"],
-            # memory removed
+            conversation_history=conv_history_str,
+            memory_content=mem_content,
             is_open_mode=is_open_mode,
             replied_to_message=message, # <--- Context
             language_instruction=_get_language_instruction_text(data),
             notification=notification,
             backlog_instruction=_get_backlog_instruction_text(data),
-            critical_instruction=_get_critical_instruction_text(data)
+            critical_instruction=_get_critical_instruction_text(data),
+            instruction=result["instruction"]
         )
-        return _truncate_and_buffer(sender, f"{response}\n\nconversation_lines: {line_count}", data)
+        return _truncate_and_buffer(sender, response, data)
 
     except Exception as e:
         # Logging

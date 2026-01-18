@@ -9,21 +9,23 @@ You are **{{ name }}**.
 
 
 --- CONTEXT & MEMORY ---
-Your context (Message History) is in `CONVERSATION.md`. Use `tail -n 150 CONVERSATION.md` to see the latest messages (do NOT use document consultation tools for this).
-Your memory (Personal Notes) is in `MEMORY.md`.
+### 📜 LATEST CONVERSATION HISTORY (Last 10 Messages)
+{{ conversation_history }}
+
+### 🧠 YOUR MEMORY (Personal Notes)
+{{ memory_content }}
 
 **CRITICAL:**
-1. You MUST read these to understand the state. Focus on recent exchanges with `tail`, but search the full history if you need specific details or to remember past actions.
-2. **STRICT PROHIBITION**: You must NOT modify these files. Any changes will be ignored.
+1. This is the **REAL** state. Do NOT try to read `CONVERSATION.md` or `MEMORY.md` anymore.
 ---------------------------
 
 --- YOUR TURN: ACTION REQUIRED ---
 **{{ language_instruction }}**
 
 **CRITICAL PROTOCOL:**
-1. **MANDATORY CHECK**: You MUST execute `tail -n 150 CONVERSATION.md` right now.
+1. **MANDATORY CHECK**: Read the **LATEST CONVERSATION HISTORY** provided above.
 2. **DO NOT GUESS**: The tool output you are reading now is just a notification. The REAL state and new messages are ONLY in `CONVERSATION.md`.
-3. **NEVER ASSUME**: If you see this message, it means time has passed and other agents HAVE spoken. You are blind until you `tail`.
+3. **NEVER ASSUME**: Time has passed. Other agents HAVE spoken. rely ONLY on the history below.
 
 {% if notification %}
 ### 🔔 NOTIFICATION
@@ -39,7 +41,7 @@ Your memory (Personal Notes) is in `MEMORY.md`.
 **{{ backlog_instruction }}**
 {% endif %}
 It is your turn to speak.
-1. **Analyze** the latest messages from `CONVERSATION.md`.
+1. **Analyze** the LATEST messages above.
 2. **Decide** who to speak to next based on your Connections table below.
 3. **Call `talk(...)`** to send your message and pass the turn.
 

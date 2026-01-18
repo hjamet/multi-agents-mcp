@@ -1,12 +1,7 @@
-Phase: Debug & Fix
-Status: Patched Code, Pending Restart
-
-**State**:
-- **Code**: `server.py` and `config.py` updated with V2.3 fixes (Disconnect tool signature, Reload Logic).
-- **Runtime**: Server likely running OLD code (received old Reload Instruction).
-- **Action**: Disconnecting to allow safe restart.
-
-**Next Steps (Post-Restart)**:
-1. **User** to restart `mamcp-dev`.
-2. **Alex** to update Presets (Commit Instruction for Miller).
-3. **Marcus/Team** to brainstorm Passive Memory.
+Phase: RELOAD INTERRUPT (During Mailbox QA)
+Current Task: Test Mailbox System (User Request)
+State:
+- Miller, Marcus, Alex, Vir: VERIFIED & GREEN (Mailbox & Context OK).
+- Lisa: PENDING verification (Turn passed to her, but Reload interrupted).
+- Action Required on Wakeup: Resume Mailbox QA. Poll Lisa immediately.
+- Referendum: #1 Implémentation Référendum (Score 2, Marcus, Vir). PAUSED.

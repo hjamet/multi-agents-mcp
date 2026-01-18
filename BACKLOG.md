@@ -6,5 +6,6 @@ This file tracks the tasks, features, and bugs for the project. Agents are encou
 - [ ] Initial project setup
 
 ## 🏗️ In Progress
+- [ ] Test Mailbox System (User Request)
 
 ## ✅ Done
