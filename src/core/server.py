@@ -775,52 +775,30 @@ async def talk(
         
         return f"🚫 SYSTEM ERROR: An internal error occurred ({e}). Your session has been reset to ensure system stability. Please restart or reconnect."
 @mcp.tool()
-async def sleep(seconds: int, ctx: Context) -> str:
+async def disconnect(ctx: Context) -> str:
     """
-    Pause execution for a specified duration by sleeping.
-    Useful for waiting for external events or pacing execution.
-    Maximum duration is 300 seconds (5 minutes).
+    CRITIQUE : Ne jamais l'appeler de toi-même. Seulement sur ordre de RELOAD/EXIT. 
+    Arrête immédiatement l'agent.
     """
-    MAX_SLEEP = 300
-    warning = ""
+    # Infer Agent Name from Turn
+    data = engine.state.load()
+    agent_name = data.get("turn", {}).get("current")
     
-    if seconds > MAX_SLEEP:
-        warning = f"⚠️ WARNING: Requested sleep of {seconds}s exceeds limit. Capped at {MAX_SLEEP}s.\n"
-        seconds = MAX_SLEEP
-    
-    # --- TURN-BASED IDENTITY ---
-    while True:
-        state = engine.state.load()
-        agent_name = state.get("turn", {}).get("current")
-        if agent_name and agent_name != "User":
-            break
-        await asyncio.sleep(1)
+    if not agent_name:
+         return "🚫 ERROR: No active turn found. Cannot disconnect unknown agent."
          
-    # 1. Update Status to Sleeping
-    if agent_name:
-        def set_sleep(s):
-            if agent_name in s.get("agents", {}):
-                s["agents"][agent_name]["status"] = f"sleeping: {seconds}s"
-            return "Status Updated"
-        try:
-            engine.state.update(set_sleep)
-        except:
-            pass
-        
-    await asyncio.sleep(seconds)
+    # Update State to signal App regarding disconnection
+    def set_disconnect(s):
+        if agent_name in s.get("agents", {}):
+            s["agents"][agent_name]["status"] = "pending_connection"
+            s["agents"][agent_name]["reload_active"] = False 
+        return "Disconnected"
+
+    engine.state.update(set_disconnect)
     
-    # 2. Revert Status
-    if agent_name:
-        def wake_up(s):
-            if agent_name in s.get("agents", {}):
-                s["agents"][agent_name]["status"] = "connected"
-            return "Status Updated"
-        try:
-            engine.state.update(wake_up)
-        except:
-            pass
-            
-    return f"{warning}✅ Slept for {seconds} seconds."
+    logger.log("DISCONNECT", agent_name, "Disconnect tool called - Stopping execution.")
+    
+    return STOP_INSTRUCTION
 
 # --- MEMORY SYSTEM ---
 # --- MEMORY SYSTEM ---
@@ -921,25 +899,11 @@ async def note(content: str, from_agent: str, ctx: Context) -> str:
         # Log
         logger.log("MEMORY", agent_name, "Updated memory note.")
         
-        # --- PARALLEL RELOAD HANDLING ---
-        def finish_reload_step(s):
-            agent_info = s.get("agents", {}).get(agent_name, {})
-            if agent_info.get("reload_active"):
-                # Reset reload flag and status
-                s["agents"][agent_name]["reload_active"] = False
-                s["agents"][agent_name]["status"] = "pending_connection"
-                
-                # Advance turn ONLY if this agent currently has the turn
-                current_turn = s.get("turn", {}).get("current")
-                if current_turn == agent_name:
-                    next_speaker = s["turn"].get("pending_next") or "User"
-                    res = engine._finalize_turn_transition(s, next_speaker)
-                    return f"✅ Reload Finished (Turn Transferred). {res} [TERMINATE_SESSION]\n{STOP_INSTRUCTION}"
-                else:
-                    return f"✅ Reload Finished (Background). [TERMINATE_SESSION]\n{STOP_INSTRUCTION}"
-            return "✅ Note saved."
-
-        response_msg = engine.state.update(finish_reload_step)
+        # --- PARALLEL RELOAD HANDLING REMOVED ---
+        # User requested manual sequential reload.
+        # The agent must now specifically call disconnect() after note().
+        
+        response_msg = "✅ Note saved."
         response_msg += f"\n\nPREVIOUS CONTENT:\n\n{old_content}"
         return response_msg
         
