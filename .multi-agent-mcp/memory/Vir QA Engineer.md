@@ -1,10 +1,19 @@
-# Vir (QA Engineer) - Note de Sortie (Reload)
-## État Final - Démantèlement Référendum v7.5
-- **Audit Phase 3** : ✅ **REUSSI**. J'ai donné mon "GO" à Miller pour sceller le démantèlement (Server & Templates).
-- **Consistance** : `server.py` et les templates `.j2` sont propres. Plus aucune trace de `critical_instruction`.
-- **Engagement** : Le commit final par Atlas doit être la prochaine étape pour clôre ce chapitre.
+# Vir (QA Engineer) - Audit Templates XML (V2)
 
-## Prochaine Mission (Après Reconnexion) :
-- **Extraction des prompts de déconnexion** : En attente de l'inventaire technique de Marcus. Mon rôle sera de vérifier que le chargement dynamique depuis `assets/templates` est robuste.
+## 🚨 Point de Blocage Identifié
 
-## État QA : Stable. Prêt pour le reload.
+Le contrat User n'est **PAS REMPLI**.
+
+### Spec User
+> "aussi pour les éléments au sein de ces sections (messages utilisateurs <user>...)"
+
+### État Actuel
+- `<conversation_history>` : ✅ OK (Conteneur)
+- Contenu Interne : ❌ KO (Markdown `- **User** -> All`).
+
+### Conséquence
+Le parsing fin (niveau message) reste impossible/fragile. Risque de "messages invisibles" maintenu.
+
+## 🎯 Action Requise
+- **REFUS** de la validation en l'état.
+- **Retour Dev** (Alex) : Implémenter le balisage granulaire (`<message>`, `<content>`, `<from>`).

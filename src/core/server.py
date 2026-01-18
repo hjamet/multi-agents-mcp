@@ -143,6 +143,10 @@ def _format_conversation_history(messages: List[dict], agent_name: Optional[str]
         start_index = max(0, len(messages) - 10)
         
     slice_msgs = messages[start_index:]
+    
+    # SECURITY PATCH: Hard limit of 20 unread messages (User Request)
+    if len(slice_msgs) > 20:
+        slice_msgs = slice_msgs[-20:]
     output = []
     
     for m in slice_msgs:
@@ -889,6 +893,46 @@ async def talk(
         return f"🚫 SYSTEM ERROR: An internal error occurred ({e}). Your session has been reset to ensure system stability. Please restart or reconnect."
 
 @mcp.tool()
+async def get_previous_message(from_agent: str, n: int, author: str, ctx: Context = None) -> str:
+    """
+    Retrieves a specific past message and its context (previous and next message).
+    Args:
+        from_agent: Your identity.
+        n: The occurrence index (1 = the most recent message from 'author').
+        author: The name of the author to search for.
+    """
+    try:
+        data = engine.state.load()
+        messages = data.get("messages", [])
+        
+        # 1. Find indices of messages from 'author'
+        author_indices = [i for i, m in enumerate(messages) if m.get("from") == author]
+        
+        if not author_indices:
+            return f"No messages found from author '{author}'."
+            
+        if n < 1 or n > len(author_indices):
+            return f"Index '{n}' out of range. Author '{author}' has {len(author_indices)} messages."
+            
+        # Target index is the N-th from the end
+        target_idx = author_indices[-n]
+        
+        # 2. Get Context [target-1, target, target+1]
+        start_idx = max(0, target_idx - 1)
+        end_idx = min(len(messages), target_idx + 2)
+        
+        chosen_msgs = messages[start_idx:end_idx]
+        
+        # 3. Format (Disable unread logic to show full window)
+        formatted = _format_conversation_history(chosen_msgs, agent_name=None)
+        
+        # 4. Truncate
+        return _truncate_and_buffer(from_agent, formatted, data)
+        
+    except Exception as e:
+        return f"Error in get_previous_message tool: {e}"
+
+@mcp.tool()
 async def disconnect(from_agent: str, ctx: Context) -> str:
     """
     CRITICAL: Ne jamais l'appeler de toi-même. Seulement sur ordre de RELOAD/EXIT. 
@@ -1052,7 +1096,7 @@ async def mailbox(from_agent: str, ctx: Context) -> str:
     offset = data_store["offset"]
     
     state = engine.state.load()
-    limit = state.get("config", {}).get("truncation_limit", 0)
+    limit = state.get("config", {}).get("truncation_limit", 4096)
     
     # 1. If limit disabled mid-stream, flush everything
     if limit <= 0:

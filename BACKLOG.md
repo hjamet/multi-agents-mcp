@@ -5,20 +5,16 @@ This file tracks the tasks, features, and bugs for the project. Agents are encou
 ## 📋 To Do
 - [ ] Initial project setup
 - [ ] Sécuriser l'attente utilisateur (gestion des timeouts MCP)
+- [x] Implement `history` tool (get_previous_message) with context retrieval (User Request)
+- [x] Implement Hard Limit (20 messages) on unread message retrieval (User Request)
 
 
 
 
-
-
-
-
-## 🏗️ In Progress
-
-## 🏗️ In Progress
 
 
 ## ✅ Done
+- [x] Implémentation outil `history` (aka get_previous_message) (User Request)
 - [x] Refactor Message Retrieval Logic (Unread vs Last N)
 - [x] Améliorer parsing Mailbox (XML Structure implemented)
 - [x] Implement XML Tags in Templates (Structure Cleanliness)
