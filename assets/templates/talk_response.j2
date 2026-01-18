@@ -18,6 +18,11 @@ You are **{{ name }}**.
 **CRITICAL:**
 1. This is the **REAL** state. Do NOT try to read `CONVERSATION.md` or `MEMORY.md` anymore.
 ---------------------------
+{% if search_results_markdown %}
+### 🔎 RELEVANT CODE CONTEXT (Auto-Search)
+{{ search_results_markdown }}
+---------------------------
+{% endif %}
 
 --- YOUR TURN: ACTION REQUIRED ---
 **{{ language_instruction }}**

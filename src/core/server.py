@@ -13,7 +13,8 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from src.core.logic import Engine
-from src.config import TEMPLATE_DIR, MEMORY_DIR, EXECUTION_DIR, STOP_INSTRUCTION, RELOAD_INSTRUCTION, NOTE_RESPONSE
+from src.config import TEMPLATE_DIR, MEMORY_DIR, EXECUTION_DIR, STOP_INSTRUCTION, RELOAD_INSTRUCTION, NOTE_RESPONSE, LOCAL_DATA_DIR
+from src.services.search_engine import SearchEngine
 
 
 # Initialize
@@ -77,7 +78,42 @@ logger = get_logger()
 
 
 # Setup Templates
+# Setup Templates
 jinja_env = Environment(loader=FileSystemLoader(str(TEMPLATE_DIR)))
+
+# --- SEARCH ENGINE SETUP ---
+_SEARCH_ENGINE_INSTANCE = None
+def _get_search_engine():
+    global _SEARCH_ENGINE_INSTANCE
+    if _SEARCH_ENGINE_INSTANCE is None:
+        _SEARCH_ENGINE_INSTANCE = SearchEngine()
+        persist = LOCAL_DATA_DIR / "vector_store"
+        # Server is READ-ONLY (Streamlit handles watching)
+        _SEARCH_ENGINE_INSTANCE.initialize(root_dir=ROOT_DIR, persist_dir=persist, watch=False)
+    return _SEARCH_ENGINE_INSTANCE
+
+def _get_search_context(state: dict, messages: List[dict]) -> str:
+    """Helper to get relevant search context for talk."""
+    try:
+        conf = state.get("config", {}).get("search", {})
+        x = conf.get("x_markdown", 2)
+        y = conf.get("y_total", 5)
+        
+        if x == 0 and y == 0: return ""
+        
+        # Build query from last 3 messages
+        query_parts = [m.get("content", "") for m in messages[-3:]]
+        query = "\n".join(query_parts)
+        
+        if not query.strip(): return ""
+        
+        se = _get_search_engine()
+        md, _ = se.get_relevant_context(query, max_markdown=x, max_total=y)
+        return md
+    except Exception as e:
+        logger.error("System", f"Search Context Error: {e}")
+        return ""
+
 
 
 def _format_conversation_history(messages: List[dict]) -> str:
@@ -378,6 +414,8 @@ async def agent(ctx: Context) -> str:
         language_instruction=_get_language_instruction_text(data),
         notification=notification,
         backlog_instruction=_get_backlog_instruction_text(data),
+        search_results_markdown=_get_search_context(data, visible_messages),
+
 
     )
     return _truncate_and_buffer(name, response, data)
@@ -659,6 +697,8 @@ async def talk(
                         language_instruction=_get_language_instruction_text(data),
                         notification=notification,
                         backlog_instruction=_get_backlog_instruction_text(data),
+                        search_results_markdown=_get_search_context(data, visible_msgs),
+
 
                         instruction=f"✅ USER INTERCEPTION: The User replied: \"{user_reply}\". Your turn is back. READ THE CONVERSATION NOW."
                      )
@@ -719,6 +759,8 @@ async def talk(
                 language_instruction=_get_language_instruction_text(data),
                 notification=notification,
                 backlog_instruction=_get_backlog_instruction_text(data),
+                search_results_markdown=_get_search_context(data, visible_msgs),
+
 
                 instruction=f"✅ {user_feedback_msg}"
             )
@@ -799,6 +841,8 @@ async def talk(
             language_instruction=_get_language_instruction_text(data),
             notification=notification,
             backlog_instruction=_get_backlog_instruction_text(data),
+            search_results_markdown=_get_search_context(data, visible_msgs),
+
 
             instruction=result["instruction"]
         )
@@ -1033,6 +1077,38 @@ async def mailbox(from_agent: str, ctx: Context) -> str:
     msg = template.format(remaining_after, from_agent)
             
     return chunk + msg
+
+@mcp.tool()
+async def search(query: str, glob: str = None, ctx: Context = None) -> str:
+    """
+    Search the codebase using semantic vector search.
+    Returns the most relevant code snippets.
+    
+    Args:
+        query: The natural language query.
+        glob: Optional glob pattern (e.g. "*.py", "src/*").
+    """
+    try:
+        # Default limit from config if not specified
+        se = _get_search_engine()
+        state = engine.state.load()
+        # Use Standard Default Y=15
+        final_limit = state.get("config", {}).get("search", {}).get("y_total", 15)
+        
+        results = se.search(query, limit=final_limit, file_pattern=glob)
+        
+        if not results:
+            return "No results found."
+            
+        output = [f"Found {len(results)} matches for '{query}' (Limit: {final_limit}):\n"]
+        for r in results:
+            output.append(f"--- {r['path']} (Lines {r['start_line']}-{r['end_line']}) ---")
+            output.append(r['content'])
+            output.append("--------------------------------------------------\n")
+            
+        return "\n".join(output)
+    except Exception as e:
+        return f"Error executing search: {e}"
 
 if __name__ == "__main__":
     mcp.run()

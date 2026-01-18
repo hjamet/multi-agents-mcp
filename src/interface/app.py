@@ -31,6 +31,7 @@ from src.config import (
     RELOAD_INSTRUCTION
 )
 from src.core.state import StateStore
+from src.services.search_engine import SearchEngine
 
 st.set_page_config(page_title="Agent Orchestra", page_icon="🤖", layout="wide")
 
@@ -212,6 +213,20 @@ def save_config(new_config):
         s["config"] = new_config
         return "Config Saved"
     state_store.update(update_fn)
+
+
+# --- SEARCH ENGINE INIT ---
+@st.cache_resource
+def init_search_engine():
+    engine = SearchEngine()
+    # Ensure directory exists for persist
+    persist = LOCAL_DATA_DIR / "vector_store"
+    persist.mkdir(parents=True, exist_ok=True)
+    engine.initialize(root_dir=CODE_ROOT, persist_dir=persist)
+    return engine
+
+# Initialize background service
+search_engine = init_search_engine()
 
 
 # --- DIALOGS ---
@@ -755,6 +770,39 @@ with st.sidebar:
     if new_lang != current_lang:
         config["language"] = new_lang
         save_config(config)
+        st.rerun()
+
+        config["language"] = new_lang
+        save_config(config)
+        st.rerun()
+
+    st.divider()
+    
+    # Search Config
+    st.markdown("### 🔎 Search Engine")
+    
+    # Status Indicator
+    if search_engine and search_engine.initialized:
+        dev_label = search_engine.device.upper().replace("”", "") # Fix typo if any from previous edit
+        st.caption(f"Status: **Active** | Device: **{dev_label}** ⚡")
+    else:
+        st.caption("Status: 🔴 Disabled (Missing Deps)")
+
+    search_conf = config.get("search", {})
+    
+    sc1, sc2 = st.columns(2)
+    with sc1:
+        x_val = st.number_input("Context (X)", min_value=0, max_value=10, value=search_conf.get("x_markdown", 3), help="Number of full markdown result to inject (Passive)")
+    with sc2:
+        y_val = st.number_input("Total (Y)", min_value=1, max_value=50, value=search_conf.get("y_total", 15), help="Default limit for Search Tool")
+        
+    if x_val != search_conf.get("x_markdown", 3) or y_val != search_conf.get("y_total", 15):
+        if "search" not in config: config["search"] = {}
+        config["search"]["x_markdown"] = x_val
+        config["search"]["y_total"] = y_val
+        save_config(config)
+        st.toast("Search config saved!")
+        time.sleep(0.5)
         st.rerun()
 
     st.divider()
