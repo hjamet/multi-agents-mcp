@@ -27,7 +27,8 @@ from src.config import (
     LOCAL_DATA_DIR, 
     GLOBAL_PRESET_DIR, 
     ASSETS_DIR,
-    CODE_ROOT as CONFIG_CODE_ROOT
+    CODE_ROOT as CONFIG_CODE_ROOT,
+    RELOAD_INSTRUCTION
 )
 from src.core.state import StateStore
 
@@ -227,10 +228,7 @@ def handle_disconnect_agent(agent_name):
             # Inject System Message for the Agent
             msg = {
                 "from": "System",
-                "content": "🔁 **SYSTEM NOTIFICATION**: RELOAD REQUESTED.\n"
-                           "1. Synthesize your final state into a `note()`.\n"
-                           "2. Call `disconnect()` to terminate process.\n"
-                           "⛔ **PROHIBITED**: `talk()`, `sleep()`.",
+                "content": RELOAD_INSTRUCTION,
                 "public": False,
                 "target": agent_name,
                 "timestamp": time.time()

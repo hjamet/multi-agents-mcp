@@ -13,7 +13,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from src.core.logic import Engine
-from src.config import TEMPLATE_DIR, MEMORY_DIR, EXECUTION_DIR, STOP_INSTRUCTION, RELOAD_INSTRUCTION
+from src.config import TEMPLATE_DIR, MEMORY_DIR, EXECUTION_DIR, STOP_INSTRUCTION, RELOAD_INSTRUCTION, NOTE_RESPONSE
 
 
 # Initialize
@@ -305,7 +305,7 @@ async def agent(ctx: Context) -> str:
     # BLOCKING: Wait for everyone before returning the initial prompt
     wait_msg = await engine.wait_for_all_agents_async(name)
     if wait_msg == "RELOAD_REQUIRED":
-         return f"⚠️ SYSTEM ALERT: [RELOAD IN PROGRESS]\n{STOP_INSTRUCTION}"
+         return STOP_INSTRUCTION
     if wait_msg.startswith("TIMEOUT"):
          return wait_msg
 
@@ -485,8 +485,7 @@ async def talk(
         if sender_data.get("reload_active"):
              logger.log("BLOCK", sender, "Blocked talk() due to reload_active=True")
              # Force them to quit immediately
-             return (f"🔁 **SYSTEM NOTIFICATION**: RELOAD REQUESTED.\n"
-                     f"{RELOAD_INSTRUCTION}")
+             return RELOAD_INSTRUCTION
 
         next_agent = to
 
@@ -960,9 +959,11 @@ async def note(content: str, from_agent: str, ctx: Context) -> str:
         # Agent can save note asynchronously during reload sequence.
         # The agent must now specifically call disconnect() after note().
         
-        response_msg = "✅ Note saved."
-        response_msg += f"\n\nPREVIOUS CONTENT:\n\n{old_content}"
-        return response_msg
+        # Render Note Response Template
+        return jinja_env.from_string(NOTE_RESPONSE).render(
+            agent_name=agent_name,
+            old_content=old_content
+        )
         
     except Exception as e:
         return f"🚫 SYSTEM ERROR writing note: {e}"

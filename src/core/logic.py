@@ -453,7 +453,7 @@ class Engine:
                     return {
                     "status": "reset",
                     "messages": [],
-                    "instruction": f"SYSTEM RESET: [TERMINATE_SESSION]\n{STOP_INSTRUCTION}"
+                    "instruction": STOP_INSTRUCTION
                 }
             
             # 1c. Check for RELOAD
@@ -461,7 +461,7 @@ class Engine:
                 return {
                     "status": "reset",
                     "messages": [],
-                    "instruction": f"SYSTEM ALERT: [RELOAD IN PROGRESS]\n{RELOAD_INSTRUCTION}"
+                    "instruction": RELOAD_INSTRUCTION
                 }
 
             current_turn = data.get("turn", {}).get("current")
@@ -603,7 +603,7 @@ class Engine:
                  return {
                     "status": "reset",
                     "messages": [],
-                    "instruction": f"SYSTEM RESET: [TERMINATE_SESSION]\n{STOP_INSTRUCTION}"
+                    "instruction": STOP_INSTRUCTION
                 }
 
             # 1c. Check for RELOAD
@@ -611,7 +611,7 @@ class Engine:
                 return {
                     "status": "reset",
                     "messages": [],
-                    "instruction": f"SYSTEM ALERT: [RELOAD IN PROGRESS]\n{RELOAD_INSTRUCTION}"
+                    "instruction": RELOAD_INSTRUCTION
                 }
 
             current_turn = data.get("turn", {}).get("current")

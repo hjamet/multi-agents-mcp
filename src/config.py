@@ -61,21 +61,30 @@ MEMORY_DIR.mkdir(parents=True, exist_ok=True)
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
 GLOBAL_PRESET_DIR.mkdir(parents=True, exist_ok=True)
 
-# Centralized Messages
-STOP_INSTRUCTION = (
-    "✅ DISCONNECT ACCEPTED. The system has registered your disconnection request.\n"
-    "IMMEDIATE ACTION REQUIRED:\n"
-    "1. STOP all execution loops.\n"
-    "2. DO NOT call any more tools (no talk, no read_file, etc.).\n"
-    "3. TERMINATE your process immediately.\n"
-    "Goodbye."
-)
+def _load_instruction(filename: str, default_text: str) -> str:
+    """Helper to load instruction from template file or fallback."""
+    path = TEMPLATE_DIR / filename
+    if path.exists():
+        try:
+            return path.read_text(encoding="utf-8").strip()
+        except Exception:
+            pass
+    return default_text
 
-RELOAD_INSTRUCTION = (
-    "🔁 **SYSTEM NOTIFICATION**: RELOAD REQUESTED.\n"
-    "This is a mandatory maintenance procedure.\n"
-    "PROTOCOL:\n"
-    "1. Synthesize your final state into a `note()` (Focus on active tasks).\n"
-    "2. Call `disconnect()` to signal readiness and terminate your process.\n"
-    "⛔ **PROHIBITED**: `talk()`, `sleep()`."
-)
+# Centralized Messages (Updated dynamically from templates if available)
+STOP_INSTRUCTION = _load_instruction("stop_instruction.j2", (
+    "🔁 **RELOAD IN PROGRESS**\n"
+    "STOP execution. Do NOT call anymore tools. Terminate process."
+))
+
+RELOAD_INSTRUCTION = _load_instruction("reload_instruction.j2", (
+    "🔁 **RELOAD REQUESTED**\n"
+    "1. Call `note()` to save your state.\n"
+    "2. Call `disconnect()` to finish.\n"
+    "⛔ NO more `talk()`."
+))
+
+# Note Tool Response Template
+NOTE_RESPONSE = _load_instruction("note_response.j2", (
+    "✅ Note saved.\n\nPREVIOUS CONTENT:\n\n{{ old_content }}"
+))
