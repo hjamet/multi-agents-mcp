@@ -116,18 +116,36 @@ def _get_search_context(state: dict, messages: List[dict]) -> str:
 
 
 
-def _format_conversation_history(messages: List[dict]) -> str:
+def _format_conversation_history(messages: List[dict], agent_name: Optional[str] = None) -> str:
     """
-    Formats the last 10 messages for context injection.
+    Formats messages for context injection (XML).
+    Logic: All unread messages + 1 previous (context anchor).
     """
     if not messages:
         return "(No messages yet)"
         
-    # Take last 10
-    recent = messages[-10:]
+    start_index = 0
+    if agent_name:
+        # Find last message from me
+        last_my_index = -1
+        for i, m in enumerate(messages):
+            if m.get("from") == agent_name:
+                last_my_index = i
+        
+        if last_my_index != -1:
+            # We want [last_my_index:] to include the last one I sent + subsequent
+            start_index = max(0, last_my_index)
+        else:
+            # Never spoken? Show last 15 as fallback
+            start_index = max(0, len(messages) - 15)
+    else:
+        # Fallback for generic calls
+        start_index = max(0, len(messages) - 10)
+        
+    slice_msgs = messages[start_index:]
     output = []
     
-    for m in recent:
+    for m in slice_msgs:
         sender = m.get("from", "Unknown")
         content = m.get("content", "")
         # Calculate Target for display
@@ -135,7 +153,13 @@ def _format_conversation_history(messages: List[dict]) -> str:
         if not m.get("public"):
              target_display = m.get("target", "Unknown")
              
-        output.append(f"- **{sender}** -> {target_display}: {content}")
+        # XML Format
+        xml_msg = f"""<message>
+    <from>{sender}</from>
+    <to>{target_display}</to>
+    <content>{content}</content>
+</message>"""
+        output.append(xml_msg)
         
     return "\n".join(output)
 
@@ -397,7 +421,7 @@ async def agent(ctx: Context) -> str:
     mem_content = _get_memory_content(name)
     if not mem_content: mem_content = "(No personal memory yet. Use `note()` to write one.)"
     
-    conv_history_str = _format_conversation_history(visible_messages)
+    conv_history_str = _format_conversation_history(visible_messages, name)
 
     # Calculate Notifications
     notification = _get_new_messages_notification(name, visible_messages)
@@ -679,7 +703,7 @@ async def talk(
                      mem_content = _get_memory_content(sender)
                      if not mem_content: mem_content = "(No personal memory yet. Use `note()` to write one.)"
                      
-                     conv_history_str = _format_conversation_history(visible_msgs)
+                     conv_history_str = _format_conversation_history(visible_msgs, sender)
 
                      # Calculate Notifications
                      notification = _get_new_messages_notification(sender, visible_msgs)
@@ -704,9 +728,6 @@ async def talk(
                      )
                      return _truncate_and_buffer(sender, response, data)
 
-            # Fallback (Busy or Aborted Wait) -> Standard Template Response
-            if logger: logger.log("TURN", "System", "Turn passed to USER (Non-Blocking / Busy). Agent retains control.")
-            
             try:
                 data = engine.state.load()
                 role_snippet = _get_latest_role(data, sender)
@@ -741,7 +762,7 @@ async def talk(
             mem_content = _get_memory_content(sender)
             if not mem_content: mem_content = "(No personal memory yet. Use `note()` to write one.)"
             
-            conv_history_str = _format_conversation_history(visible_msgs)
+            conv_history_str = _format_conversation_history(visible_msgs, sender)
 
             # Calculate Notifications
             notification = _get_new_messages_notification(sender, visible_msgs)

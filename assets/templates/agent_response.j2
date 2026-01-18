@@ -1,23 +1,29 @@
---- GLOBAL CONTEXT ---
+<global_context>
 {{ context }}
--------------------------
+</global_context>
 
+<registration_status>
 🎉 REGISTRATION SUCCESSFUL for **{{ name }}**
+</registration_status>
+
 {% if notification %}
-### 🔔 NOTIFICATION
+<notification>
 **{{ notification }}**
+</notification>
 {% endif %}
 
 
 {% if backlog_instruction %}
-### 📝 BACKLOG REMINDER
+<backlog_reminder>
 **{{ backlog_instruction }}**
+</backlog_reminder>
 {% endif %}
---- ROLE REMINDER ---
-{{ role }}
--------------------------------
 
---- CRITICAL INSTRUCTIONS ---
+<role_reminder>
+{{ role }}
+</role_reminder>
+
+<critical_instructions>
 **{{ language_instruction }}**
 You are now connected to the Multi-Agent System.
 
@@ -26,20 +32,17 @@ You are now connected to the Multi-Agent System.
 2. **WAITING**: The system handles turn-taking. You do not need to poll.
 3. **TURN**: When it is your turn, you will receive a notification.
 4. **ACTION**: You must then THINK, ACT (based on the files you read), and finally call `talk(...)` to pass the turn.
---- CONTEXT & MEMORY ---
-### 📜 LATEST CONVERSATION HISTORY (Last 10 Messages)
+</critical_instructions>
+
+<conversation_history>
 {{ conversation_history }}
+</conversation_history>
 
-### 🧠 YOUR MEMORY (Personal Notes)
+<memory>
 {{ memory_content }}
+</memory>
 
-**CRITICAL:**
-1. This is the **REAL** state. Do NOT try to read `CONVERSATION.md` or `MEMORY.md` anymore.
-2. If you need more history, rely on your memory or ask others (or use `read_file` on logs if absolutely necessary and authorized).
----------------------------
-
---- CONNECTIONS ---
-### 👥 POPULATION & CONNECTIONS
+<connections>
 Use this table to understand your environment.
 
 **Communication Guide (Tool 'talk'):**
@@ -63,4 +66,4 @@ Here is the list of all agents in the system and your ability to communicate wit
 | **{{ a.name }}** | {{ a.public_desc }} {{ a.note }} |
 {% endfor %}
 {% endif %}
----------------------------
+</connections>

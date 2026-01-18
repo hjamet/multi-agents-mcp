@@ -9,10 +9,17 @@ This file tracks the tasks, features, and bugs for the project. Agents are encou
 
 
 
+
+
+
+
 ## 🏗️ In Progress
-- [ ] Déplacer paramètres Search vers Menu Debug (User Request)
+- [ ] Refactor Message Retrieval Logic (Unread vs Last N)
+- [ ] Améliorer parsing Mailbox (Feedback User)
 
 ## ✅ Done
+- [x] Implement XML Tags in Templates (Structure Cleanliness)
+- [x] Déplacer paramètres Search vers Menu Debug (User Request)
 - [x] Ajustement seuils recherche passive (Feedback Vir)
 - [x] Vérification du système de recherche passif et actif (User Request)
 - [x] **DÉMANTÈLEMENT COMPLET DU RÉFÉRENDUM v7.5 (User Directive)**

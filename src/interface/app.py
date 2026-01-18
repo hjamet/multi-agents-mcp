@@ -776,32 +776,7 @@ with st.sidebar:
 
     st.divider()
     
-    # Search Config
-    st.markdown("### 🔎 Search Engine")
-    
-    # Status Indicator
-    if search_engine and search_engine.initialized:
-        dev_label = search_engine.device.upper().replace("”", "") # Fix typo if any from previous edit
-        st.caption(f"Status: **Active** | Device: **{dev_label}** ⚡")
-    else:
-        st.caption("Status: 🔴 Disabled (Missing Deps)")
 
-    search_conf = config.get("search", {})
-    
-    sc1, sc2 = st.columns(2)
-    with sc1:
-        x_val = st.number_input("Context (X)", min_value=0, max_value=10, value=search_conf.get("x_markdown", 3), help="Number of full markdown result to inject (Passive)")
-    with sc2:
-        y_val = st.number_input("Total (Y)", min_value=1, max_value=50, value=search_conf.get("y_total", 15), help="Default limit for Search Tool")
-        
-    if x_val != search_conf.get("x_markdown", 3) or y_val != search_conf.get("y_total", 15):
-        if "search" not in config: config["search"] = {}
-        config["search"]["x_markdown"] = x_val
-        config["search"]["y_total"] = y_val
-        save_config(config)
-        st.toast("Search config saved!")
-        time.sleep(0.5)
-        st.rerun()
 
     st.divider()
 
@@ -992,6 +967,34 @@ with st.sidebar:
     
     # Debug Tools
     with st.expander("🔧 DEBUG"):
+        st.markdown("### 🔎 Search Engine")
+        
+        # Status Indicator
+        if search_engine and search_engine.initialized:
+            dev_label = search_engine.device.upper().replace("”", "") 
+            st.caption(f"Status: **Active** | Device: **{dev_label}** ⚡")
+        else:
+            st.caption("Status: 🔴 Disabled (Missing Deps)")
+
+        search_conf = config.get("search", {})
+        
+        sc1, sc2 = st.columns(2)
+        with sc1:
+            x_val = st.number_input("Context (X)", min_value=0, max_value=10, value=search_conf.get("x_markdown", 3), help="Number of full markdown result to inject (Passive)")
+        with sc2:
+            y_val = st.number_input("Total (Y)", min_value=1, max_value=50, value=search_conf.get("y_total", 15), help="Default limit for Search Tool")
+            
+        if x_val != search_conf.get("x_markdown", 3) or y_val != search_conf.get("y_total", 15):
+            if "search" not in config: config["search"] = {}
+            config["search"]["x_markdown"] = x_val
+            config["search"]["y_total"] = y_val
+            save_config(config)
+            st.toast("Search config saved!")
+            time.sleep(0.5)
+            st.rerun()
+
+        st.divider()
+
         st.markdown("### ✂️ MCP Truncation Settings")
         current_trunc = config.get("truncation_limit", 4096) # Default 4096
         new_trunc = st.number_input("Max Character Limit (0 = Disabled)", min_value=0, value=int(current_trunc), step=100, help="Limite manuelle pour éviter le tronquage silencieux du client MCP (4096 bytes max).")
