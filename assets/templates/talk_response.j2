@@ -29,6 +29,15 @@ Your memory (Personal Notes) is in `MEMORY.md`.
 ### 🔔 NOTIFICATION
 **{{ notification }}**
 {% endif %}
+
+{% if critical_instruction %}
+{{ critical_instruction }}
+{% endif %}
+
+{% if backlog_instruction %}
+### 📝 BACKLOG REMINDER
+**{{ backlog_instruction }}**
+{% endif %}
 It is your turn to speak.
 1. **Analyze** the latest messages from `CONVERSATION.md`.
 2. **Decide** who to speak to next based on your Connections table below.

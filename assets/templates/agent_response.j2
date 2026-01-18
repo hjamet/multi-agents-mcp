@@ -7,6 +7,15 @@
 ### 🔔 NOTIFICATION
 **{{ notification }}**
 {% endif %}
+
+{% if critical_instruction %}
+{{ critical_instruction }}
+{% endif %}
+
+{% if backlog_instruction %}
+### 📝 BACKLOG REMINDER
+**{{ backlog_instruction }}**
+{% endif %}
 --- ROLE REMINDER ---
 {{ role }}
 -------------------------------
