@@ -858,7 +858,7 @@ with st.sidebar:
                             st.rerun()
             
     st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
-    if st.button("🔄 Reload All Agents", type="secondary", use_container_width=True, help="Séquence de rechargement (Séquentiel)."):
+    if st.button("🔄 Reload All Agents", type="secondary", use_container_width=True, help="Séquence de rechargement (Parallèle)."):
          # Identify Targets
         to_reload = [
             n for n, d in agents.items() 
@@ -867,9 +867,32 @@ with st.sidebar:
         if not to_reload:
             st.toast("Aucun agent actif à recharger.")
         else:
-            # START SEQUENTIAL SEQUENCE
+            # START PARALLEL SEQUENCE
             st.session_state.reload_queue = list(to_reload)
-            st.toast(f"Séquence de rechargement initialisée pour {len(to_reload)} agents.")
+            
+            # Atomic Bulk Update
+            def bulk_reload_signal(s):
+                count = 0
+                for name in to_reload:
+                    if name in s.get("agents", {}):
+                         s["agents"][name]["reload_active"] = True
+                         # Inject System Message
+                         msg = {
+                            "from": "System",
+                            "content": "🔁 **SYSTEM NOTIFICATION**: RELOAD REQUESTED.\n"
+                                       "1. Synthesize your final state into a `note()`.\n"
+                                       "2. Call `disconnect()` to terminate process.\n"
+                                       "⛔ **PROHIBITED**: `talk()`, `sleep()`.",
+                            "public": False,
+                            "target": name,
+                            "timestamp": time.time()
+                         }
+                         s.setdefault("messages", []).append(msg)
+                         count += 1
+                return f"Signal de rechargement global envoyé ({count} agents)."
+            
+            state_store.update(bulk_reload_signal)
+            st.toast(f"Séquence de rechargement PARALLÈLE initialisée pour {len(to_reload)} agents.")
             st.rerun()
 
     # --- SEQUENTIAL RELOAD PROCESSOR ---

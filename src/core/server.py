@@ -858,12 +858,36 @@ async def talk(
         return f"🚫 SYSTEM ERROR: An internal error occurred ({e}). Your session has been reset to ensure system stability. Please restart or reconnect."
 
 @mcp.tool()
-async def disconnect(ctx: Context) -> str:
+async def disconnect(from_agent: str, ctx: Context) -> str:
     """
     CRITICAL: Ne jamais l'appeler de toi-même. Seulement sur ordre de RELOAD/EXIT. 
     Arrête immédiatement l'agent.
+    
+    Args:
+        from_agent: Your identity (must match the requester).
     """
     # Simply return the stop instruction.
+    agent_name = from_agent
+    
+    # --- 0. EXISTENCE CHECK ---
+    data = engine.state.load()
+    known_agents = data.get("agents", {})
+    if agent_name != "User" and agent_name not in known_agents:
+         return f"🚫 IDENTITY ERROR: Name '{agent_name}' not found in registry."
+    
+    # --- UPDATE STATE ---
+    # Transition to "Attente Reconnexion" (pending_connection)
+    # This turns the UI status to Orange (Waiting) instead of Red (Disconnecting)
+    def update_to_pending(s):
+        if agent_name in s.get("agents", {}):
+            s["agents"][agent_name]["status"] = "pending_connection"
+            s["agents"][agent_name]["reload_active"] = False
+            # We don't remove them from the roster, just change status
+        return f"Agent {agent_name} disconnected -> Pending Connection"
+        
+    engine.state.update(update_to_pending)
+    logger.log("DISCONNECT", agent_name, "Agent disconnected cleanly. Waiting for reconnection.")
+
     return STOP_INSTRUCTION
 
 # --- MEMORY SYSTEM ---
