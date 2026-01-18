@@ -229,15 +229,26 @@ def _get_backlog_instruction_text(state: dict) -> str:
 def _get_critical_instruction_text(state: dict) -> str:
     """Helper to inject Critical Mode instruction."""
     if state.get("config", {}).get("enable_critical_mode", False):
-        return """### 🛡️ CRITICAL THINKING MODE (PEER REVIEW v2)
+        return """### 🛡️ CRITICAL THINKING MODE (PEER REVIEW v5)
 **MANDATORY**: You are in a high-precision collaboration. TRUST NO ONE BLINDLY.
-Before your main response, you must START with a rigorous check of the recent history (Context Window):
+Before your main response, you must START with a rigorous check of the recent messages from **OTHER AGENTS** (Context Window).
 
+**YOUR DUTY (THE ESCALATION LADDER)**:
+1. **Identify Weakness**: Find the most dubious/fragile sentence or logic in recent history.
+2. **Prefer Warnings**: If you have *any* doubt, use `[⚠️ WARNING]`. Use `[✅ VALID]` ONLY for 100% certainty.
+3. **Consensus Check**: Did a peer raise a `[⚠️ WARNING]` or `[❌ ERROR]`?
+   - **Do NOT follow blindly.** Analyze their concern.
+   - **If you share the doubt/confusion** about a `[⚠️ WARNING]` => **ESCALATE** it to `[❌ ERROR]`.
+   - **If you agree** with an `[❌ ERROR]` => **STOP** the current task. Address this error as your **MAIN TOPIC** immediately.
+
+**FORMAT**:
 > **🔍 CRITIQUE & ALIGNMENT**
-> - **Analysis**: Review the last few turns. Did we drift from the User's original goal? Are there any contradictions between agents? Is the latest action fully aligned with the defined plan?
-> - **Verdict**: [✅ VALID] or [⚠️ DISSENT] -> *State clearly: "I confirm expectation" OR "Wait, I think we misunderstood X..."*
+> - **Citation**: "The exact sentence..."
+> - **Verdict**: [✅ VALID] or [⚠️ WARNING] or [❌ ERROR]
+> - **Observation**: *Explain your reasoning or ASK clarifying questions if unsure.*
 
-*Rule: If you raise a [⚠️ DISSENT], you must prioritize resolving the confusion over executing the task.*"""
+*Rule: Escalation requires your OWN intellectual conviction. Do not copy-paste doubts.*"""
+    return ""
     return ""
 
 

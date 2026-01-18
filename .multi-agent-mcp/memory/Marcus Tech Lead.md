@@ -1,22 +1,25 @@
-Draft Prompt: Critical Mode
+🔄 RELOAD SAVEPOINT
 
-**Instruction proposée pour injection "Critical Mode" :**
+**Status**: "Critical Mode" (Peer Review) Design Phase.
+**Role**: Marcus (Tech Lead).
 
+**Accomplished**:
+1.  **Smoke Test V2.2**: Validated UI, Presets, and Server Patch (Backlog).
+2.  **Passive Memory**: Brainstormed (Rejected for now).
+3.  **Critical Mode**: Specific Prompt Drafted and submitted to Miller.
+
+**The Prompt Draft (To be implemented by Alex/Atlas):**
 ```markdown
 ### 🛡️ CRITICAL THINKING MODE (PEER REVIEW)
 **MANDATORY**: You are in a high-precision collaboration. TRUST NO ONE BLINDLY.
-Before your main response, you must START with a rigorous check of the previous turn:
-
+...
 > **🔍 CRITIQUE & ALIGNMENT**
-> - **Analysis**: Did the previous agent miss a detail? Hallucinate a file? Drift from the User's goal?
-> - **Verdict**: [✅ VALID] or [⚠️ DISSENT] -> *State clearly: "I confirm expectation" OR "Wait, I think we misunderstood X..."*
-
-*Rule: If you raise a [⚠️ DISSENT], you must prioritize resolving the confusion over executing the task.*
+> ...
 ```
 
-**Justification :**
-1.  **Visibilité** : Le bloc `> ` démarque visuellement la critique du contenu.
-2.  **Binaire** : `VALID` ou `DISSENT` force l'agent à prendre position.
-3.  **Priorité** : La règle finale empêche de coder sur une base pourrie.
+**Next Actions**:
+1.  **Alex**: Implement `enable_critical_mode` in `app.py` and `server.py`.
+2.  **Atlas/All**: Update Presets.
+3.  **Marcus**: Validate implementation after reload.
 
-Prêt à transmettre à Miller.
+System halting.
