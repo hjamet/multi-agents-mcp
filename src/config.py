@@ -62,10 +62,8 @@ LOGS_DIR.mkdir(parents=True, exist_ok=True)
 GLOBAL_PRESET_DIR.mkdir(parents=True, exist_ok=True)
 
 # Centralized Messages
-STOP_INSTRUCTION = (
-    "Don't worry; the user needs to clear your context window. To facilitate this, you must exit "
-    "your current execution loop and terminate immediately after performing one final memory update. "
-    "DO NOT consult the CONVERSATION or MEMORY files, and DO NOT call any other tools—specifically "
-    "'talk', 'agent', or 'sleep'. Your final action must be to summarize the current state, call "
-    "the 'note' tool, and then stop all execution entirely."
+STOP_INSTRUCTION = "Session Terminated. Do not call any more tools. Stop execution completely."
+
+RELOAD_INSTRUCTION = (
+    "1. Call `note()`. 2. Call `disconnect()`. DO NOT call `talk()` or `sleep()`. TERMINATE."
 )

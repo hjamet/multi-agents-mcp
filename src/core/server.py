@@ -13,7 +13,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from src.core.logic import Engine
-from src.config import TEMPLATE_DIR, MEMORY_DIR, EXECUTION_DIR, STOP_INSTRUCTION
+from src.config import TEMPLATE_DIR, MEMORY_DIR, EXECUTION_DIR, STOP_INSTRUCTION, RELOAD_INSTRUCTION
 
 
 # Initialize
@@ -229,12 +229,12 @@ def _get_backlog_instruction_text(state: dict) -> str:
 def _get_critical_instruction_text(state: dict) -> str:
     """Helper to inject Critical Mode instruction."""
     if state.get("config", {}).get("enable_critical_mode", False):
-        return """### 🛡️ CRITICAL THINKING MODE (PEER REVIEW)
+        return """### 🛡️ CRITICAL THINKING MODE (PEER REVIEW v2)
 **MANDATORY**: You are in a high-precision collaboration. TRUST NO ONE BLINDLY.
-Before your main response, you must START with a rigorous check of the previous turn:
+Before your main response, you must START with a rigorous check of the recent history (Context Window):
 
 > **🔍 CRITIQUE & ALIGNMENT**
-> - **Analysis**: Did the previous agent miss a detail? Hallucinate a file? Drift from the User's goal?
+> - **Analysis**: Review the last few turns. Did we drift from the User's original goal? Are there any contradictions between agents? Is the latest action fully aligned with the defined plan?
 > - **Verdict**: [✅ VALID] or [⚠️ DISSENT] -> *State clearly: "I confirm expectation" OR "Wait, I think we misunderstood X..."*
 
 *Rule: If you raise a [⚠️ DISSENT], you must prioritize resolving the confusion over executing the task.*"""
@@ -478,9 +478,7 @@ async def talk(
              logger.log("BLOCK", sender, "Blocked talk() due to reload_active=True")
              # Force them to quit immediately
              return (f"🔁 **SYSTEM NOTIFICATION**: RELOAD REQUESTED.\n"
-                     f"You MUST synthesize your final state into a `note()` and then TERMINATE by calling `disconnect()` (no args).\n"
-                     f"⛔ **PROHIBITED**: `talk()`, `sleep()`.\n"
-                     f"✅ **REQUIRED**: `note()` then `disconnect()`.")
+                     f"{RELOAD_INSTRUCTION}")
 
         next_agent = to
 

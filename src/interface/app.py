@@ -798,7 +798,12 @@ with st.sidebar:
             
             card_class = "active-turn" if is_turn else ""
             
-            if status == "connected":
+            if info.get("reload_active"):
+                status_color = "#FF5722" # Deep Orange
+                status_label = "Déconnexion..."
+                bg = "rgba(255, 87, 34, 0.1)"
+                border_color = "rgba(255, 87, 34, 0.3)"
+            elif status == "connected":
                 status_color = "#4CAF50" # Green
                 status_label = "En ligne"
                 bg = "rgba(76, 175, 80, 0.05)"
@@ -1078,7 +1083,7 @@ if st.session_state.page == "Communication":
                 render_reply_button(sender, content, real_idx)
 
             # Message Content
-            st.markdown(f"""<div class="message-bubble" style="{bubble_style}"><div style="color: #1f1f1f; line-height: 1.5;">{content_visual}</div></div>""", unsafe_allow_html=True)
+            st.markdown(f"""<div class="message-bubble" style="{bubble_style}"><div style="color: #1f1f1f; line-height: 1.5;">\n\n{content_visual}</div></div>""", unsafe_allow_html=True)
 
 
     # --- UI CONTROLS (Above Input) ---

@@ -2,7 +2,7 @@ import time
 import asyncio
 from typing import Optional, List, Dict, Any
 from .state import StateStore
-from ..config import STOP_INSTRUCTION
+from ..config import STOP_INSTRUCTION, RELOAD_INSTRUCTION
 
 
 class Engine:
@@ -461,7 +461,7 @@ class Engine:
                 return {
                     "status": "reset",
                     "messages": [],
-                    "instruction": f"SYSTEM ALERT: [RELOAD IN PROGRESS]\n{STOP_INSTRUCTION}"
+                    "instruction": f"SYSTEM ALERT: [RELOAD IN PROGRESS]\n{RELOAD_INSTRUCTION}"
                 }
 
             current_turn = data.get("turn", {}).get("current")
@@ -611,7 +611,7 @@ class Engine:
                 return {
                     "status": "reset",
                     "messages": [],
-                    "instruction": f"SYSTEM ALERT: [RELOAD IN PROGRESS]\n{STOP_INSTRUCTION}"
+                    "instruction": f"SYSTEM ALERT: [RELOAD IN PROGRESS]\n{RELOAD_INSTRUCTION}"
                 }
 
             current_turn = data.get("turn", {}).get("current")
