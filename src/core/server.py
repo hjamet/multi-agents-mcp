@@ -454,7 +454,9 @@ async def talk(
              logger.log("BLOCK", sender, "Blocked talk() due to reload_active=True")
              # Force them to quit immediately
              return (f"🔁 **SYSTEM NOTIFICATION**: RELOAD REQUESTED.\n"
-                     f"{STOP_INSTRUCTION}")
+                     f"You MUST synthesize your final state into a `note()` and then TERMINATE by calling `disconnect()` (no args).\n"
+                     f"⛔ **PROHIBITED**: `talk()`, `sleep()`.\n"
+                     f"✅ **REQUIRED**: `note()` then `disconnect()`.")
 
         next_agent = to
 
