@@ -14,10 +14,13 @@ This file tracks the tasks, features, and bugs for the project. Agents are encou
 
 
 ## 🏗️ In Progress
-- [ ] Refactor Message Retrieval Logic (Unread vs Last N)
-- [ ] Améliorer parsing Mailbox (Feedback User)
+
+## 🏗️ In Progress
+
 
 ## ✅ Done
+- [x] Refactor Message Retrieval Logic (Unread vs Last N)
+- [x] Améliorer parsing Mailbox (XML Structure implemented)
 - [x] Implement XML Tags in Templates (Structure Cleanliness)
 - [x] Déplacer paramètres Search vers Menu Debug (User Request)
 - [x] Ajustement seuils recherche passive (Feedback Vir)
