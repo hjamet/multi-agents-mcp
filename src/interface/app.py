@@ -216,21 +216,21 @@ def save_config(new_config):
 # --- DIALOGS ---
 def handle_disconnect_agent(agent_name):
     """
-    Sets the reload_active flag for the agent immediately and allows reconnection.
+    Sets the reload_active flag for the agent.
+    Does NOT set 'pending_connection' immediately (Agent must do it via disconnect tool).
     """
     def update_fn(s):
         if agent_name in s.get("agents", {}):
             s["agents"][agent_name]["reload_active"] = True
-            s["agents"][agent_name]["status"] = "pending_connection"
+            # Status remains 'connected'/'working' until Agent calls disconnect()
             
             # Inject System Message for the Agent
             msg = {
                 "from": "System",
                 "content": "🔁 **SYSTEM NOTIFICATION**: RELOAD REQUESTED.\n"
-                           "You must synthesize your final state into a `note()` and then terminate.\n"
-                           "⛔ **PROHIBITED Tools**: `talk()`, `sleep()`, `agent()`.\n"
-                           "✅ **ALLOWED**: `note()` ONLY.\n"
-                           "🏁 **ACTION**: Terminate process immediately after `note()`.",
+                           "1. Synthesize your final state into a `note()`.\n"
+                           "2. Call `disconnect()` to terminate process.\n"
+                           "⛔ **PROHIBITED**: `talk()`, `sleep()`.",
                 "public": False,
                 "target": agent_name,
                 "timestamp": time.time()
@@ -241,6 +241,18 @@ def handle_disconnect_agent(agent_name):
     
     state_store.update(update_fn)
     st.toast(f"Reload signal sent to {agent_name} 🔁")
+
+def force_disconnect_agent(agent_name):
+    """
+    Forces status to pending_connection immediately.
+    """
+    def update_fn(s):
+        if agent_name in s.get("agents", {}):
+            s["agents"][agent_name]["reload_active"] = False # Reset flag
+            s["agents"][agent_name]["status"] = "pending_connection"
+        return f"Force disconnect: {agent_name}"
+    state_store.update(update_fn)
+    st.toast(f"☠️ Force Disconnect: {agent_name}")
 
 PRESET_DIR = GLOBAL_PRESET_DIR
 
@@ -825,44 +837,62 @@ with st.sidebar:
                     # Center the button vertically relative to card is hard, but simple button works
                     # Add some top margin to align with card center approx
                     st.markdown('<div style="height: 6px;"></div>', unsafe_allow_html=True)
-                    if st.button("🔄", key=f"reload_{name}", help=f"Déconnecter {name} pour rechargement"):
-                        handle_disconnect_agent(name)
-                        time.sleep(0.5) # UI Feedback
-                        st.rerun()
+                    agent_info = agents.get(name, {})
+                    is_reloading = agent_info.get("reload_active") or (name in st.session_state.get("reload_queue", []))
+
+                    if is_reloading:
+                        if st.button("❌", key=f"force_{name}", help="Force Disconnect (Si bloqué)", type="primary"):
+                             force_disconnect_agent(name)
+                             # Also remove from queue if present to unblock sequence
+                             if name in st.session_state.get("reload_queue", []):
+                                 st.session_state.reload_queue.remove(name)
+                             st.rerun()
+                    else:
+                        if st.button("🔄", key=f"reload_{name}", help=f"Recharger {name}"):
+                            handle_disconnect_agent(name)
+                            st.rerun()
             
     st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
-    if st.button("🔄 Reload All Agents", type="secondary", use_container_width=True, help="Déconnecter tous les agents pour une reconnexion, sans perdre l'historique."):
-        # Identify Target Agents (Connected or Working)
-        agents_to_reload = [
+    if st.button("🔄 Reload All Agents", type="secondary", use_container_width=True, help="Séquence de rechargement (Safe Mode)."):
+         # Identify Targets
+        to_reload = [
             n for n, d in agents.items() 
-            if d.get("status") in ["connected", "working", "pending_connection"] # Include pending just in case
+            if d.get("status") in ["connected", "working"] 
         ]
-        
-        if not agents_to_reload:
-             st.toast("Aucun agent à recharger.")
+        if not to_reload:
+            st.toast("Aucun agent actif à recharger.")
         else:
-             def reload_all_logic(s):
-                 for agent_name in agents_to_reload:
-                     if agent_name in s.get("agents", {}):
-                         s["agents"][agent_name]["reload_active"] = True
-                         s["agents"][agent_name]["status"] = "pending_connection"
-                         
-                         # Inject System Message
-                         msg = {
-                             "from": "System",
-                             "content": f"🔁 **SYSTEM NOTIFICATION**: GLOBAL RELOAD REQUESTED.\n\n"
-                                        f"You must synthesize your final state into a `note()` and then terminate.",
-                             "public": False,
-                             "target": agent_name,
-                             "timestamp": time.time()
-                         }
-                         s.setdefault("messages", []).append(msg)
-                 return len(agents_to_reload)
-             
-             count = state_store.update(reload_all_logic)
-             st.toast(f"{count} agents en cours de rechargement parallèle 🔁")
-             time.sleep(0.5)
-             st.rerun()
+            st.session_state.reload_queue = to_reload
+            st.rerun()
+
+    # --- SEQUENTIAL RELOAD PROCESSOR ---
+    if "reload_queue" not in st.session_state:
+        st.session_state.reload_queue = []
+        
+    queue = st.session_state.reload_queue
+    
+    if queue:
+        st.divider()
+        current_target = queue[0]
+        # Check Status
+        info = agents.get(current_target, {})
+        status = info.get("status")
+        
+        # UI Progress
+        st.info(f"⏳ Reloading {current_target} ({len(queue)} left)...")
+        # progress = (len(agents) - len(queue)) / len(agents) if agents else 0
+        # st.progress(progress)
+        
+        if status == "pending_connection" or current_target not in agents:
+            # Done!
+            st.session_state.reload_queue.pop(0)
+            st.toast(f"✅ {current_target} ready.")
+            st.rerun()
+        else:
+            # Check if signal needed
+            if not info.get("reload_active"):
+                 handle_disconnect_agent(current_target)
+                 st.rerun()
 
     st.divider()
 
