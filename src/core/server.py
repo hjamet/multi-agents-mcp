@@ -242,7 +242,7 @@ def _get_new_messages_notification(agent_name: str, messages: List[dict]) -> str
             count += 1
             
     if count == 0:
-        return f"No new messages. Check the conversation with `tail -n 80 CONVERSATION.md` and consult MEMORY to stay synchronized."
+        return f"No new messages. Check the conversation with `tail -n 150 CONVERSATION.md` and consult MEMORY to stay synchronized."
     
     senders_list = sorted(list(senders))
     if len(senders_list) > 1:
@@ -250,7 +250,7 @@ def _get_new_messages_notification(agent_name: str, messages: List[dict]) -> str
     else:
         senders_str = senders_list[0]
         
-    return f"CRITICAL: You have received {count} new messages from {senders_str} since your last check. Review the conversation with `tail -n 80 CONVERSATION.md` and consult MEMORY to update your context."
+    return f"CRITICAL: You have received {count} new messages from {senders_str} since your last check. Review the conversation with `tail -n 150 CONVERSATION.md` and consult MEMORY to update your context."
 
 
 @mcp.tool()
@@ -436,7 +436,7 @@ async def talk(
             if wait_result["status"] == "success":
                 # Resumed!
                 engine.acknowledge_turn(sender)
-                return f"⚠️ **SYSTEM WARNING**: You attempted to speak out of turn and were paused. It is now correctly your turn. Review the conversation history with `tail -n 80 CONVERSATION.md` to see what happened while you were paused, then speak again."
+                return f"⚠️ **SYSTEM WARNING**: You attempted to speak out of turn and were paused. It is now correctly your turn. Review the conversation history with `tail -n 150 CONVERSATION.md` to see what happened while you were paused, then speak again."
             
             elif wait_result["status"] == "reset":
                  return f"⚠️ SYSTEM ALERT: {wait_result['instruction']}"
@@ -645,7 +645,7 @@ async def talk(
             template = jinja_env.get_template("talk_response.j2")
             
             # User defined message:
-            user_feedback_msg = "Message sent to User. They will reply when available. **CRITICAL: You MUST check `tail -n 80 CONVERSATION.md` to see if other agents spoke in the meantime.**"
+            user_feedback_msg = "Message sent to User. They will reply when available. **CRITICAL: You MUST check `tail -n 150 CONVERSATION.md` to see if other agents spoke in the meantime.**"
             
             # Calculate Open Mode
             is_open_mode = False

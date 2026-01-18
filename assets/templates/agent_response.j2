@@ -16,12 +16,12 @@
 You are now connected to the Multi-Agent System.
 
 **MANDATORY PROTOCOL:**
-1. **SYNC FIRST**: You MUST check the current state using `tail -n 80 CONVERSATION.md` and read `MEMORY.md` BEFORE taking any action.
+1. **SYNC FIRST**: You MUST check the current state using `tail -n 150 CONVERSATION.md` and read `MEMORY.md` BEFORE taking any action.
 2. **WAITING**: The system handles turn-taking. You do not need to poll.
 3. **TURN**: When it is your turn, you will receive a notification.
 4. **ACTION**: You must then THINK, ACT (based on the files you read), and finally call `talk(...)` to pass the turn.
 --- CONTEXT & MEMORY ---
-Your context (Message History) is in `CONVERSATION.md`. Use `tail -n 80 CONVERSATION.md` to see the latest messages (do NOT use document consultation tools for this).
+Your context (Message History) is in `CONVERSATION.md`. Use `tail -n 150 CONVERSATION.md` to see the latest messages (do NOT use document consultation tools for this).
 Your memory (Personal Notes) is in `MEMORY.md`.
 
 **CRITICAL:**
