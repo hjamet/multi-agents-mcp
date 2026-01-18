@@ -1236,6 +1236,12 @@ elif st.session_state.page == "Cockpit":
     # Global Context (Full Width)
     st.subheader("🌍 Contexte Global")
     with st.container(border=True):
+        enable_backlog = st.checkbox("Backlog Coachable", value=config.get("enable_backlog", False), help="Si coché, les agents consulteront et mettront à jour BACKLOG.md à la racine.")
+        if enable_backlog != config.get("enable_backlog", False):
+            config["enable_backlog"] = enable_backlog
+            save_config(config)
+            st.rerun()
+            
         global_context = st.text_area("Narratif / Contexte Partagé", config.get("context", ""), height=215)
         if global_context != config.get("context", ""):
             if st.button("Mettre à jour le Contexte", use_container_width=True):

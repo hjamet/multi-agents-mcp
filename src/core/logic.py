@@ -512,6 +512,10 @@ class Engine:
                 agents = data.get("agents", {})
                 config = data.get("config", {})
                 
+                backlog_instr = ""
+                if config.get("enable_backlog"):
+                    backlog_instr = "\n\n⚠️ BACKLOG ENABLED: You must also consult and update the `BACKLOG.md` file at the root of the repo to track tasks and progress."
+
                 my_info = agents.get(agent_name, {})
                 profile_ref = my_info.get("profile_ref")
                 
@@ -546,7 +550,7 @@ class Engine:
                 return {
                     "status": "success",
                     "messages": visible_messages, # FULL Delta, no truncation
-                    "instruction": f"🚨 TURN GRANTED. You MUST run `tail -n 150 CONVERSATION.md` IMMEDIATELY to see what happened while you were waiting. DO NOT SPEAK before reading the history.{advice_text}"
+                    "instruction": f"🚨 TURN GRANTED. You MUST run `tail -n 150 CONVERSATION.md` IMMEDIATELY to see what happened while you were waiting. DO NOT SPEAK before reading the history.{backlog_instr}{advice_text}"
                 }
             
             time.sleep(1)
@@ -653,6 +657,11 @@ class Engine:
                 
                 agents = data.get("agents", {})
                 config = data.get("config", {})
+                
+                backlog_instr = ""
+                if config.get("enable_backlog"):
+                    backlog_instr = "\n\n⚠️ BACKLOG ENABLED: You must also consult and update the `BACKLOG.md` file at the root of the repo to track tasks and progress."
+
                 my_info = agents.get(agent_name, {})
                 profile_ref = my_info.get("profile_ref")
                 
@@ -676,7 +685,7 @@ class Engine:
                 return {
                     "status": "success",
                     "messages": visible_messages,
-                    "instruction": f"It is your turn. Speak.{advice_text}"
+                    "instruction": f"It is your turn. Speak.{backlog_instr}{advice_text}"
                 }
             
             await asyncio.sleep(1) # Non-blocking Sleep
