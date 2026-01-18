@@ -1266,7 +1266,7 @@ elif st.session_state.page == "Cockpit":
     # Global Context (Full Width)
     st.subheader("🌍 Contexte Global")
     with st.container(border=True):
-        enable_backlog = st.checkbox("Backlog Coachable", value=config.get("enable_backlog", False), help="Si coché, les agents consulteront et mettront à jour BACKLOG.md à la racine.")
+        enable_backlog = st.checkbox("Backlog", value=config.get("enable_backlog", False), help="Si coché, les agents consulteront et mettront à jour BACKLOG.md à la racine.")
         if enable_backlog != config.get("enable_backlog", False):
             config["enable_backlog"] = enable_backlog
             save_config(config)
