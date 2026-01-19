@@ -124,3 +124,4 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
     - 🚑 **Identity Hotfix** : Correction blocage infini sur typo de nom (Fail Fast au lieu de Pause) (v2.2.1).
     - 🗣️ **API Cleanup** : Argument `public` remplacé par `private` (facultatif, défaut False=Public) dans `talk` (v2.3.0).
     - 🔧 **Maintenance 2.2 (Final)** : Reload Séquentiel (Server V2), Backlog activé par défaut, UI simplifiée ("Backlog"), Suppression `sleep` / Ajout `disconnect` (v2.3.1).
+    - 🔎 **Search Integration** : Ajout de la capacité `search` et instructions d'utilisation pour Marcus, Alex et Lisa dans les presets (v2.3.2).
