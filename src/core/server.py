@@ -482,6 +482,16 @@ async def talk(
 
         sender = from_agent
         
+        # --- MAILBOX SECURITY CHECK ---
+        if sender in TRUNCATION_BUFFER:
+            return (
+                "CRITICAL : message non envoyé. Vous n'aviez pas fini de lire votre mailbox. "
+                "Appelez IMMEDIATEMENT l'outil mailbox pour finir la compréhension de votre contexte. "
+                "Ensuite adaptez éventuellement votre travail et votre reflection en fonction de "
+                "ces informations que vous aviez manqué, puis appelez à nouveau l'outil talk"
+            )
+
+        
         # --- 0. EXISTENCE CHECK (Fix for Typos causing Infinite Loops) ---
         # If the agent name doesn't exist, we can't 'wait for its turn'.
         known_agents = state.get("agents", {})

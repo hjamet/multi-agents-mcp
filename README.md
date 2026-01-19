@@ -126,3 +126,4 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
     - 🔧 **Maintenance 2.2 (Final)** : Reload Séquentiel (Server V2), Backlog activé par défaut, UI simplifiée ("Backlog"), Suppression `sleep` / Ajout `disconnect` (v2.3.1).
     - 🔎 **Search Integration** : Ajout de la capacité `search` et instructions d'utilisation pour Marcus, Alex et Lisa dans les presets (v2.3.2).
     - 🗺️ **Search Engine Fix** : Correction du path d'indexation pour scanner le dossier courant (User Project) au lieu du code source de l'outil (v2.3.3).
+    - 🛡️ **Mailbox Security** : Ajout d'une sécurité bloquant `talk` si la `mailbox` n'a pas été entièrement lue (v2.3.4).
