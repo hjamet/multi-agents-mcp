@@ -89,7 +89,7 @@ def _get_search_engine():
         _SEARCH_ENGINE_INSTANCE = SearchEngine()
         persist = LOCAL_DATA_DIR / "vector_store"
         # Server is READ-ONLY (Streamlit handles watching)
-        _SEARCH_ENGINE_INSTANCE.initialize(root_dir=ROOT_DIR, persist_dir=persist, watch=False)
+        _SEARCH_ENGINE_INSTANCE.initialize(root_dir=EXECUTION_DIR, persist_dir=persist, watch=False)
     return _SEARCH_ENGINE_INSTANCE
 
 def _get_search_context(state: dict, messages: List[dict]) -> str:

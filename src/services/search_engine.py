@@ -145,6 +145,7 @@ class SearchEngine(FileSystemEventHandler):
     def _full_scan(self):
         """Scans all files and indexes them."""
         logger.log("INFO", "Search", "Starting full file scan...")
+        logger.log("INFO", "Search", f"Scanning Root: {self.root_dir}")
         all_files = []
         for root, dirs, files in os.walk(self.root_dir):
             # Skip hidden dirs and system dir

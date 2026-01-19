@@ -23,6 +23,7 @@ if str(CODE_ROOT) not in sys.path:
 from src.config import (
     STATE_FILE, 
     MEMORY_DIR, 
+    EXECUTION_DIR,
     TEMPLATE_DIR, 
     LOCAL_DATA_DIR, 
     GLOBAL_PRESET_DIR, 
@@ -222,7 +223,7 @@ def init_search_engine():
     # Ensure directory exists for persist
     persist = LOCAL_DATA_DIR / "vector_store"
     persist.mkdir(parents=True, exist_ok=True)
-    engine.initialize(root_dir=CODE_ROOT, persist_dir=persist)
+    engine.initialize(root_dir=EXECUTION_DIR, persist_dir=persist)
     return engine
 
 # Initialize background service
