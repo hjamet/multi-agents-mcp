@@ -24,6 +24,7 @@ class Config(BaseSchema):
     total_agents: int = 2
     context: str = ""
     user_availability: str = "available"
+    user_unavailable_suffix: str = ""
     profiles: List[Profile] = Field(default_factory=list)
 
 class AgentState(BaseSchema):

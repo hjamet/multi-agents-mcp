@@ -251,7 +251,7 @@ def handle_disconnect_agent(agent_name):
             }
             s.setdefault("messages", []).append(msg)
             
-        return f"Signal de rechargement envoyé à : {agent_name}"
+        return f"Reload signal sent to: {agent_name}"
     
     state_store.update(update_fn)
     st.toast(f"Reload signal sent to {agent_name} 🔁")
@@ -270,10 +270,10 @@ def force_disconnect_agent(agent_name):
 
 PRESET_DIR = GLOBAL_PRESET_DIR
 
-@st.dialog("Sauvegarder le Scénario")
+@st.dialog("Save Scenario")
 def save_scenario_dialog(current_config):
-    save_name = st.text_input("Nom de Sauvegarde", placeholder="mon_scenario")
-    if st.button("Confirmer la Sauvegarde", use_container_width=True):
+    save_name = st.text_input("Save Name", placeholder="my_scenario")
+    if st.button("Confirm Save", use_container_width=True):
         if save_name:
             # Basic filename cleaning
             filename = "".join([c for c in save_name if c.isalnum() or c in (' ', '.', '_', '-')]).rstrip()
@@ -292,31 +292,31 @@ def save_scenario_dialog(current_config):
                 except Exception as e:
                     # Non-blocking, just dev convenience
                     print(f"Failed to sync to repo: {e}")
-            st.success(f"Sauvegardé : {filename}")
+            st.success(f"Saved: {filename}")
             time.sleep(1)
             st.rerun()
         else:
-            st.error("Veuillez entrer un nom.")
+            st.error("Please enter a name.")
 
-@st.dialog("Charger un Scénario")
+@st.dialog("Load Scenario")
 def load_scenario_dialog():
     # Unified Source: User Global Presets
     # (Defaults have been synced here by sync_presets)
     presets = sorted([f for f in os.listdir(PRESET_DIR) if f.endswith(".json")])
     
     if not presets:
-        st.warning("Aucun scénario trouvé.")
+        st.warning("No scenarios found.")
         return
 
     options = [f"💾 {f}" for f in presets]
     path_map = {f"💾 {f}": PRESET_DIR / f for f in presets}
         
-    selected_label = st.selectbox("Choisir un Preset", options)
+    selected_label = st.selectbox("Choose a Preset", options)
     
     c_load, c_del = st.columns([0.85, 0.15])
     
     with c_load:
-        if st.button("Charger la Configuration", use_container_width=True, type="primary"):
+        if st.button("Load Configuration", use_container_width=True, type="primary"):
             if selected_label:
                 path = path_map[selected_label]
                 with open(path, "r") as f:
@@ -327,21 +327,21 @@ def load_scenario_dialog():
                     new_conf["total_agents"] = get_total_agents(new_conf["profiles"])
                     
                 save_config(new_conf)
-                st.success(f"Configuration '{selected_label}' chargée !")
+                st.success(f"Configuration '{selected_label}' loaded!")
                 time.sleep(1)
                 st.rerun()
                 
     with c_del:
-        if st.button("🗑️", key="del_scen_btn", help="Supprimer définivement", use_container_width=True):
+        if st.button("🗑️", key="del_scen_btn", help="Delete permanently", use_container_width=True):
              if selected_label:
                  path = path_map[selected_label]
                  try:
                      os.remove(path)
-                     st.toast(f"Scénario supprimé: {selected_label}")
+                     st.toast(f"Scenario deleted: {selected_label}")
                      time.sleep(0.7)
                      st.rerun()
                  except Exception as e:
-                     st.error(f"Erreur: {e}")
+                     st.error(f"Error: {e}")
 
 def get_total_agents(profiles):
     total = 0
@@ -740,7 +740,7 @@ with st.sidebar:
         st.session_state.page = "Cockpit"
         st.rerun()
         
-    if st.button("🛠️ Éditeur", use_container_width=True, type="primary" if st.session_state.page == "Editor" else "secondary"):
+    if st.button("🛠️ Editor", use_container_width=True, type="primary" if st.session_state.page == "Editor" else "secondary"):
         st.session_state.page = "Editor"
         st.rerun()
 
@@ -757,6 +757,25 @@ with st.sidebar:
     if new_status != user_status:
         config["user_availability"] = new_status
         save_config(config)
+        
+        # Public system message about availability
+        def announce_availability(s):
+            if new_status == "available":
+                content = "The user has reconnected and is available again."
+            else:
+                content = "The user has disconnected. They will let you know when they are back. Please continue your work autonomously."
+            
+            msg = {
+                "from": "System",
+                "content": content,
+                "timestamp": time.time(),
+                "public": True,
+                "target": "all"
+            }
+            s.setdefault("messages", []).append(msg)
+            return "Availability Announced"
+        
+        state_store.update(announce_availability)
         st.rerun()
 
     status_icon = "🟢" if new_status == "available" else "🔴"
@@ -785,7 +804,7 @@ with st.sidebar:
     connected_count = len([n for n, d in agents.items() if n != "User" and d.get("status") == "connected"])
     st.markdown(f"""
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
-            <h3 style="margin: 0; font-size: 1.2em;">👥 Agents Actifs</h3>
+            <h3 style="margin: 0; font-size: 1.2em;">👥 Active Agents</h3>
             <span style="background: #e0e0e0; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; font-weight: bold;">{connected_count}</span>
         </div>
     """, unsafe_allow_html=True)
@@ -799,7 +818,7 @@ with st.sidebar:
     current_turn = turn.get("current")
     
     if not roster_list:
-        st.caption("Aucun agent détecté.")
+        st.caption("No agents detected.")
     else:
         for name in roster_list:
             # Handle User specifically since they are not in 'agents' dict
@@ -820,27 +839,27 @@ with st.sidebar:
             
             if info.get("reload_active"):
                 status_color = "#FF5722" # Deep Orange
-                status_label = "Déconnexion..."
+                status_label = "Disconnecting..."
                 bg = "rgba(255, 87, 34, 0.1)"
                 border_color = "rgba(255, 87, 34, 0.3)"
             elif status == "connected":
                 status_color = "#4CAF50" # Green
-                status_label = "En ligne"
+                status_label = "Online"
                 bg = "rgba(76, 175, 80, 0.05)"
                 border_color = "rgba(76, 175, 80, 0.2)"
             elif status == "pending_connection":
                 status_color = "#FF9800" # Orange
-                status_label = "Attente Reconnexion"
+                status_label = "Waiting for Reconnection"
                 bg = "rgba(255, 152, 0, 0.05)"
                 border_color = "rgba(255, 152, 0, 0.2)"
             elif status == "working":
                 status_color = "#2196F3" # Blue
-                status_label = "Travaille..."
+                status_label = "Working..."
                 bg = "rgba(33, 150, 243, 0.05)"
                 border_color = "rgba(33, 150, 243, 0.2)"
             else:
                 status_color = "#9E9E9E" # Grey
-                status_label = "Hors-ligne"
+                status_label = "Offline"
                 bg = "transparent"
                 border_color = "#eee"
             
@@ -848,9 +867,9 @@ with st.sidebar:
             is_active_working = is_turn and status == "connected"
             if is_active_working:
                 status_color = "#2196F3"
-                status_label = "En action..."
+                status_label = "In action..."
             
-            card_html = f"""<div class="{card_class}" style="background-color: {bg}; border: 1px solid {border_color}; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s ease;"><div style="display: flex; align-items: center; gap: 12px;"><div style="font-size: 1.4em; background: white; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">{emoji}</div><div style="display: flex; flex-direction: column;"><span style="font-weight: 600; color: {'#1a1a1a' if status == 'connected' else '#666'}; font-size: 0.95em;">{name}</span><div style="display: flex; align-items: center; gap: 4px;"><div style="width: 6px; height: 6px; background-color: {status_color}; border-radius: 50%;"></div><span style="font-size: 0.7em; color: {status_color}; font-weight: 500; letter-spacing: 0.5px;">{status_label}</span></div></div></div>{'<span style="font-size: 1.2em;" title="C&rsquo;est son tour !">✨</span>' if is_turn else ''}</div>"""
+            card_html = f"""<div class="{card_class}" style="background-color: {bg}; border: 1px solid {border_color}; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s ease;"><div style="display: flex; align-items: center; gap: 12px;"><div style="font-size: 1.4em; background: white; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">{emoji}</div><div style="display: flex; flex-direction: column;"><span style="font-weight: 600; color: {'#1a1a1a' if status == 'connected' else '#666'}; font-size: 0.95em;">{name}</span><div style="display: flex; align-items: center; gap: 4px;"><div style="width: 6px; height: 6px; background-color: {status_color}; border-radius: 50%;"></div><span style="font-size: 0.7em; color: {status_color}; font-weight: 500; letter-spacing: 0.5px;">{status_label}</span></div></div></div>{'<span style="font-size: 1.2em;" title="It is their turn!">✨</span>' if is_turn else ''}</div>"""
             
             if name == "User":
                 st.markdown(card_html, unsafe_allow_html=True)
@@ -866,7 +885,7 @@ with st.sidebar:
                     is_reloading = agent_info.get("reload_active") or (name in st.session_state.get("reload_queue", []))
 
                     if is_reloading:
-                        if st.button("❌", key=f"force_{name}", help="Force Disconnect (Si bloqué)", type="primary"):
+                        if st.button("❌", key=f"force_{name}", help="Force Disconnect (If blocked)", type="primary"):
                              force_disconnect_agent(name)
                              # Also remove from queue if present to unblock sequence
                              if name in st.session_state.get("reload_queue", []):
@@ -878,14 +897,14 @@ with st.sidebar:
                             st.rerun()
             
     st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
-    if st.button("🔄 Reload All Agents", type="secondary", use_container_width=True, help="Séquence de rechargement (Parallèle)."):
+    if st.button("🔄 Reload All Agents", type="secondary", use_container_width=True, help="Reload sequence (Parallel)."):
          # Identify Targets
         to_reload = [
             n for n, d in agents.items() 
             if d.get("status") in ["connected", "working"] 
         ]
         if not to_reload:
-            st.toast("Aucun agent actif à recharger.")
+            st.toast("No active agents to reload.")
         else:
             # START PARALLEL SEQUENCE
             st.session_state.reload_queue = list(to_reload)
@@ -909,10 +928,10 @@ with st.sidebar:
                          }
                          s.setdefault("messages", []).append(msg)
                          count += 1
-                return f"Signal de rechargement global envoyé ({count} agents)."
+                return f"Global reload signal sent ({count} agents)."
             
             state_store.update(bulk_reload_signal)
-            st.toast(f"Séquence de rechargement PARALLÈLE initialisée pour {len(to_reload)} agents.")
+            st.toast(f"PARALLEL reload sequence initialized for {len(to_reload)} agents.")
             st.rerun()
 
     # --- SEQUENTIAL RELOAD PROCESSOR ---
@@ -936,10 +955,10 @@ with st.sidebar:
                  handle_disconnect_agent(current_target)
                  st.rerun()
                  
-            # Condition 3: Waiting for agent...
-            else:
-                # Just wait. The autorefresh will loop us.
-                st.toast(f"⏳ Attente déconnexion: {current_target}...")
+        # Condition 3: Waiting for agent...
+        else:
+            # Just wait. The autorefresh will loop us.
+            st.toast(f"⏳ Waiting for disconnection: {current_target}...")
         else:
             # Agent gone? Remove from queue
             st.session_state.reload_queue.pop(0) 
@@ -949,7 +968,7 @@ with st.sidebar:
 
     # --- PAUSE CONTROL ---
     is_paused = config.get("paused", False)
-    if st.toggle("⏸️ PAUSE MCP", value=is_paused, help="Fige le temps pour tous les agents."):
+    if st.toggle("⏸️ PAUSE MCP", value=is_paused, help="Freezes time for all agents."):
         if not is_paused:
             config["paused"] = True
             save_config(config)
@@ -961,7 +980,7 @@ with st.sidebar:
             st.rerun()
             
     if is_paused:
-        st.warning("⚠️ SIMULATION EN PAUSE")
+        st.warning("⚠️ SIMULATION PAUSED")
     
     st.divider()
 
@@ -1048,7 +1067,7 @@ if st.session_state.page == "Communication":
 
     c_title, c_status = st.columns([6, 4])
     with c_title:
-        st.header("💬 Flux Neural")
+        st.header("💬 Neural Stream")
     with c_status:
         current_turn = turn.get("current", "?")
         if current_turn == "User":
@@ -1069,7 +1088,7 @@ if st.session_state.page == "Communication":
             
 
         else:
-            st.markdown(f"""<div style="background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; border-radius: 8px; text-align: center;"><span style="color: #6c757d; font-size: 0.9em;">En attente de :</span><br><span style="color: #1f1f1f; font-weight: bold; font-size: 1.1em;">🤖 {current_turn}</span></div>""", unsafe_allow_html=True)
+            st.markdown(f"""<div style="background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; border-radius: 8px; text-align: center;"><span style="color: #6c757d; font-size: 0.9em;">Waiting for:</span><br><span style="color: #1f1f1f; font-weight: bold; font-size: 1.1em;">🤖 {current_turn}</span></div>""", unsafe_allow_html=True)
     
     # 1. Reply Context State
     if "reply_to" not in st.session_state:
@@ -1108,14 +1127,14 @@ if st.session_state.page == "Communication":
     limit_stream = st.session_state.stream_limit
     if total_stream > limit_stream:
             # UI Minimaliste (Tertiary)
-            if st.button(f"🔃 Historique ({total_stream - limit_stream})", key="load_more_stream", type="tertiary"):
+            if st.button(f"🔃 History ({total_stream - limit_stream})", key="load_more_stream", type="tertiary"):
                 st.session_state.stream_limit += 25
                 st.rerun()
     
     visible_stream = stream_msgs[max(0, total_stream - limit_stream):]
     
     if not visible_stream:
-        st.info("Aucune activité détectée sur les bandes neurales.")
+        st.info("No activity detected on neural bands.")
         
     for real_idx, m in visible_stream:
         sender = m.get("from", "?")
@@ -1174,9 +1193,9 @@ if st.session_state.page == "Communication":
         ctx = st.session_state.reply_to
         col_banner, col_x = st.columns([11, 1])
         with col_banner:
-            st.markdown(f'<div class="reply-banner-custom">↩️ Réponse à <b>{ctx["sender"]}</b>: "{ctx["preview"]}"</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="reply-banner-custom">↩️ Reply to <b>{ctx["sender"]}</b>: "{ctx["preview"]}"</div>', unsafe_allow_html=True)
         with col_x:
-            if st.button("✖️", key="cancel_reply_v6", help="Annuler"):
+            if st.button("✖️", key="cancel_reply_v6", help="Cancel"):
                 st.session_state.reply_to = None
                 st.rerun()
 
@@ -1193,8 +1212,8 @@ if st.session_state.page == "Communication":
     
     if typing_agents:
         agent_names = ", ".join(typing_agents)
-        plural = "sont" if len(typing_agents) > 1 else "est"
-        st.markdown(f'<div class="typing-container">{agent_names} {plural} en train d\'écrire...<div class="typing-dots"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>', unsafe_allow_html=True)
+        plural = "are" if len(typing_agents) > 1 else "is"
+        st.markdown(f'<div class="typing-container">{agent_names} {plural} typing...<div class="typing-dots"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>', unsafe_allow_html=True)
     
     # 2b. Focus Toggle (Removed)
     c1, c2, c3 = st.columns([1, 1, 1])
@@ -1202,7 +1221,7 @@ if st.session_state.page == "Communication":
     # MOVED: Banner in bottom right (c3)
     if turn.get("current") == "User":
         with c3:
-            st.markdown("""<div style="background-color: #fff3cd; border: 2px solid #ff3d00; padding: 8px; border-radius: 8px; text-align: center; animation: pulse 2s infinite;"><span style="color: #bf360c; font-weight: 900; font-size: 0.9em; text-transform: uppercase;">⚡ À VOUS DE JOUER ⚡</span></div><style>@keyframes pulse {0% { box-shadow: 0 0 0 0 rgba(255, 61, 0, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(255, 61, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 61, 0, 0); }}</style>""", unsafe_allow_html=True)
+            st.markdown("""<div style="background-color: #fff3cd; border: 2px solid #ff3d00; padding: 8px; border-radius: 8px; text-align: center; animation: pulse 2s infinite;"><span style="color: #bf360c; font-weight: 900; font-size: 0.9em; text-transform: uppercase;">⚡ YOUR TURN ⚡</span></div><style>@keyframes pulse {0% { box-shadow: 0 0 0 0 rgba(255, 61, 0, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(255, 61, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 61, 0, 0); }}</style>""", unsafe_allow_html=True)
 
     # --- OMNI-CHANNEL INPUT ---
     # Maintain original order for mention system
@@ -1270,7 +1289,7 @@ if st.session_state.page == "Communication":
             final_content = prompt
             if st.session_state.reply_to:
                 ref = st.session_state.reply_to
-                final_content = f"↪️ [Réponse à {ref['sender']}: \"{ref['preview']}\"]\n{prompt}"
+                final_content = f"↪️ [Reply to {ref['sender']}: \"{ref['preview']}\"]\n{prompt}"
 
             msg = {
                 "from": "User",
@@ -1318,7 +1337,7 @@ if st.session_state.page == "Communication":
                 if reply_ref_id < len(s["messages"]):
                      s["messages"][reply_ref_id]["replied"] = True
                      
-            return "Message Transmis."
+            return "Message Sent."
 
         res = state_store.update(send_omni_msg)
         st.session_state.reply_to = None
@@ -1331,41 +1350,44 @@ if st.session_state.page == "Communication":
 # PAGE: COCKPIT (Admin)
 # ==========================================
 elif st.session_state.page == "Cockpit":
-    st.header("🎛️ Cockpit de Supervision")
+    st.header("🎛️ Supervision Cockpit")
     
     # --- 0. GRAPHVIZ VIEW (TOP) ---
-    with st.expander("🕸️ Topologie de la Flotte (Graphviz)", expanded=False):
+    with st.expander("🕸️ Fleet Topology (Graphviz)", expanded=False):
         try:
             g = render_graph(profiles)
             st.graphviz_chart(g, use_container_width=True)
         except Exception as e:
-            st.error(f"Erreur de rendu du graphe : {e}")
+            st.error(f"Graph rendering error: {e}")
 
     # Scenarios
-    st.subheader("💾 Scénarios")
+    st.subheader("💾 Scenarios")
     with st.container(border=True):
         col_scen1, col_scen2 = st.columns(2)
-        if col_scen1.button("💾 Sauvegarder", use_container_width=True, help="Sauvegarder la configuration actuelle"):
+        if col_scen1.button("💾 Save", use_container_width=True, help="Save current configuration"):
             save_scenario_dialog(config)
-        if col_scen2.button("📂 Charger", use_container_width=True, help="Charger une configuration existante"):
+        if col_scen2.button("📂 Load", use_container_width=True, help="Load an existing configuration"):
             load_scenario_dialog()
 
     # Global Context (Full Width)
-    st.subheader("🌍 Contexte Global")
+    st.subheader("🌍 Global Context")
     with st.container(border=True):
-        enable_backlog = st.checkbox("Backlog", value=config.get("enable_backlog", False), help="Si coché, les agents consulteront et mettront à jour BACKLOG.md à la racine.")
+        enable_backlog = st.checkbox("Backlog", value=config.get("enable_backlog", False), help="If checked, agents will consult and update BACKLOG.md at the root.")
         if enable_backlog != config.get("enable_backlog", False):
             config["enable_backlog"] = enable_backlog
             save_config(config)
             st.rerun()
 
 
-        global_context = st.text_area("Narratif / Contexte Partagé", config.get("context", ""), height=215)
-        if global_context != config.get("context", ""):
-            if st.button("Mettre à jour le Contexte", use_container_width=True):
+        global_context = st.text_area("Narrative / Shared Context", config.get("context", ""), height=215)
+        unavailable_suffix = st.text_area("User Unavailable Message (Suffix)", config.get("user_unavailable_suffix", ""), height=150, help="Text added to the default message when the user is unavailable.")
+        
+        if global_context != config.get("context", "") or unavailable_suffix != config.get("user_unavailable_suffix", ""):
+            if st.button("Update Context & Suffix", use_container_width=True):
                 config["context"] = global_context
+                config["user_unavailable_suffix"] = unavailable_suffix
                 save_config(config)
-                st.success("Contexte mis à jour")
+                st.success("Configuration updated")
 
     st.divider()
     
@@ -1409,7 +1431,7 @@ elif st.session_state.page == "Cockpit":
     st.markdown("---")
 
     # --- 2.5 FIRST SPEAKER SELECTOR ---
-    st.subheader("🎯 Séquence de Départ")
+    st.subheader("🎯 Start Sequence")
     potential_agents = []
     
     # Calculate potential agent IDs the same way reset_logic does
@@ -1434,9 +1456,9 @@ elif st.session_state.page == "Cockpit":
     if st.session_state.first_speaker not in potential_agents:
         st.session_state.first_speaker = potential_agents[0] if potential_agents else ""
 
-    selected_first = st.selectbox("Qui répondra en premier à l'utilisateur ?", potential_agents,
+    selected_first = st.selectbox("Who will reply first to the user?", potential_agents,
                                  index=potential_agents.index(st.session_state.first_speaker) if st.session_state.first_speaker in potential_agents else 0,
-                                 help="L'agent qui aura le premier tour pour répondre au premier message de l'utilisateur.")
+                                 help="The agent who will have the first turn to respond to the user's first message.")
     st.session_state.first_speaker = selected_first
 
     st.markdown("<br>", unsafe_allow_html=True)
@@ -1444,7 +1466,7 @@ elif st.session_state.page == "Cockpit":
     # --- 3. RESET BUTTON (MODERN) ---
     col_r1, col_r2, col_r3 = st.columns([1, 2, 1])
     with col_r2:
-        if st.button("🚀 INITIALISER LA SIMULATION", type="primary", use_container_width=True, help="Réinitialise tous les agents et la conversation"):
+        if st.button("🚀 INITIALIZE SIMULATION", type="primary", use_container_width=True, help="Resets all agents and the conversation"):
             first_speaker_choice = st.session_state.first_speaker
             
             def reset_logic(s):
@@ -1485,9 +1507,9 @@ elif st.session_state.page == "Cockpit":
                 s["agents"] = new_agents
                 
                 s.setdefault("messages", []).append({
-                    "from": "System", "content": f"🟢 SIMULATION RESET. En attente de l'utilisateur. (Premier répondant : {first_speaker_choice})", "public": True, "timestamp": time.time()
+                    "from": "System", "content": f"🟢 SIMULATION RESET. Waiting for the user. (First respondent: {first_speaker_choice})", "public": True, "timestamp": time.time()
                 })
-                return "Réinitialisation terminée"
+                return "Reset completed"
             msg = state_store.update(reset_logic)
             st.toast(msg)
             time.sleep(0.5)
@@ -1499,7 +1521,7 @@ elif st.session_state.page == "Cockpit":
 # PAGE: EDITOR (Admin)
 # ==========================================
 elif st.session_state.page == "Editor":
-    st.header("🛠️ Éditeur d'Agents")
+    st.header("🛠️ Agent Editor")
     
     profile_names = [p["name"] for p in profiles]
     profile_names.append("➕ Create New")
@@ -1509,7 +1531,7 @@ elif st.session_state.page == "Editor":
     if cur_edit in profile_names:
         sel_idx = profile_names.index(cur_edit)
         
-    selected_name = st.selectbox("Selection Profil", profile_names, index=sel_idx, key="edit_sel_page")
+    selected_name = st.selectbox("Profile Selection", profile_names, index=sel_idx, key="edit_sel_page")
     
     if selected_name == "➕ Create New":
         current_profile = {
@@ -1532,7 +1554,7 @@ elif st.session_state.page == "Editor":
         new_mode = False
         st.session_state.editing_agent_name = selected_name
         
-        if st.button("🗑️ Supprimer Profil", type="primary"):
+        if st.button("🗑️ Delete Profile", type="primary"):
              config["profiles"] = [p for p in profiles if p["name"] != selected_name]
              emoji_key = f"editing_emoji_{selected_name}"
              if emoji_key in st.session_state:
@@ -1563,15 +1585,15 @@ elif st.session_state.page == "Editor":
                             st.rerun()
             
             with c_name:
-                new_name = st.text_input("Nom", current_profile.get("name", ""), key=f"edit_name_{selected_name}")
+                new_name = st.text_input("Name", current_profile.get("name", ""), key=f"edit_name_{selected_name}")
 
         with c_disp:
-            disp = st.text_input("Affichage", current_profile.get("display_name", ""), key=f"edit_disp_{selected_name}")
+            disp = st.text_input("Display Name", current_profile.get("display_name", ""), key=f"edit_disp_{selected_name}")
         
         new_desc = st.text_input("Description", current_profile.get("description", ""), key=f"edit_desc_{selected_name}")
         new_prompt = st.text_area("System Prompt", current_profile.get("system_prompt", ""), height=300, key=f"edit_prompt_{selected_name}")
         
-        st.subheader("Capacités de Communication")
+        st.subheader("Communication Capabilities")
         caps = current_profile.get("capabilities", [])
         
         # Preserve other capabilities (e.g. shell_exec)
@@ -1588,25 +1610,25 @@ elif st.session_state.page == "Editor":
             default_idx = 1 # Private
         
         comm_mode = st.radio(
-            "Portée de Communication",
-            ["Public", "Privé", "Les Deux (Public & Privé)"],
+            "Communication Scope",
+            ["Public", "Private", "Both (Public & Private)"],
             index=default_idx,
             key=f"comm_mode_{selected_name}",
             horizontal=True,
-            help="Définit la portée de communication autorisée pour cet agent."
+            help="Defines the allowed communication scope for this agent."
         )
         
         new_caps = list(other_caps)
         if comm_mode == "Public":
             new_caps.append("public")
-        elif comm_mode == "Privé":
+        elif comm_mode == "Private":
             new_caps.append("private")
         else:
             new_caps.append("public")
             new_caps.append("private")
 
-        st.subheader("Connexions")
-        st.info("Définissez qui cet agent peut contacter et dans quel but (contexte stratégique).")
+        st.subheader("Connections")
+        st.info("Define who this agent can contact and for what purpose (strategic context).")
         
         other_profile_names = [p["name"] for p in profiles if p["name"] != current_profile.get("name")]
         # Standardize targets to title case for matching with state.json while keeping user/public accessible
@@ -1617,8 +1639,8 @@ elif st.session_state.page == "Editor":
         # Header for the "Table"
         with st.container():
             h1, h2, h3 = st.columns([2, 5, 1])
-            h1.markdown("**Cible**")
-            h2.markdown("**Condition / Contexte**")
+            h1.markdown("**Target**")
+            h2.markdown("**Condition / Context**")
             h3.markdown("**Active**")
             st.markdown("<hr style='margin-top: 0; margin-bottom: 10px; border-color: #eee;'>", unsafe_allow_html=True)
         
@@ -1644,7 +1666,7 @@ elif st.session_state.page == "Editor":
                 new_connections.append({"target": target, "context": ctx, "authorized": auth})
             st.markdown("<div style='margin-bottom: 5px;'></div>", unsafe_allow_html=True)
         
-        if st.button("💾 Enregistrer Modifications", type="primary"):
+        if st.button("💾 Save Changes", type="primary"):
             current_profile["name"] = new_name
             current_profile["display_name"] = disp
             current_profile["description"] = new_desc

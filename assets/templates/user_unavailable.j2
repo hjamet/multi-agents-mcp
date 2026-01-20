@@ -1,0 +1,17 @@
+The user is currently unavailable; they will let you know when they are back. Please address another agent:
+
+{% if is_open_mode %}
+| Authorized | Agent Name | Notes / Context |
+| :---: | :--- | :--- |
+{% for a in agent_directory if a.name != 'User' and a.name != '📢 PUBLIC' %}
+| {% if a.authorized %}[x]{% else %}[ ]{% endif %} | **{{ a.name }}** | {{ a.public_desc }} {{ a.note }} |
+{% endfor %}
+{% else %}
+| Agent Name | Notes / Context |
+| :--- | :--- |
+{% for a in agent_directory if a.name != 'User' and a.name != '📢 PUBLIC' %}
+| **{{ a.name }}** | {{ a.public_desc }} {{ a.note }} |
+{% endfor %}
+{% endif %}
+
+{{ suffix }}

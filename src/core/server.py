@@ -753,51 +753,17 @@ async def talk(
                 global_context = ""
                 agent_directory = []
 
-            template = jinja_env.get_template("talk_response.j2")
+            template = jinja_env.get_template("user_unavailable.j2")
             
-            # User defined message:
-            user_feedback_msg = "Message sent to User. They will reply when available. **CRITICAL: Review the 'LATEST CONVERSATION HISTORY' above to see if other agents spoke in the meantime.**"
-            
-            # Calculate Open Mode
-            is_open_mode = False
-            try:
-                my_info = data['agents'].get(sender, {})
-                prof_ref = my_info.get("profile_ref")
-                profiles = data['config']['profiles']
-                my_prof = next((p for p in profiles if p["name"] == prof_ref), {})
-                is_open_mode = "open" in my_prof.get("capabilities", [])
-            except: pass
-
             # Re-fetch recent messages
             full_msgs = data.get("messages", []) # Full History (Agent-Pull)
             visible_msgs = [m for m in full_msgs if m.get("public") or m.get("target") == sender or m.get("from") == sender or sender in (m.get("audience") or [])]
 
-            # Prepare Context Data
-            mem_content = _get_memory_content(sender)
-            if not mem_content: mem_content = "(No personal memory yet. Use `note()` to write one.)"
-            
-            conv_history_str = _format_conversation_history(visible_msgs, sender)
-
-            # Calculate Notifications
-            notification = _get_new_messages_notification(sender, visible_msgs)
-
             rendered = template.render(
                 name=sender,
-                role_snippet=role_snippet,
-                context=global_context,
                 agent_directory=agent_directory,
-                connections=[d for d in agent_directory if d.get('authorized')],
-                conversation_history=conv_history_str,
-                memory_content=mem_content,
                 is_open_mode=is_open_mode,
-                replied_to_message=message, # <--- Context
-                language_instruction=_get_language_instruction_text(data),
-                notification=notification,
-                backlog_instruction=_get_backlog_instruction_text(data),
-                search_results_markdown=_get_search_context(data, visible_msgs),
-
-
-                instruction=f"✅ {user_feedback_msg}"
+                suffix=data.get("config", {}).get("user_unavailable_suffix", "")
             )
             return _truncate_and_buffer(sender, rendered, data)
 

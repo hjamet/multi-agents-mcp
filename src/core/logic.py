@@ -377,6 +377,12 @@ class Engine:
                  if err:
                      return f"🚫 ACTION DENIED: You are not authorized to speak privately to '{next_agent}' ({err})."
 
+            # --- USER CONNECTION ENFORCEMENT ---
+            if next_agent == "User" and from_agent != "User":
+                if "User" not in allowed_targets:
+                    return "You cannot communicate directly with the user. Please address a message to another agent: [Connections table]"
+            # -----------------------------------
+
             # 1. Add message
             msg = {
                 "from": from_agent,
