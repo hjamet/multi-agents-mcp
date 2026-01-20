@@ -914,7 +914,7 @@ with st.sidebar:
                 # 0. Global Transition Marker
                 msg_start = {
                     "from": "System",
-                    "content": "🔄 **FULL SYSTEM RELOAD INITIATED**. All agents are being requested to disconnect.",
+                    "content": "🔄 **RECHARGEMENT GÉNÉRAL DU SYSTÈME**. Tous les agents sont priés de se déconnecter.",
                     "public": True,
                     "target": "All",
                     "timestamp": time.time()
@@ -928,10 +928,7 @@ with st.sidebar:
                          # Inject System Message (Private to Agent)
                          msg = {
                             "from": "System",
-                            "content": "🔁 **SYSTEM NOTIFICATION**: RELOAD REQUESTED.\n"
-                                       "1. Synthesize your final state into a `note()`.\n"
-                                       "2. Call `disconnect()` to terminate process.\n"
-                                       "⛔ **PROHIBITED**: `talk()`, `sleep()`.",
+                            "content": RELOAD_INSTRUCTION,
                             "public": False,
                             "target": name,
                             "timestamp": time.time()
@@ -939,6 +936,7 @@ with st.sidebar:
                          s.setdefault("messages", []).append(msg)
                          count += 1
                 return f"Global reload signal sent ({count} agents)."
+
             
             state_store.update(bulk_reload_signal)
             st.session_state.is_reloading_all = True # Local flag to post final message
@@ -969,11 +967,12 @@ with st.sidebar:
                         
                         msg_done = {
                             "from": "System",
-                            "content": "✅ **SYSTEM RESET COMPLETE**. All agents have disconnected. Previous session signals are now obsolete.",
+                            "content": "✅ **RÉINITIALISATION DU SYSTÈME TERMINÉE**. Tous les agents se sont déconnectés. Les signaux des sessions précédentes sont obsolètes.",
                             "public": True,
                             "target": "All",
                             "timestamp": time.time()
                         }
+
                         s.setdefault("messages", []).append(msg_done)
                         return "Reload Done"
                     state_store.update(post_reload_done)

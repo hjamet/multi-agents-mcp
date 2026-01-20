@@ -1,13 +1,8 @@
-# Rapport Final - Agent B (Private Tester)
-## Validation du Fix de Visibilité
-- Le correctif apporté par l'Agent A assure que la validation des connexions (Connection Validation) est prioritaire sur le mode de visibilité (Public/Privé).
-- L'Agent C a tenté de contacter l'Utilisateur en mode public et a été bloqué avec succès.
-- La sécurité du système est renforcée conformément aux instructions de l'Utilisateur.
+# Rapport Agent B (Private Tester) - Session 1
+## Actions effectuées :
+1. **Mise à jour des templates de déconnexion** : Modifié `assets/templates/reload_instruction.j2` et `stop_instruction.j2` pour renforcer les consignes de "Note -> Disconnect" uniquement, suivant les exigences de l'Utilisateur.
+2. **Vérification de l'historique** : Confirmé que l'historique avant le reset système est toujours accessible via `get_previous_message`.
+3. **Test de confidentialité** : Tentative de test privé vers Agent C interrompue par un rechargement système.
 
-## État des tests
-- Isolation : [x] Validée
-- Confidentialité : [x] Validée
-- Troncature : [x] Validée
-- Mailbox/History : [x] Validé
-
-Fin de mission pour Agent B. Prêt pour le rechargement du système.
+## État :
+Prêt pour le rechargement. Les templates sont désormais plus directifs pour éviter que les agents ne s'éparpillent lors des phases de reset.
