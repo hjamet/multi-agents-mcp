@@ -95,46 +95,108 @@ def get_random_emoji():
 # --- HELPER FUNCTIONS ---
 def inject_custom_css():
     st.markdown("""<style>
-    /* Global message container */
+    /* Global message container - optimized for mobile */
     [data-testid="stChatMessage"] {
-        padding: 1rem !important;
-        margin-bottom: 1.5rem !important;
+        padding: 0.5rem 0.6rem 0.5rem 0 !important;
+        margin-bottom: 0.8rem !important;
     }
     
     [data-testid="stChatMessage"] [data-testid="stVerticalBlock"] {
-        gap: 12px !important;
+        gap: 6px !important;
+    }
+    
+    [data-testid="stChatMessageContent"] {
+        padding-left: 0 !important;
+        margin-left: 0 !important;
+    }
+    
+    /* Hide default Streamlit avatar since we show it in header */
+    [data-testid="stChatMessage"] > div:first-child {
+        display: none !important;
+    }
+    
+    /* Remove gap since avatar is hidden */
+    [data-testid="stChatMessage"] > div {
+        gap: 0 !important;
+        margin-left: 0 !important;
+    }
+    
+    /* User messages styling - green and aligned right */
+    [data-testid="stChatMessage"]:has([aria-label*="Chat message from User"]) {
+        margin-left: auto !important;
+        margin-right: 0 !important;
+        max-width: 85% !important;
+    }
+    
+    [aria-label*="Chat message from User"] .message-bubble {
+        background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%) !important;
+        border-left: 4px solid #4caf50 !important;
+        box-shadow: 0 2px 8px rgba(76, 175, 80, 0.15) !important;
+    }
+    
+    [aria-label*="Chat message from User"] .message-header {
+        opacity: 0.95 !important;
     }
 
     /* Header layout inside message */
     .message-header {
         display: flex;
         align-items: center;
-        gap: 10px;
-        margin-bottom: 8px;
+        gap: 8px;
+        margin-bottom: 6px;
         opacity: 0.85;
+        flex-wrap: wrap;
     }
 
     .message-bubble {
         border-radius: 4px 14px 14px 14px;
-        padding: 12px 18px;
-        line-height: 1.6;
+        padding: 10px 14px;
+        line-height: 1.5;
         font-size: 0.95em;
         border-left: 4px solid transparent;
         box-shadow: 0 2px 5px rgba(0,0,0,0.04);
         background: white;
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    /* Mobile optimizations */
+    @media (max-width: 768px) {
+        [data-testid="stChatMessage"] {
+            padding: 0.4rem 0.5rem 0.4rem 0 !important;
+            margin-bottom: 0.6rem !important;
+        }
+        
+        .message-bubble {
+            padding: 8px 12px;
+            font-size: 0.9em;
+        }
+        
+        .message-header {
+            gap: 6px;
+            margin-bottom: 4px;
+        }
     }
     
     .reply-banner-custom {
         background: #f0f7ff;
         border: 1px solid #d0e7ff;
-        border-radius: 10px;
-        padding: 8px 15px;
+        border-radius: 8px;
+        padding: 6px 12px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
         font-size: 0.85em;
         box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    @media (max-width: 768px) {
+        .reply-banner-custom {
+            padding: 5px 10px;
+            font-size: 0.8em;
+            margin-bottom: 5px;
+        }
     }
 
     /* Premium Toggle Styling (Targeting the specific widget) */
@@ -178,21 +240,41 @@ def inject_custom_css():
     
     .target-badge {
         font-weight: 600;
-        padding: 1px 6px;
-        border-radius: 4px;
-        font-size: 0.75em;
+        padding: 1px 5px;
+        border-radius: 3px;
+        font-size: 0.7em;
         color: #444;
         background: rgba(0,0,0,0.08);
         border: 1px solid rgba(0,0,0,0.1);
     }
     
     .status-tag {
-        font-size: 0.7em;
+        font-size: 0.65em;
         font-weight: 700;
-        padding: 1px 5px;
-        border-radius: 4px;
+        padding: 1px 4px;
+        border-radius: 3px;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.4px;
+    }
+    
+    /* Reply button optimization */
+    button[kind="tertiary"] {
+        padding: 0 !important;
+        min-height: 24px !important;
+        height: 24px !important;
+        font-size: 1.1em !important;
+    }
+    
+    @media (max-width: 768px) {
+        .target-badge {
+            font-size: 0.65em;
+            padding: 1px 4px;
+        }
+        
+        .status-tag {
+            font-size: 0.6em;
+            padding: 1px 3px;
+        }
     }
     
     .public-tag { color: #2e7d32; background: #e8f5e9; border: 1px solid #a5d6a7; }
@@ -204,13 +286,13 @@ def inject_custom_css():
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 6px 16px;
+        padding: 5px 14px;
         color: #666;
         font-size: 0.85em;
         font-style: italic;
         background: rgba(0,0,0,0.03);
         border-radius: 20px;
-        margin: 10px auto;
+        margin: 8px auto;
         width: fit-content;
         border: 1px solid rgba(0,0,0,0.05);
         box-shadow: 0 2px 4px rgba(0,0,0,0.02);
@@ -227,6 +309,14 @@ def inject_custom_css():
     @keyframes typing-bounce {
         0%, 80%, 100% { transform: translateY(0); opacity: 0.3; }
         40% { transform: translateY(-3px); opacity: 1; }
+    }
+    
+    @media (max-width: 768px) {
+        .typing-container {
+            padding: 4px 12px;
+            font-size: 0.8em;
+            margin: 6px auto;
+        }
     }
     </style>""", unsafe_allow_html=True)
 
@@ -1239,13 +1329,13 @@ if st.session_state.page == "Communication":
                 bubble_style = "background-color: #fff8f8; border: 2px dashed #ff4b4b;"
 
         with st.chat_message(sender, avatar=sender_emoji):
-            # Header with sender, target and status tags
-            c_header, c_action = st.columns([12, 1])
+            # Header with sender, target, status tags and reply button
+            c_header, c_reply = st.columns([11, 1])
             
             with c_header:
-                st.markdown(f"""<div class="message-header"><span style="font-weight: 700; color: #333; font-size: 0.9em;">{sender}</span><span style="color: #999; font-size: 0.8em;">→</span><span class="target-badge">{target if target != 'all' else 'everyone'}</span>{tag_html}<span style="color: #bbb; font-size: 0.7em; margin-left: auto;">{time.strftime('%H:%M:%S', time.localtime(timestamp))}</span></div>""", unsafe_allow_html=True)
+                st.markdown(f"""<div class="message-header"><div style="font-size: 1.2em; line-height: 1;">{sender_emoji}</div><span style="font-weight: 700; color: #333; font-size: 0.9em;">{sender}</span><span style="color: #999; font-size: 0.8em;">→</span><span class="target-badge">{target if target != 'all' else 'everyone'}</span>{tag_html}<span style="color: #bbb; font-size: 0.7em;">{time.strftime('%H:%M:%S', time.localtime(timestamp))}</span></div>""", unsafe_allow_html=True)
             
-            with c_action:
+            with c_reply:
                 render_reply_button(sender, content, real_idx)
 
             # Message Content
