@@ -895,6 +895,17 @@ async def disconnect(from_agent: str, ctx: Context) -> str:
             s["agents"][agent_name]["status"] = "pending_connection"
             s["agents"][agent_name]["reload_active"] = False
             # We don't remove them from the roster, just change status
+            
+            # --- ANNOUNCE DISCONNECTION ---
+            sys_msg = {
+                "from": "System",
+                "content": f"🔴 **{agent_name}** has disconnected, because the user requested a reset.",
+                "public": True,
+                "target": "All",
+                "timestamp": time.time()
+            }
+            s.setdefault("messages", []).append(sys_msg)
+            
         return f"Agent {agent_name} disconnected -> Pending Connection"
         
     engine.state.update(update_to_pending)

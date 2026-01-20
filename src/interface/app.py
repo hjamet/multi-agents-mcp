@@ -911,11 +911,21 @@ with st.sidebar:
             
             # Atomic Bulk Update
             def bulk_reload_signal(s):
+                # 0. Global Transition Marker
+                msg_start = {
+                    "from": "System",
+                    "content": "🔄 **FULL SYSTEM RELOAD INITIATED**. All agents are being requested to disconnect.",
+                    "public": True,
+                    "target": "All",
+                    "timestamp": time.time()
+                }
+                s.setdefault("messages", []).append(msg_start)
+
                 count = 0
                 for name in to_reload:
                     if name in s.get("agents", {}):
                          s["agents"][name]["reload_active"] = True
-                         # Inject System Message
+                         # Inject System Message (Private to Agent)
                          msg = {
                             "from": "System",
                             "content": "🔁 **SYSTEM NOTIFICATION**: RELOAD REQUESTED.\n"
@@ -931,6 +941,7 @@ with st.sidebar:
                 return f"Global reload signal sent ({count} agents)."
             
             state_store.update(bulk_reload_signal)
+            st.session_state.is_reloading_all = True # Local flag to post final message
             st.toast(f"PARALLEL reload sequence initialized for {len(to_reload)} agents.")
             st.rerun()
 
@@ -948,6 +959,26 @@ with st.sidebar:
             # Condition 1: Agent is finished (Disconnect/Pending)
             if status in ["pending_connection", "disconnected", "offline"]:
                 st.session_state.reload_queue.pop(0) # Done
+                
+                # Check if it was the last one
+                if not st.session_state.reload_queue:
+                    def post_reload_done(s):
+                        # Reset all reload flags and post a final marker
+                        for a in s.get("agents", {}).values():
+                            a["reload_active"] = False
+                        
+                        msg_done = {
+                            "from": "System",
+                            "content": "✅ **SYSTEM RESET COMPLETE**. All agents have disconnected. Previous session signals are now obsolete.",
+                            "public": True,
+                            "target": "All",
+                            "timestamp": time.time()
+                        }
+                        s.setdefault("messages", []).append(msg_done)
+                        return "Reload Done"
+                    state_store.update(post_reload_done)
+                    st.toast("✅ Full System Reload Done!")
+
                 st.rerun() # Proceed to next immediately
                 
             # Condition 2: Agent needs to be signaled

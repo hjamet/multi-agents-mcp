@@ -53,12 +53,12 @@ class Engine:
             agents[found_name]["reload_active"] = False
             
             # 2b. Announce it (System Message)
-            # This fixes the "User sees nothing" bug
+            # This fixes the "User sees nothing" bug and helps agents identify a fresh start
             sys_msg = {
                 "from": "System",
-                "content": f"🔵 **{found_name}** has joined the simulation.",
-                "public": False, # Private to User
-                "target": "User", 
+                "content": f"🔵 **{found_name}** vient de se reconnecter.",
+                "public": True, 
+                "target": "All", 
                 "audience": [],
                 "timestamp": time.time()
             }
