@@ -20,12 +20,12 @@ if [ ! -f "$REPO_ROOT/pyproject.toml" ]; then
     exit 1
 fi
 
-# 1b. Configurer Streamlit par défaut (Port 8505, Production)
+# 1b. Configurer Streamlit par défaut (Port 8501, Développement)
 echo -e "${BLUE}⚙️ Configuration de Streamlit...${NC}"
 mkdir -p "$REPO_ROOT/.streamlit"
 cat <<EOF > "$REPO_ROOT/.streamlit/config.toml"
 [server]
-port = 8505
+port = 8501
 address = "0.0.0.0"
 headless = true
 enableCORS = false
