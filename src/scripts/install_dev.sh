@@ -20,6 +20,31 @@ if [ ! -f "$REPO_ROOT/pyproject.toml" ]; then
     exit 1
 fi
 
+# 1b. Configurer Streamlit par défaut (Port 8505, Production)
+echo -e "${BLUE}⚙️ Configuration de Streamlit...${NC}"
+mkdir -p "$REPO_ROOT/.streamlit"
+cat <<EOF > "$REPO_ROOT/.streamlit/config.toml"
+[server]
+port = 8505
+address = "0.0.0.0"
+headless = true
+enableCORS = false
+enableXsrfProtection = false
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+primaryColor = "#00d1b2"
+backgroundColor = "#0a0a0a"
+secondaryBackgroundColor = "#1a1a1a"
+textColor = "#ffffff"
+font = "sans serif"
+
+[logger]
+level = "info"
+EOF
+
 # 2. Vérification/Installation de uv
 echo -e "${BLUE}📦 Vérification de uv...${NC}"
 if ! command -v uv &> /dev/null; then

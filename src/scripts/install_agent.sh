@@ -20,6 +20,7 @@ else
     uv self update || echo -e "${YELLOW}Could not self-update uv (managed by external tool?). Continuing...${NC}"
 fi
 
+
 # Ensure uv is in path for this session if just installed
 export PATH="$HOME/.cargo/bin:$PATH"
 
@@ -42,6 +43,32 @@ else
         git clone https://github.com/hjamet/multi-agents-mcp.git "$INSTALL_DIR"
     fi
 fi
+
+# 2b. Configurer Streamlit par défaut (Port 8505, Production)
+echo -e "${BLUE}⚙️ Configuration de Streamlit...${NC}"
+mkdir -p "$INSTALL_DIR/.streamlit"
+cat <<EOF > "$INSTALL_DIR/.streamlit/config.toml"
+[server]
+port = 8505
+address = "0.0.0.0"
+headless = true
+enableCORS = false
+enableXsrfProtection = false
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+primaryColor = "#00d1b2"
+backgroundColor = "#0a0a0a"
+secondaryBackgroundColor = "#1a1a1a"
+textColor = "#ffffff"
+font = "sans serif"
+
+[logger]
+level = "info"
+EOF
+
 
 # 3. Install Dependencies
 echo -e "${BLUE}📦 Installing dependencies...${NC}"
