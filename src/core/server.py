@@ -343,6 +343,53 @@ def _get_new_messages_notification(agent_name: str, messages: List[dict]) -> str
     return f"CRITICAL: You have received {count} new messages from {senders_str}.\nMANDATORY PROTOCOL:\n1. READ the 'LATEST CONVERSATION HISTORY' section above carefully.\n2. If you need more context, you may use `read_file` on logs, but usually the last 10 messages are enough."
 
 
+def _render_talk_response(sender: str, data: dict, instruction: str, replied_to_message: Optional[str] = None) -> str:
+    """
+    Consolidated helper to render talk_response.j2.
+    """
+    # 1. Resolve Profile & Open Mode
+    my_info = data.get('agents', {}).get(sender, {})
+    prof_ref = my_info.get("profile_ref")
+    profiles = data.get('config', {}).get('profiles', [])
+    my_prof = next((p for p in profiles if p["name"] == prof_ref), {})
+    is_open_mode = "open" in my_prof.get("capabilities", [])
+
+    # 2. Build History (Visibility Check)
+    full_msgs = data.get("messages", [])
+    visible_msgs = [m for m in full_msgs if m.get("public") or m.get("target") == sender or m.get("from") == sender or sender in (m.get("audience") or [])]
+    conv_history_str = _format_conversation_history(visible_msgs, sender)
+
+    # 3. Gather Context Data
+    role_snippet = _get_latest_role(data, sender)
+    global_context = data.get("config", {}).get("context", "")
+    agent_directory = _build_agent_directory(data, sender)
+    mem_content = _get_memory_content(sender)
+    if not mem_content: 
+        mem_content = "(No personal memory yet. Use `note()` to write one.)"
+    
+    notification = _get_new_messages_notification(sender, visible_msgs)
+    
+    # 4. Render
+    template = jinja_env.get_template("talk_response.j2")
+    response = template.render(
+        name=sender,
+        role_snippet=role_snippet,
+        context=global_context,
+        agent_directory=agent_directory,
+        connections=[d for d in agent_directory if d.get('authorized')],
+        conversation_history=conv_history_str,
+        memory_content=mem_content,
+        is_open_mode=is_open_mode,
+        replied_to_message=replied_to_message,
+        language_instruction=_get_language_instruction_text(data),
+        notification=notification,
+        backlog_instruction=_get_backlog_instruction_text(data),
+        search_results_markdown=_get_search_context(data, visible_msgs),
+        instruction=instruction
+    )
+    return _truncate_and_buffer(sender, response, data)
+
+
 @mcp.tool()
 async def agent(ctx: Context) -> str:
     """
@@ -443,8 +490,7 @@ async def agent(ctx: Context) -> str:
         notification=notification,
         backlog_instruction=_get_backlog_instruction_text(data),
         search_results_markdown=_get_search_context(data, visible_messages),
-
-
+        instruction=instruction_text
     )
     return _truncate_and_buffer(name, response, data)
 
@@ -539,17 +585,25 @@ async def talk(
             
             # BLOCKING REPAIR: Wait until it is actually my turn
             # This effectively "pauses" the agent in the `talk` call until the turn cycle comes back to them.
-            wait_result = await engine.wait_for_turn_async(sender, timeout_seconds=600) # Long timeout
-            
-            if wait_result["status"] == "success":
-                # Resumed!
-                engine.acknowledge_turn(sender)
-                return f"⚠️ **SYSTEM WARNING**: You attempted to speak out of turn and were paused. It is now correctly your turn. Review the conversation history with `tail -n 150 CONVERSATION.md` to see what happened while you were paused, then speak again."
-            
-            elif wait_result["status"] == "reset":
-                 return f"⚠️ SYSTEM ALERT: {wait_result['instruction']}"
-            else:
-                 return "🚫 SYSTEM TIMEOUT: You were paused for speaking out of turn, but the turn never came back to you. Session timed out."
+            while True:
+                wait_result = await engine.wait_for_turn_async(sender, timeout_seconds=60)
+                
+                if wait_result["status"] == "success":
+                    # Resumed!
+                    engine.acknowledge_turn(sender)
+                    data = engine.state.load()
+                    instruction = (
+                        "⚠️ **SYSTEM WARNING**: You attempted to speak out of turn and were paused. "
+                        "It is now correctly your turn. Review the LATEST CONVERSATION HISTORY above "
+                        "carefully to see what happened while you were paused, then speak again."
+                    )
+                    return _render_talk_response(sender, data, instruction)
+                
+                if wait_result["status"] == "reset":
+                     return f"⚠️ SYSTEM ALERT: {wait_result['instruction']}"
+                
+                # On timeout, just loop again (User requested: Never return until turn)
+                continue
 
         # If we get here, Identity is Validated: sender == current_turn_holder
         
@@ -679,85 +733,33 @@ async def talk(
                      # Prepare Template Render
                      try:
                         data = engine.state.load()
-                        role_snippet = _get_latest_role(data, sender)
-                        global_context = data.get("config", {}).get("context", "")
-                        agent_directory = _build_agent_directory(data, sender)
                      except Exception as e:
                         logger.error(sender, f"Error loading state in talk (User Reply): {e}")
-                        role_snippet = "Unknown"
-                        global_context = ""
-                        agent_directory = []
+                        return f"🚫 SYSTEM ERROR: {e}"
 
-                     template = jinja_env.get_template("talk_response.j2")
-                     
-                     # Calculate Open Mode
-                     is_open_mode = False
-                     try:
-                        my_info = data['agents'].get(sender, {})
-                        prof_ref = my_info.get("profile_ref")
-                        profiles = data['config']['profiles']
-                        my_prof = next((p for p in profiles if p["name"] == prof_ref), {})
-                        is_open_mode = "open" in my_prof.get("capabilities", [])
-                     except: pass
-
-                     # Combine Messages (Missed + User Reply)
-                     # We need to construct the messages list carefully
-                     # For simplicity, we just grab everything visible again or just the user reply
-                     # But we need to maintain the 'start_turn_messages' logic if we want to be consistent
-                     # Re-fetching visible messages is safer:
-                     visible_msgs = [] # (Simplified logic for now to avoid complexity in this snippet)
-                     # Actually, let's just use the user_reply as the instruction
-                     
-                     # Note: We need a valid 'messages' list for the template. 
-                     # Let's re-fetch recent history
-                     full_msgs = data.get("messages", []) # Full History (Agent-Pull)
-                     visible_msgs = [m for m in full_msgs if m.get("public") or m.get("target") == sender or m.get("from") == sender or sender in (m.get("audience") or [])]
-                     
-                     # Prepare Context Data
-                     mem_content = _get_memory_content(sender)
-                     if not mem_content: mem_content = "(No personal memory yet. Use `note()` to write one.)"
-                     
-                     conv_history_str = _format_conversation_history(visible_msgs, sender)
-
-                     # Calculate Notifications
-                     notification = _get_new_messages_notification(sender, visible_msgs)
-
-                     response = template.render(
-                        name=sender,
-                        role_snippet=role_snippet,
-                        context=global_context,
-                        agent_directory=agent_directory,
-                        connections=[d for d in agent_directory if d.get('authorized')],
-                        conversation_history=conv_history_str,
-                        memory_content=mem_content,
-                        is_open_mode=is_open_mode,
-                        replied_to_message=message,  # <--- Context
-                        language_instruction=_get_language_instruction_text(data),
-                        notification=notification,
-                        backlog_instruction=_get_backlog_instruction_text(data),
-                        search_results_markdown=_get_search_context(data, visible_msgs),
-
-
-                        instruction=f"✅ USER INTERCEPTION: The User replied: \"{user_reply}\". Your turn is back. READ THE CONVERSATION NOW."
-                     )
-                     return _truncate_and_buffer(sender, response, data)
+                     instruction = f"✅ USER INTERCEPTION: The User replied: \"{user_reply}\". Your turn is back. READ THE CONVERSATION NOW."
+                     return _render_talk_response(sender, data, instruction, replied_to_message=message)
 
             try:
                 data = engine.state.load()
-                role_snippet = _get_latest_role(data, sender)
-                global_context = data.get("config", {}).get("context", "")
-                agent_directory = _build_agent_directory(data, sender)
             except Exception as e:
                 logger.error(sender, f"Error loading state in talk (User): {e}")
-                role_snippet = "Unknown"
-                global_context = ""
-                agent_directory = []
+                return f"🚫 SYSTEM ERROR: {e}"
 
             template = jinja_env.get_template("user_unavailable.j2")
             
             # Re-fetch recent messages
             full_msgs = data.get("messages", []) # Full History (Agent-Pull)
             visible_msgs = [m for m in full_msgs if m.get("public") or m.get("target") == sender or m.get("from") == sender or sender in (m.get("audience") or [])]
+
+            # Resolve Directory for user_unavailable template
+            agent_directory = _build_agent_directory(data, sender)
+            # Resolve Open Mode
+            my_info = data.get('agents', {}).get(sender, {})
+            prof_ref = my_info.get("profile_ref")
+            profiles = data.get('config', {}).get('profiles', [])
+            my_prof = next((p for p in profiles if p["name"] == prof_ref), {})
+            is_open_mode = "open" in my_prof.get("capabilities", [])
 
             rendered = template.render(
                 name=sender,
@@ -790,64 +792,13 @@ async def talk(
             return f"⚠️ SYSTEM ALERT: {result['instruction']}"
         
         # Success - Render Template
-        # Fetch Data
-        role_snippet = "(Unknown Role)"
-        global_context = ""
-        agent_directory = []
-        
         try:
             data = engine.state.load()
-            role_snippet = _get_latest_role(data, sender)
-            global_context = data.get("config", {}).get("context", "")
-            agent_directory = _build_agent_directory(data, sender)
-                
         except Exception as e:
             logger.error(sender, f"Error loading state in talk: {e}")
-            pass
+            return f"🚫 SYSTEM ERROR: {e}"
 
-        template = jinja_env.get_template("talk_response.j2")
-        # Calculate Open Mode
-        is_open_mode = False
-        try:
-            my_info = data['agents'].get(sender, {})
-            prof_ref = my_info.get("profile_ref")
-            profiles = data['config']['profiles']
-            my_prof = next((p for p in profiles if p["name"] == prof_ref), {})
-            is_open_mode = "open" in my_prof.get("capabilities", [])
-        except: pass
-        
-        # Write Context Files
-        full_msgs = data.get("messages", []) # Full History (Agent-Pull)
-        visible_msgs = [m for m in full_msgs if m.get("public") or m.get("target") == sender or m.get("from") == sender or sender in (m.get("audience") or [])]
-
-        # Prepare Context Data
-        mem_content = _get_memory_content(sender)
-        if not mem_content: mem_content = "(No personal memory yet. Use `note()` to write one.)"
-        
-        conv_history_str = _format_conversation_history(visible_msgs)
-        
-        # Calculate Notifications
-        notification = _get_new_messages_notification(sender, visible_msgs)
-
-        response = template.render(
-            name=sender,
-            role_snippet=role_snippet,
-            context=global_context,
-            agent_directory=agent_directory,
-            connections=[d for d in agent_directory if d.get('authorized')],
-            conversation_history=conv_history_str,
-            memory_content=mem_content,
-            is_open_mode=is_open_mode,
-            replied_to_message=message, # <--- Context
-            language_instruction=_get_language_instruction_text(data),
-            notification=notification,
-            backlog_instruction=_get_backlog_instruction_text(data),
-            search_results_markdown=_get_search_context(data, visible_msgs),
-
-
-            instruction=result["instruction"]
-        )
-        return _truncate_and_buffer(sender, response, data)
+        return _render_talk_response(sender, data, result["instruction"], replied_to_message=message)
 
     except Exception as e:
         # Logging

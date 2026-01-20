@@ -24,10 +24,22 @@ You are **{{ name }}**.
 <instructions>
 **{{ language_instruction }}**
 
+{% if instruction %}
+<instruction>
+{{ instruction }}
+</instruction>
+{% endif %}
+
 {% if notification %}
 <notification>
 **{{ notification }}**
 </notification>
+{% endif %}
+
+{% if replied_to_message %}
+<replied_to>
+{{ replied_to_message }}
+</replied_to>
 {% endif %}
 
 {% if backlog_instruction %}

@@ -23,9 +23,16 @@
 {{ role }}
 </role_reminder>
 
-<critical_instructions>
-**{{ language_instruction }}**
-You are now connected to the Multi-Agent System.
+    <critical_instructions>
+    **{{ language_instruction }}**
+
+    {% if instruction %}
+    <instruction>
+    {{ instruction }}
+    </instruction>
+    {% endif %}
+
+    You are now connected to the Multi-Agent System.
 
 **MANDATORY PROTOCOL:**
 1. **SYNC FIRST**: Read the Context & Memory below carefully.
