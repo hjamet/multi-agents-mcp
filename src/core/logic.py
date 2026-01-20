@@ -348,40 +348,33 @@ class Engine:
                  if old_turn == from_agent and consecutive >= 5:
                      return "🚫 PROHIBITED: Self-loop limit reached (5/5). You cannot speak 6 times in a row. Please yield the turn."
 
-            # A. Capability Checks
-            # User Rule: "Tous les agents ne doivent pouvoir parler qu'en public." (Implies preference, but logic supports private if cap exists)
-            
-            if public and "public" not in caps and "public" not in allowed_targets:
-                 # Note: allowed_targets usually lists generic "public" connection if explicit
-                 return f"🚫 ACTION DENIED: You do not have the 'public' capability."
-            
-            if not public:
+            # A. Connection Validation (Mandatory for all visibilities)
+            def check_target(t_name):
+                if t_name == "User":
+                    if "User" in allowed_targets: return None
+                    return "Your profile does not permit direct interaction with the User. Please use an authorized proxy (e.g. your Lead)."
+                t_info = agents.get(t_name)
+                if not t_info: return f"Unknown agent '{t_name}'"
+                t_prof = t_info.get("profile_ref")
+                if t_name in allowed_targets: return None
+                if t_prof in allowed_targets: return None
+                return f"You are not authorized to communicate with '{t_prof}' based on your connection rules."
+
+            if from_agent != "User":
+                err = check_target(next_agent)
+                if err:
+                    return f"🚫 ACTION DENIED: {err}"
+
+            # B. Visibility Capability Checks
+            if public:
+                if "public" not in caps and "public" not in allowed_targets:
+                     # Note: allowed_targets usually lists generic "public" connection if explicit
+                     return f"🚫 ACTION DENIED: You do not have the 'public' capability."
+            else:
                  # Private Message
                  if "private" not in caps:
                       return f"🚫 ACTION DENIED: You do not have the 'private' capability. You can only speak publicly."
-                 
-                 # Check connection to target
-                 # Helper to check one target
-                 def check_target(t_name):
-                    if t_name == "User":
-                        if "User" in allowed_targets: return None
-                        return "No established connection to 'User'"
-                    t_info = agents.get(t_name)
-                    if not t_info: return f"Unknown agent '{t_name}'"
-                    t_prof = t_info.get("profile_ref")
-                    if t_name in allowed_targets: return None
-                    if t_prof in allowed_targets: return None
-                    return f"Not connected to '{t_prof}'"
-                 
-                 err = check_target(next_agent)
-                 if err:
-                     return f"🚫 ACTION DENIED: You are not authorized to speak privately to '{next_agent}' ({err})."
 
-            # --- USER CONNECTION ENFORCEMENT ---
-            if next_agent == "User" and from_agent != "User":
-                if "User" not in allowed_targets:
-                    return "You cannot communicate directly with the user. Please address a message to another agent: [Connections table]"
-            # -----------------------------------
 
             # 1. Add message
             msg = {
