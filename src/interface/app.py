@@ -955,10 +955,10 @@ with st.sidebar:
                  handle_disconnect_agent(current_target)
                  st.rerun()
                  
-        # Condition 3: Waiting for agent...
-        else:
-            # Just wait. The autorefresh will loop us.
-            st.toast(f"⏳ Waiting for disconnection: {current_target}...")
+            # Condition 3: Waiting for agent...
+            else:
+                # Just wait. The autorefresh will loop us.
+                st.toast(f"⏳ Waiting for disconnection: {current_target}...")
         else:
             # Agent gone? Remove from queue
             st.session_state.reload_queue.pop(0) 
