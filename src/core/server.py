@@ -761,6 +761,16 @@ async def talk(
             my_prof = next((p for p in profiles if p["name"] == prof_ref), {})
             is_open_mode = "open" in my_prof.get("capabilities", [])
 
+            # Transition turn back to sender since User is unavailable
+            def reset_turn(s):
+                s["turn"]["current"] = sender
+                s["turn"]["turn_start_time"] = time.time()
+                return "Turn reset to sender"
+            engine.state.update(reset_turn)
+            
+            # Reload fresh state after turn reset
+            data = engine.state.load()
+
             rendered = template.render(
                 name=sender,
                 agent_directory=agent_directory,
