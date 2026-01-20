@@ -9,6 +9,8 @@ import os
 import time
 import re
 import shutil
+import argparse
+import hashlib
 from pathlib import Path
 
 # Add src to path to allow imports if run directly
@@ -35,6 +37,39 @@ from src.core.state import StateStore
 from src.services.search_engine import SearchEngine
 
 st.set_page_config(page_title="Agent Orchestra", page_icon="🤖", layout="wide")
+
+# --- AUTHENTICATION ---
+def check_authentication():
+    # 1. Parse CLI Arguments for --password
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--password", type=str, default=None, help="Optional password to secure the interface")
+    args, unknown = parser.parse_known_args()
+    
+    cli_password = args.password
+    
+    # If no password configured, we are good
+    if not cli_password:
+        return
+
+    # 2. Check Session State
+    if st.session_state.get("authenticated", False):
+        return
+
+    # 3. Show Login Page
+    st.markdown("### 🔒 Authentication Required")
+    password_input = st.text_input("Enter Password", type="password")
+    
+    if st.button("Login"):
+        if password_input == cli_password:
+            st.session_state.authenticated = True
+            st.rerun()
+        else:
+            st.error("❌ Incorrect Password")
+            
+    # Stop Execution until authenticated
+    st.stop()
+
+check_authentication()
 
 # --- EMOJI LIST ---
 EMOJI_LIST = [

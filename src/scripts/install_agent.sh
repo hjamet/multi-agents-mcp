@@ -89,7 +89,7 @@ uv run python src/scripts/utils/configure_mcp.py --name multi-agents-mcp --path 
 # 4. Launch Streamlit from the global installation
 # Unset VIRTUAL_ENV to avoid inheriting from the calling shell's env
 unset VIRTUAL_ENV
-uv run --project "\$INSTALL_DIR" streamlit run src/interface/app.py
+uv run --project "\$INSTALL_DIR" streamlit run src/interface/app.py -- "\$@"
 EOF
 
 chmod +x "$MAMCP_PATH"

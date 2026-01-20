@@ -63,7 +63,7 @@ uv run python src/scripts/utils/configure_mcp.py --name multi-agents-mcp-dev --p
 
 # 4. Lancer Streamlit depuis le dossier de dev
 unset VIRTUAL_ENV
-uv run streamlit run src/interface/app.py
+uv run streamlit run src/interface/app.py -- "\$@"
 EOF
 
 chmod +x "$MAMCP_DEV_PATH"
