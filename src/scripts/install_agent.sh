@@ -58,13 +58,6 @@ enableXsrfProtection = false
 [browser]
 gatherUsageStats = false
 
-[theme]
-primaryColor = "#00d1b2"
-backgroundColor = "#0a0a0a"
-secondaryBackgroundColor = "#1a1a1a"
-textColor = "#ffffff"
-font = "sans serif"
-
 [logger]
 level = "info"
 EOF
