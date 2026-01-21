@@ -357,6 +357,11 @@ def _render_talk_response(sender: str, data: dict, instruction: str, replied_to_
     # 2. Build History (Visibility Check)
     full_msgs = data.get("messages", [])
     visible_msgs = [m for m in full_msgs if m.get("public") or m.get("target") == sender or m.get("from") == sender or sender in (m.get("audience") or [])]
+    
+    # Remove the agent's own last message (they already know what they sent)
+    if visible_msgs and visible_msgs[-1].get("from") == sender:
+        visible_msgs = visible_msgs[:-1]
+    
     conv_history_str = _format_conversation_history(visible_msgs, sender)
 
     # 3. Gather Context Data
@@ -410,13 +415,33 @@ async def agent(ctx: Context) -> str:
     # Load state once
     state = engine.state.load()
     
+    # FIX BUG #2: Check if reload is active for this agent
+    # If so, provide simplified response without requiring full initialization
+    agent_data = state.get("agents", {}).get(name, {})
+    if agent_data.get("reload_active"):
+        logger.log("INFO", name, "Reload detected during registration. Providing simplified disconnect instruction.")
+        return (
+            f"🔁 **SYSTEM RELOAD DETECTED**\n\n"
+            f"You are **{name}**.\n\n"
+            f"A system reload has been requested. This was just a test - no worries!\n\n"
+            f"**REQUIRED ACTION**: Call `disconnect(from_agent=\"{name}\")` immediately.\n\n"
+            f"⛔ **DO NOT** call `note()` or perform any other operations."
+        )
+    
     # helper to get directory
     agent_dir = _build_agent_directory(state, name)
 
     # BLOCKING: Wait for everyone before returning the initial prompt
     wait_msg = await engine.wait_for_all_agents_async(name)
     if wait_msg == "RELOAD_REQUIRED":
-         return STOP_INSTRUCTION
+         # FIX BUG #2: Provide agent name in reload instruction
+         return (
+             f"🔁 **SYSTEM RELOAD DETECTED**\n\n"
+             f"You are **{name}**.\n\n"
+             f"A system reload has been requested during network initialization.\n\n"
+             f"**REQUIRED ACTION**: Call `disconnect(from_agent=\"{name}\")` immediately.\n\n"
+             f"⛔ **DO NOT** call `note()` or perform any other operations."
+         )
     if wait_msg.startswith("TIMEOUT"):
          return wait_msg
 
@@ -438,6 +463,15 @@ async def agent(ctx: Context) -> str:
             break
             
         if turn_result["status"] == "reset":
+            # FIX BUG #2: Include agent name in reset instruction
+            if "RELOAD" in turn_result["instruction"]:
+                return (
+                    f"🔁 **SYSTEM RELOAD DETECTED**\n\n"
+                    f"You are **{name}**.\n\n"
+                    f"A system reload has been requested.\n\n"
+                    f"**REQUIRED ACTION**: Call `disconnect(from_agent=\"{name}\")` immediately.\n\n"
+                    f"⛔ **DO NOT** call `note()` or perform any other operations."
+                )
             return f"⚠️ SYSTEM ALERT: {turn_result['instruction']}"
             
         # If timeout, we just loop again. (User requested: Never return until turn)
@@ -619,6 +653,22 @@ async def talk(
 
         if not is_retry:
             logger.log("ACTION", sender, f"talking (Public: {is_public})", {"message": message})
+            
+            # --- ANTI-GHOST CHECK ---
+            # If the User has written a message during the agent's turn, block the agent's message
+            turn_start = state.get("turn", {}).get("turn_start_time", 0)
+            last_user_msg = state.get("turn", {}).get("last_user_message_time", 0)
+            
+            if sender != "User" and last_user_msg > turn_start:
+                logger.log("BLOCK", sender, "Blocked talk() due to User interruption (Anti-Ghost)")
+                # Force agent to read User's message
+                data = engine.state.load()
+                instruction = (
+                    "🚫 MESSAGE NON ENVOYÉ : L'utilisateur a écrit un message pendant que vous travailliez. "
+                    "Vous avez des messages non lus de l'utilisateur. "
+                    "Veuillez les lire et adapter votre réponse en conséquence."
+                )
+                return _render_talk_response(sender, data, instruction)
             
             # 1. Post Message
             post_result = engine.post_message(sender, message, is_public)

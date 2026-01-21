@@ -207,12 +207,11 @@ class Engine:
 
         if intended_next:
             next_agent = intended_next
-            # If the intended agent was in the queue, we consume one of their turns
+            # If the intended agent was in the queue, reset their count to 0 (FIFO rule)
             existing = next((i for i in queue if i.name == next_agent), None)
             if existing:
-                existing.count -= 1
-                if existing.count <= 0:
-                    queue.remove(existing)
+                existing.count = 0
+                queue.remove(existing)
         else:
             if not queue:
                 state["turn"]["current"] = "User"
@@ -224,9 +223,9 @@ class Engine:
             queue.sort(key=lambda x: (-x.count, x.timestamp))
             next_item = queue[0]
             next_agent = next_item.name
-            next_item.count -= 1
-            if next_item.count <= 0:
-                queue.pop(0)
+            # Reset count to 0 when agent speaks (FIFO rule)
+            next_item.count = 0
+            queue.pop(0)
 
         # Serialize back
         state["turn"]["queue"] = [item.model_dump() for item in queue]
@@ -309,16 +308,18 @@ class Engine:
         # Build list of mentionable agents
         mentionable = []
         
-        # Always can mention User
-        if from_agent != "User":
-            mentionable.append("@User")
+        # FIX BUG #6: Don't automatically add User, only if in allowed_targets
+        # User is treated like any other target
         
         # Add allowed targets
         for target_name in allowed_targets.keys():
             # Check if it's a profile name or agent name
             if target_name in agents:
                 mentionable.append(f"@{target_name}")
-            elif target_name != "public" and target_name != "User":
+            elif target_name == "User":
+                # User is a special case (not in agents dict)
+                mentionable.append("@User")
+            elif target_name != "public":
                 # It's a profile name, find matching agents
                 matching = [name for name, data in agents.items() 
                            if data.get("profile_ref") == target_name and name != from_agent]
@@ -374,27 +375,56 @@ class Engine:
 
 
             # --- MENTIONS PARSING ---
-            # Regex to find @Name
-            # First, calculate max spaces in any agent name to build adaptive regex
-            max_spaces = 0
-            for agent_name in agents.keys():
-                spaces_count = agent_name.count(' ')
-                max_spaces = max(max_spaces, spaces_count)
-            # Add User to the check
-            max_spaces = max(max_spaces, "User".count(' '))
+            # FIX BUG #3 (User Suggestion): Character-by-character parsing instead of regex
+            # Algorithm:
+            # 1. Find all @ symbols
+            # 2. Ignore those in backticks
+            # 3. For each @, look at next X chars (X = longest agent name)
+            # 4. Check if substring matches any agent name
+            # 5. Take longest match if multiple exist
             
-            # Build regex pattern: @(word)(space word){0,max_spaces}
-            # This captures agent names with up to max_spaces spaces
-            # Pattern: @(\w+(?:\s+\w+){0,N}) where N is max_spaces
-            mention_pattern = rf'@(\w+(?:\s+\w+){{0,{max_spaces}}})'
+            # Build list of all possible agent names (including User)
+            all_agent_names = list(agents.keys()) + ["User"]
+            
+            # Calculate max length for lookahead
+            max_name_length = max(len(name) for name in all_agent_names) if all_agent_names else 0
             
             # Strip code blocks first to avoid false positives
-            # Simple approach: remove text between backticks
-            content_no_code = re.sub(r'`[^`]*`', '', content)
+            # Replace content between backticks with spaces to preserve positions
+            content_no_code = re.sub(r'`[^`]*`', lambda m: ' ' * len(m.group(0)), content)
             
-            # 1. Parse all mentions (DEDUPE: use set to only count each agent once per message)
-            raw_mentions = re.findall(mention_pattern, content_no_code)
-            seen_mentions = set()  # Deduplicate within this message
+            # 1. Find all mentions by scanning character by character
+            mentions_found = []
+            i = 0
+            while i < len(content_no_code):
+                if content_no_code[i] == '@':
+                    # Look ahead up to max_name_length characters
+                    lookahead_end = min(i + 1 + max_name_length, len(content_no_code))
+                    lookahead = content_no_code[i+1:lookahead_end]
+                    
+                    # Find all agent names that match the beginning of lookahead
+                    matching_names = []
+                    for agent_name in all_agent_names:
+                        if lookahead.startswith(agent_name):
+                            matching_names.append(agent_name)
+                    
+                    # Take the longest match (greedy)
+                    if matching_names:
+                        longest_match = max(matching_names, key=len)
+                        mentions_found.append(longest_match)
+                        # Skip past this mention to avoid re-parsing
+                        i += len(longest_match) + 1
+                        continue
+                
+                i += 1
+            
+            # Deduplicate mentions (preserve order of first occurrence)
+            seen_mentions = set()
+            filtered_mentions = []
+            for m in mentions_found:
+                if m not in seen_mentions:
+                    seen_mentions.add(m)
+                    filtered_mentions.append(m)
             
             # 2. Filter / Validate Mentions
             valid_mentions = []
@@ -402,34 +432,9 @@ class Engine:
             # Get current Queue to check for emptiness later
             queue_raw = state.get("turn", {}).get("queue", [])
             
-            for m_name in raw_mentions:
-                # Skip if already processed in THIS message
-                if m_name in seen_mentions:
-                    continue
-                seen_mentions.add(m_name)
-                
-                # 2a. Existence Check
-                target_agent = None
-                if m_name == "User":
-                    target_agent = "User"
-                elif m_name in agents:
-                    target_agent = m_name
-                else:
-                    # Check if it mentions a Profile Name (e.g. @Reviewer) -> Resolve to agent
-                    # If multiple agents have that profile, we might add ALL? Or just one? 
-                    # Spec says "si un agent mentionne un agent ou user qui n'existe pas -> erreur"
-                    # But if it's a profile? Assuming agent names for now as per spec "agent1".
-                    
-                    # Closest match
-                    # Simple heuristic: find agent with name containing m_name or vice versa
-                    matches = [a for a in agents.keys() if m_name.lower() in a.lower()]
-                    suggestion = matches[0] if matches else (list(agents.keys())[0] if agents else "Unknown")
-                    
-                    connections_table = self._build_connections_table(from_agent, state, allowed_targets)
-                    return (f"🚫 MENTION ERROR: You mentioned '@{m_name}', but this agent does not exist. "
-                            f"Did you mean '@{suggestion}'? "
-                            f"If you just wanted to use the '@' symbol, wrap it in backticks like `@`."
-                            f"{connections_table}")
+            for m_name in filtered_mentions:
+                # 2a. Existence Check (already validated by matching against all_agent_names)
+                target_agent = m_name
                 
                 # 2b. Permission Check
                 # Check if target_agent is allowed.
@@ -440,11 +445,14 @@ class Engine:
                     
 
                     authorized = False
-                    if target_agent == "User":
-                        authorized = True # Agents can always mention User
-                    elif target_agent in allowed_targets:
+                    # FIX BUG #6: User mention should also require permission
+                    # Check if target is in allowed_targets (by ID or profile)
+                    if target_agent in allowed_targets:
                         authorized = True
                     elif t_prof and t_prof in allowed_targets:
+                        authorized = True
+                    # Special case: "User" might be in allowed_targets as a profile name
+                    elif target_agent == "User" and "User" in allowed_targets:
                         authorized = True
                     
                     if not authorized:
@@ -670,7 +678,7 @@ class Engine:
                     "instruction": f"🚨 TURN GRANTED. Read the LATEST CONVERSATION HISTORY above carefully to see what happened while you were waiting.{backlog_instr}{advice_text}"
                 }
             
-            time.sleep(1)
+            time.sleep(0.5)  # Reduced from 1s to 0.5s for faster RELOAD detection
             
         return {
             "status": "timeout",
@@ -806,7 +814,7 @@ class Engine:
                     "instruction": f"It is your turn. Speak.{backlog_instr}{advice_text}"
                 }
             
-            await asyncio.sleep(1) # Non-blocking Sleep
+            await asyncio.sleep(0.5)  # Reduced from 1s to 0.5s for faster RELOAD detection
             
         return {
             "status": "timeout",

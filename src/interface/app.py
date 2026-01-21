@@ -477,7 +477,15 @@ def get_total_agents(profiles):
             pass
     return total
 
-def format_mentions(text):
+def format_mentions(text, agent_names=None):
+    """
+    Format mentions in text with HTML styling.
+    FIX BUG #7: Synchronize with logic.py's character-by-character parsing.
+    
+    Args:
+        text: The text to format
+        agent_names: List of valid agent names (including "User"). If None, uses a permissive regex.
+    """
     if not text: return text
     
     # 1. First decorate @everyone
@@ -488,12 +496,29 @@ def format_mentions(text):
     )
     
     # 2. Then decorate @AgentName
-    # Regex for @Name (handling spaces/hashes for Agent IDs)
-    return re.sub(
-        r'(@(?!everyone)[a-zA-Z0-9_ #]+)', 
-        r'<span style="color: #ffffff; background-color: #0d47a1; padding: 2px 8px; border-radius: 4px; font-weight: 600; font-size: 0.85em; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">\1</span>', 
-        text
-    )
+    # FIX BUG #7: Use exact matching with agent names (same as logic.py)
+    if agent_names:
+        # Build a regex that matches exact agent names
+        # Sort by length (longest first) to ensure greedy matching
+        sorted_names = sorted(agent_names, key=len, reverse=True)
+        # Escape special regex characters in names
+        escaped_names = [re.escape(name) for name in sorted_names if name != "everyone"]
+        if escaped_names:
+            pattern = r'@(' + '|'.join(escaped_names) + r')(?=\s|$|[^\w])'
+            text = re.sub(
+                pattern,
+                r'<span style="color: #ffffff; background-color: #0d47a1; padding: 2px 8px; border-radius: 4px; font-weight: 600; font-size: 0.85em; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">@\1</span>',
+                text
+            )
+    else:
+        # Fallback: Use permissive pattern (original behavior)
+        text = re.sub(
+            r'(@(?!everyone)[\w\s()#]+)', 
+            r'<span style="color: #ffffff; background-color: #0d47a1; padding: 2px 8px; border-radius: 4px; font-weight: 600; font-size: 0.85em; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">\1</span>', 
+            text
+        )
+    
+    return text
 
 def render_graph(profiles, current_editing=None):
     graph = graphviz.Digraph()
@@ -934,13 +959,41 @@ with st.sidebar:
         </div>
     """, unsafe_allow_html=True)
     
-    # Maintain original order from agents dictionary
-    roster_list = [name for name in agents.keys()]
+    # Get queue data for priority display (UI Enhancement)
+    queue_raw = turn.get("queue", [])
+    queue_counts = {}
+    queue_items = {}  # Store full queue items for sorting
+    for item in queue_raw:
+        if isinstance(item, dict):
+            name = item.get("name")
+            queue_counts[name] = item.get("count", 0)
+            queue_items[name] = item
     
-    # Explicitly add User to the top
-    roster_list.insert(0, "User")
-    
+    # Build roster list sorted by turn priority (FIX: User request for proper ordering)
+    # 1. User always first
+    # 2. Current turn agent (if not User)
+    # 3. Agents in queue (sorted by count DESC, timestamp ASC)
+    # 4. Other agents
     current_turn = turn.get("current")
+    roster_list = ["User"]
+    
+    # Add current turn agent (if not User and not already in list)
+    if current_turn and current_turn != "User" and current_turn not in roster_list:
+        roster_list.append(current_turn)
+    
+    # Add agents from queue (sorted by priority: count DESC, timestamp ASC)
+    queue_sorted = sorted(
+        [(name, item) for name, item in queue_items.items()],
+        key=lambda x: (-x[1].get("count", 0), x[1].get("timestamp", 0))
+    )
+    for name, _ in queue_sorted:
+        if name not in roster_list and name in agents:
+            roster_list.append(name)
+    
+    # Add remaining agents not in queue
+    for name in agents.keys():
+        if name not in roster_list:
+            roster_list.append(name)
     
     if not roster_list:
         st.caption("No agents detected.")
@@ -994,7 +1047,11 @@ with st.sidebar:
                 status_color = "#2196F3"
                 status_label = "In action..."
             
-            card_html = f"""<div class="{card_class}" style="background-color: {bg}; border: 1px solid {border_color}; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s ease;"><div style="display: flex; align-items: center; gap: 12px;"><div style="font-size: 1.4em; background: white; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">{emoji}</div><div style="display: flex; flex-direction: column;"><span style="font-weight: 600; color: {'#1a1a1a' if status == 'connected' else '#666'}; font-size: 0.95em;">{name}</span><div style="display: flex; align-items: center; gap: 4px;"><div style="width: 6px; height: 6px; background-color: {status_color}; border-radius: 50%;"></div><span style="font-size: 0.7em; color: {status_color}; font-weight: 500; letter-spacing: 0.5px;">{status_label}</span></div></div></div>{'<span style="font-size: 1.2em;" title="It is their turn!">✨</span>' if is_turn else ''}</div>"""
+            # Get mention count for this agent (UI Enhancement)
+            mention_count = queue_counts.get(name, 0)
+            mention_badge = f'<span style="background: #ff4b4b; color: white; padding: 2px 6px; border-radius: 8px; font-size: 0.7em; font-weight: 700; margin-left: 6px;" title="Mentions in queue">{mention_count}</span>' if mention_count > 0 else ''
+            
+            card_html = f"""<div class="{card_class}" style="background-color: {bg}; border: 1px solid {border_color}; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s ease;"><div style="display: flex; align-items: center; gap: 12px;"><div style="font-size: 1.4em; background: white; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">{emoji}</div><div style="display: flex; flex-direction: column;"><div style="display: flex; align-items: center;"><span style="font-weight: 600; color: {'#1a1a1a' if status == 'connected' else '#666'}; font-size: 0.95em;">{name}</span>{mention_badge}</div><div style="display: flex; align-items: center; gap: 4px;"><div style="width: 6px; height: 6px; background-color: {status_color}; border-radius: 50%;"></div><span style="font-size: 0.7em; color: {status_color}; font-weight: 500; letter-spacing: 0.5px;">{status_label}</span></div></div></div>{'<span style="font-size: 1.2em;" title="It is their turn!">✨</span>' if is_turn else ''}</div>"""
             
             if name == "User":
                 st.markdown(card_html, unsafe_allow_html=True)
@@ -1300,11 +1357,30 @@ if st.session_state.page == "Communication":
         is_replied = m.get("replied", False)
         
         # FORMAT MENTIONS
-        content_visual = format_mentions(content)
+        # Build list of all agent names (including User) for exact matching
+        all_agent_names = list(agents.keys()) + ["User"]
+        content_visual = format_mentions(content, agent_names=all_agent_names)
         
         agent_info = agents.get(sender, {})
         sender_emoji = agent_info.get("emoji", "🤖") if sender != "System" else "💾"
         if sender == "User": sender_emoji = "👤"
+        
+        # Extract mentions from content for better target display (UI Enhancement)
+        # Parse mentions using same logic as backend
+        mentioned_agents = []
+        if target == "Queue":
+            # Extract mentions from content
+            import re
+            content_no_code = re.sub(r'`[^`]*`', lambda m: ' ' * len(m.group(0)), content)
+            for agent_name in all_agent_names:
+                if f'@{agent_name}' in content_no_code:
+                    mentioned_agents.append(agent_name)
+        
+        # Format target display
+        if target == "Queue" and mentioned_agents:
+            target_display = ", ".join(mentioned_agents)
+        else:
+            target_display = target if target != 'all' else 'everyone'
         
         # Style and Tag Logic
         tag_html = ""
@@ -1322,10 +1398,10 @@ if st.session_state.page == "Communication":
                 else:
                     bubble_style = "background-color: #f0f7ff; border-left: 4px solid #1976d2;"
             elif sender == "User":
-                tag_html = f'<span class="status-tag">📤 Outgoing to {target}</span>'
+                tag_html = f'<span class="status-tag">📤 Outgoing to {target_display}</span>'
                 bubble_style = "background-color: #ffffff; border-left: 4px solid #94a3b8;"
             else:
-                tag_html = f'<span class="status-tag direct-tag" style="background: #ffebee; color: #c62828;">🔒 Private {sender} → {target}</span>'
+                tag_html = f'<span class="status-tag direct-tag" style="background: #ffebee; color: #c62828;">🔒 Private {sender} → {target_display}</span>'
                 bubble_style = "background-color: #fff8f8; border: 2px dashed #ff4b4b;"
 
         with st.chat_message(sender, avatar=sender_emoji):
@@ -1333,7 +1409,7 @@ if st.session_state.page == "Communication":
             c_header, c_reply = st.columns([11, 1])
             
             with c_header:
-                st.markdown(f"""<div class="message-header"><div style="font-size: 1.2em; line-height: 1;">{sender_emoji}</div><span style="font-weight: 700; color: #333; font-size: 0.9em;">{sender}</span><span style="color: #999; font-size: 0.8em;">→</span><span class="target-badge">{target if target != 'all' else 'everyone'}</span>{tag_html}<span style="color: #bbb; font-size: 0.7em;">{time.strftime('%H:%M:%S', time.localtime(timestamp))}</span></div>""", unsafe_allow_html=True)
+                st.markdown(f"""<div class="message-header"><div style="font-size: 1.2em; line-height: 1;">{sender_emoji}</div><span style="font-weight: 700; color: #333; font-size: 0.9em;">{sender}</span><span style="color: #999; font-size: 0.8em;">→</span><span class="target-badge">{target_display}</span>{tag_html}<span style="color: #bbb; font-size: 0.7em;">{time.strftime('%H:%M:%S', time.localtime(timestamp))}</span></div>""", unsafe_allow_html=True)
             
             with c_reply:
                 render_reply_button(sender, content, real_idx)
