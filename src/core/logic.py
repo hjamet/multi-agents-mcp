@@ -300,6 +300,36 @@ class Engine:
         
         return "TIMEOUT: Waiting for other agents took too long. Please retry agent() tool."
 
+    def _build_connections_table(self, from_agent: str, state: Dict[str, Any], allowed_targets: Dict[str, str]) -> str:
+        """
+        Helper to build a connections table showing who the agent can mention.
+        """
+        agents = state.get("agents", {})
+        
+        # Build list of mentionable agents
+        mentionable = []
+        
+        # Always can mention User
+        if from_agent != "User":
+            mentionable.append("@User")
+        
+        # Add allowed targets
+        for target_name in allowed_targets.keys():
+            # Check if it's a profile name or agent name
+            if target_name in agents:
+                mentionable.append(f"@{target_name}")
+            elif target_name != "public" and target_name != "User":
+                # It's a profile name, find matching agents
+                matching = [name for name, data in agents.items() 
+                           if data.get("profile_ref") == target_name and name != from_agent]
+                for m in matching:
+                    mentionable.append(f"@{m}")
+        
+        if not mentionable:
+            return "\n\n📋 **Your Connections**: None (you cannot mention anyone)"
+        
+        return f"\n\n📋 **Your Connections**: You can mention: {', '.join(sorted(set(mentionable)))}"
+
     def post_message(self, from_agent: str, content: str, public: bool, audience: List[str] = None) -> str:
         """
         Posts a message, parses mentions, updates queue, and transitions turn.
@@ -345,12 +375,25 @@ class Engine:
 
             # --- MENTIONS PARSING ---
             # Regex to find @Name
-            # We treat text between `` as escaped code blocks, but simplified regex:
-            # We just look for @(\w+) and filter valid agents.
-            # Ideally we strip code blocks first, but for now simple regex is standard.
+            # First, calculate max spaces in any agent name to build adaptive regex
+            max_spaces = 0
+            for agent_name in agents.keys():
+                spaces_count = agent_name.count(' ')
+                max_spaces = max(max_spaces, spaces_count)
+            # Add User to the check
+            max_spaces = max(max_spaces, "User".count(' '))
+            
+            # Build regex pattern: @(word)(space word){0,max_spaces}
+            # This captures agent names with up to max_spaces spaces
+            # Pattern: @(\w+(?:\s+\w+){0,N}) where N is max_spaces
+            mention_pattern = rf'@(\w+(?:\s+\w+){{0,{max_spaces}}})'
+            
+            # Strip code blocks first to avoid false positives
+            # Simple approach: remove text between backticks
+            content_no_code = re.sub(r'`[^`]*`', '', content)
             
             # 1. Parse all mentions (DEDUPE: use set to only count each agent once per message)
-            raw_mentions = re.findall(r'@(\w+)', content)
+            raw_mentions = re.findall(mention_pattern, content_no_code)
             seen_mentions = set()  # Deduplicate within this message
             
             # 2. Filter / Validate Mentions
@@ -382,9 +425,11 @@ class Engine:
                     matches = [a for a in agents.keys() if m_name.lower() in a.lower()]
                     suggestion = matches[0] if matches else (list(agents.keys())[0] if agents else "Unknown")
                     
+                    connections_table = self._build_connections_table(from_agent, state, allowed_targets)
                     return (f"🚫 MENTION ERROR: You mentioned '@{m_name}', but this agent does not exist. "
                             f"Did you mean '@{suggestion}'? "
-                            f"If you just wanted to use the '@' symbol, wrap it in backticks like `@`.")
+                            f"If you just wanted to use the '@' symbol, wrap it in backticks like `@`."
+                            f"{connections_table}")
                 
                 # 2b. Permission Check
                 # Check if target_agent is allowed.
@@ -403,23 +448,29 @@ class Engine:
                         authorized = True
                     
                     if not authorized:
+                        connections_table = self._build_connections_table(from_agent, state, allowed_targets)
                         return (f"🚫 PERMISSION ERROR: You are not authorized to summon '@{target_agent}' "
-                                f"(Profile: {t_prof}). Check your allowed connections.")
+                                f"(Profile: {t_prof}). Check your allowed connections."
+                                f"{connections_table}")
                 
                 valid_mentions.append(target_agent)
 
             # --- VISIBILITY CHECKS ---
             if public:
                 if "public" not in caps and "public" not in allowed_targets:
-                     return "🚫 CAPABILITY ERROR: You do not have 'public' capability."
+                    connections_table = self._build_connections_table(from_agent, state, allowed_targets)
+                    return f"🚫 CAPABILITY ERROR: You do not have 'public' capability.{connections_table}"
             else:
                  if "private" not in caps:
-                      return "🚫 CAPABILITY ERROR: You do not have 'private' capability. Use public=True."
+                    connections_table = self._build_connections_table(from_agent, state, allowed_targets)
+                    return f"🚫 CAPABILITY ERROR: You do not have 'private' capability. Use public=True.{connections_table}"
 
             # --- QUEUE UPDATE ---
             if not valid_mentions and not queue_raw:
+                connections_table = self._build_connections_table(from_agent, state, allowed_targets)
                 return ("🚫 TURN ERROR: The queue is empty and you mentioned no one. "
-                        "You MUST mention at least one agent (e.g. @User or @AgentName) to pass the turn.")
+                        "You MUST mention at least one agent (e.g. @User or @AgentName) to pass the turn."
+                        f"{connections_table}")
 
             # Load Queue Objects
             queue_objs = []
