@@ -1503,31 +1503,51 @@ if st.session_state.page == "Communication":
             # --- MENTION PARSING (Same logic as agents - dedupe per message) ---
             known_agents = s.get("agents", {})
             
-            # FIX BUG #15: Build profile_map to resolve profile references to agent names
-            # This allows User to mention agents by their profile name (e.g. @Agent_B)
+            # FIX BUG #15 & #16: Build profile_map and Scan properly for Multi-word agent names
+            # Logic: Match known agent names (and profile refs) in the string, prioritizing longest matches 
+            # but respecting appearance order.
+            
             profile_map = {}
             for name, data in known_agents.items():
                 pref = data.get("profile_ref")
                 if pref:
                     profile_map[pref] = name
             
-            # Use regex to find all mentions in order of appearance (deduplicated)
-            raw_mentions = re.findall(r'@(\w+)', prompt)
-            seen_in_msg = set()
-            valid_mentions = []
+            # 1. Build a map of {Token: AgentName} for all possible valid mentions (Full Name & Profile Name)
+            # We want to search for "@FullName" or "@ProfileName"
+            mention_candidates = {}
+            for name in known_agents.keys():
+                mention_candidates[name] = name # "Agent B (Private Tester)" -> "Agent B (Private Tester)"
+            for prof, real in profile_map.items():
+                mention_candidates[prof] = real # "Agent_B" -> "Agent B (Private Tester)"
+            mention_candidates["User"] = "User"
+
+            # 2. Find all occurrences
+            found_mentions_raw = [] # list of (start_index, end_index, resolved_name)
             
-            for m_name in raw_mentions:
-                if m_name in seen_in_msg:
-                    continue
-                seen_in_msg.add(m_name)
-                
-                # FIX BUG #15: Resolve profile ref to agent name
-                target_agent = profile_map.get(m_name, m_name)
-                
-                # Check existence
-                if target_agent in known_agents or target_agent == "User":
-                    valid_mentions.append(target_agent)
-                # If not found, we just ignore (User is not held to strict validation)
+            # We iterate over all candidates and find their positions in the text
+            for candidate_key, resolved_name in mention_candidates.items():
+                # Search for @candidate_key
+                # We use regex escape to handle parentheses in names
+                pattern = r'@' + re.escape(candidate_key)
+                for match in re.finditer(pattern, prompt):
+                    found_mentions_raw.append((match.start(), match.end(), resolved_name))
+            
+            # 3. Sort by position (asc), then by length (desc) to handle prefixes/overlaps
+            # Example: @Agent B vs @Agent B (Private Tester). We want the longer one if they start at same pos.
+            found_mentions_raw.sort(key=lambda x: (x[0], -(x[1]-x[0])))
+            
+            valid_mentions = []
+            seen_agents = set()
+            last_end = -1
+            
+            for start, end, resolved_name in found_mentions_raw:
+                # If this mention starts after the previous one ended, it's valid (no overlap)
+                if start >= last_end:
+                    if resolved_name not in seen_agents:
+                        valid_mentions.append(resolved_name)
+                        seen_agents.add(resolved_name)
+                    last_end = end
             
             # Prepare content with Reply Context
             final_content = prompt
