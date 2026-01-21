@@ -526,6 +526,7 @@ class Engine:
                 "public": public,
                 "target": "Queue", # Virtual target
                 "audience": audience or [],
+                "mentions": valid_mentions,  # Store mentions for private message filtering
                 "timestamp": time.time()
             }
             state.setdefault("messages", []).append(msg)
@@ -630,14 +631,19 @@ class Engine:
                     is_public = m.get("public", True)
                     sender = m.get("from")
                     target = m.get("target")
+                    mentions = m.get("mentions", [])  # Get list of mentioned agents
                     
                     if is_public:
                         visible_messages.append(m)
                         continue
                         
                     # Private Logic
-                    # update for Queue target
-                    if sender == agent_name or target == agent_name or agent_name in (m.get("audience") or []):
+                    # A private message is visible if:
+                    # 1. I'm the sender
+                    # 2. I'm explicitly mentioned in the message
+                    # 3. I'm in the audience list
+                    # 4. I share the same profile as the sender (team privacy)
+                    if sender == agent_name or agent_name in mentions or agent_name in (m.get("audience") or []):
                         visible_messages.append(m)
                     elif my_prof:
                          sender_prof = agents_map.get(sender, {}).get("profile_ref")
@@ -778,14 +784,19 @@ class Engine:
                     is_public = m.get("public", True)
                     sender = m.get("from")
                     target = m.get("target")
+                    mentions = m.get("mentions", [])  # Get list of mentioned agents
                     
                     if is_public:
                         visible_messages.append(m)
                         continue
                         
                     # Private Logic
-                    # target might be "Queue" or "All" or explicit agent name
-                    if sender == agent_name or target == agent_name or agent_name in (m.get("audience") or []):
+                    # A private message is visible if:
+                    # 1. I'm the sender
+                    # 2. I'm explicitly mentioned in the message
+                    # 3. I'm in the audience list
+                    # 4. I share the same profile as the sender (team privacy)
+                    if sender == agent_name or agent_name in mentions or agent_name in (m.get("audience") or []):
                         visible_messages.append(m)
                     elif my_prof:
                          sender_prof = agents_map.get(sender, {}).get("profile_ref")

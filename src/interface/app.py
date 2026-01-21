@@ -481,6 +481,8 @@ def format_mentions(text, agent_names=None):
     """
     Format mentions in text with HTML styling.
     FIX BUG #7: Synchronize with logic.py's character-by-character parsing.
+    FIX BUG #12: Respect backslash escaping (\@) and backticks to avoid rendering escaped mentions.
+    UX IMPROVEMENT: Remove @ from badges to avoid confusion when copying.
     
     Args:
         text: The text to format
@@ -488,37 +490,62 @@ def format_mentions(text, agent_names=None):
     """
     if not text: return text
     
-    # 1. First decorate @everyone
-    text = re.sub(
-        r'(@everyone)',
-        r'<span style="color: #ffffff; background-color: #ff4b4b; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.9em; box-shadow: 0 2px 4px rgba(255,75,75,0.3);">\1</span>',
-        text
-    )
+    # FIX BUG #12: Strip code blocks (backticks) to avoid rendering mentions inside them
+    # We'll process the text in segments: code vs non-code
+    # Split by backticks and track which segments are code
+    segments = re.split(r'(`[^`]*`)', text)
     
-    # 2. Then decorate @AgentName
-    # FIX BUG #7: Use exact matching with agent names (same as logic.py)
-    if agent_names:
-        # Build a regex that matches exact agent names
-        # Sort by length (longest first) to ensure greedy matching
-        sorted_names = sorted(agent_names, key=len, reverse=True)
-        # Escape special regex characters in names
-        escaped_names = [re.escape(name) for name in sorted_names if name != "everyone"]
-        if escaped_names:
-            pattern = r'@(' + '|'.join(escaped_names) + r')(?=\s|$|[^\w])'
-            text = re.sub(
-                pattern,
-                r'<span style="color: #ffffff; background-color: #0d47a1; padding: 2px 8px; border-radius: 4px; font-weight: 600; font-size: 0.85em; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">@\1</span>',
-                text
-            )
-    else:
-        # Fallback: Use permissive pattern (original behavior)
-        text = re.sub(
-            r'(@(?!everyone)[\w\s()#]+)', 
-            r'<span style="color: #ffffff; background-color: #0d47a1; padding: 2px 8px; border-radius: 4px; font-weight: 600; font-size: 0.85em; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">\1</span>', 
-            text
+    processed_segments = []
+    for i, segment in enumerate(segments):
+        # Odd indices are inside backticks (code)
+        if i % 2 == 1:
+            # This is a code segment, don't process mentions
+            processed_segments.append(segment)
+            continue
+        
+        # Even indices are outside backticks (normal text)
+        # Process this segment for mentions
+        
+        # 1. First decorate @everyone (but not \@everyone)
+        # UX: Remove @ from badge, show only "everyone"
+        segment = re.sub(
+            r'(?<!\\)@(everyone)',
+            r'<span style="color: #ffffff; background-color: #ff4b4b; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.9em; box-shadow: 0 2px 4px rgba(255,75,75,0.3);">\1</span>',
+            segment
         )
+        
+        # 2. Then decorate @AgentName (but not \@AgentName)
+        # FIX BUG #7: Use exact matching with agent names (same as logic.py)
+        # FIX BUG #12: Use negative lookbehind to avoid matching \@
+        # UX: Remove @ from badge, show only agent name
+        if agent_names:
+            # Build a regex that matches exact agent names
+            # Sort by length (longest first) to ensure greedy matching
+            sorted_names = sorted(agent_names, key=len, reverse=True)
+            # Escape special regex characters in names
+            escaped_names = [re.escape(name) for name in sorted_names if name != "everyone"]
+            if escaped_names:
+                # Negative lookbehind (?<!\\) ensures we don't match \@
+                pattern = r'(?<!\\)@(' + '|'.join(escaped_names) + r')(?=\s|$|[^\w])'
+                segment = re.sub(
+                    pattern,
+                    r'<span style="color: #ffffff; background-color: #0d47a1; padding: 2px 8px; border-radius: 4px; font-weight: 600; font-size: 0.85em; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">\1</span>',
+                    segment
+                )
+        else:
+            # Fallback: Use permissive pattern (original behavior)
+            # FIX BUG #12: Add negative lookbehind for backslash
+            # UX: Capture the name without @ and display only the name
+            segment = re.sub(
+                r'(?<!\\)@((?!everyone)[\w\s()#]+)', 
+                r'<span style="color: #ffffff; background-color: #0d47a1; padding: 2px 8px; border-radius: 4px; font-weight: 600; font-size: 0.85em; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">\1</span>', 
+                segment
+            )
+        
+        processed_segments.append(segment)
     
-    return text
+    # Rejoin all segments
+    return ''.join(processed_segments)
 
 def render_graph(profiles, current_editing=None):
     graph = graphviz.Digraph()

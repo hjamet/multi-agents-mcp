@@ -543,6 +543,9 @@ async def talk(
     
     Args:
         message: The content to speak. Use @AgentName to pass turn.
+                 To reference an agent WITHOUT mentioning them (no turn pass):
+                 - Use backslash escape: \@AgentName
+                 - Use backticks: `@AgentName`
         from_agent: YOUR IDENTITY. You must explicitly state who you are (e.g. "Software_Engineer").
         private: If true, ONLY mentioned agents see the message. If false (default), everyone sees it.
     """

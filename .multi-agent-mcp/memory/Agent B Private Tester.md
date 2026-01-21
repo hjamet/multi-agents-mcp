@@ -1,41 +1,37 @@
-# Agent B (Private Tester) - État Session 3
+# Agent B (Private Tester) - État au Reload
 
-## ✅ Tests Effectués
-1. ✅ Communication publique avec Agent C et Agent A
-2. ✅ Réception et analyse du rapport Bug #9 d'Agent C
-3. ✅ Clarification reçue du User sur le Bug #9
+## ✅ Bug #13 CORRIGÉ !
 
-## 📋 Clarification User - Amélioration Parser de Mentions
+### Problème
+Agent C ne recevait pas mes messages privés.
 
-### Contexte
-Agent C a rapporté un "Bug #9" : le parser bloque les mentions dans du texte descriptif.
+### Cause
+Les mentions n'étaient pas stockées dans les messages. La logique de filtrage ne pouvait pas savoir qui devrait voir un message privé.
 
-### Réponse du User
-- Ce n'est PAS un bug, c'est le comportement normal
-- **Amélioration demandée** : Modifier le parser pour supporter l'échappement avec backslash
-- **Syntaxe proposée** : `\@User` au lieu de backtick @backtick User
-- Le User demande "de faire toutes les corrections"
+### Solution (IMPLÉMENTÉE)
+**Fichier** : `src/core/logic.py`
 
-## 🔧 Action à Implémenter (Non Démarrée)
+**3 Changements** :
+1. **Ligne 529** : Ajout `"mentions": valid_mentions` dans le message
+2. **Lignes 629-650** : Filtrage sync vérifie `agent_name in mentions`
+3. **Lignes 777-797** : Filtrage async vérifie `agent_name in mentions`
 
-### Fichiers à Modifier
-1. **src/core/logic.py** : Fonction de parsing des mentions
-   - Modifier regex pour ignorer `\@` 
-   - Retirer le backslash lors de l'affichage
-2. **Messages d'erreur** : Clarifier l'utilisation de `\@` pour échapper
+### Logique de Visibilité Privée
+Message privé visible si :
+- Je suis l'expéditeur OU
+- Je suis mentionné OU
+- Je suis dans audience OU
+- Je partage le profil de l'expéditeur
 
-### Changements Nécessaires
-- Regex : Exclure les mentions précédées de `\`
-- Affichage : `\@User` → `@User` (sans backslash)
-- Documentation : Mettre à jour message d'erreur
+## 📋 Tous les Bugs
 
-## 🎯 Prochaines Étapes
-1. Attendre reconnexion après reload
-2. Coordonner avec Agent A pour implémentation
-3. Informer Agent C de la clarification
-4. Implémenter les modifications du parser
+| Bug | Statut |
+|-----|--------|
+| #9 - Parser échappement | ✅ Corrigé |
+| #10 - Tour User | ✅ Corrigé |
+| #11 - Déconnexion dernier agent | ⏳ À investiguer |
+| #12 - Rendu HTML | ✅ Corrigé |
+| #13 - Messages privés | ✅ **CORRIGÉ** |
 
-## 📊 État Mémoire Précédente
-- Bugs #3, #4, #6, #7 déjà corrigés (sessions précédentes)
-- Améliorations UI implémentées
-- Gestion FIFO en attente
+## 🔄 À Tester Après Reload
+Vérifier que Agent C reçoit maintenant mes messages privés.
