@@ -386,10 +386,18 @@ class Engine:
             # 6. Take longest match if multiple exist
             
             # Build list of all possible agent names (including User)
-            all_agent_names = list(agents.keys()) + ["User"]
+            # FIX: Also include profile references (e.g. Agent_B) and map them to full names
+            profile_map = {}
+            for name, data in agents.items():
+                pref = data.get("profile_ref")
+                if pref:
+                    profile_map[pref] = name
+            
+            # Parsing Targets: Full Names + Profile Refs + User
+            all_targets = list(agents.keys()) + ["User"] + list(profile_map.keys())
             
             # Calculate max length for lookahead
-            max_name_length = max(len(name) for name in all_agent_names) if all_agent_names else 0
+            max_name_length = max(len(name) for name in all_targets) if all_targets else 0
             
             # Strip code blocks first to avoid false positives
             # Replace content between backticks with spaces to preserve positions
@@ -413,9 +421,9 @@ class Engine:
                     
                     # Find all agent names that match the beginning of lookahead
                     matching_names = []
-                    for agent_name in all_agent_names:
-                        if lookahead.startswith(agent_name):
-                            matching_names.append(agent_name)
+                    for target in all_targets:
+                        if lookahead.startswith(target):
+                            matching_names.append(target)
                     
                     # Take the longest match (greedy)
                     if matching_names:
@@ -442,8 +450,8 @@ class Engine:
             queue_raw = state.get("turn", {}).get("queue", [])
             
             for m_name in filtered_mentions:
-                # 2a. Existence Check (already validated by matching against all_agent_names)
-                target_agent = m_name
+                # 2a. Resolve Profile Ref -> Agent Name
+                target_agent = profile_map.get(m_name, m_name)
                 
                 # 2b. Permission Check
                 # Check if target_agent is allowed.
@@ -483,6 +491,16 @@ class Engine:
                  if "private" not in caps:
                     connections_table = self._build_connections_table(from_agent, state, allowed_targets)
                     return f"🚫 CAPABILITY ERROR: You do not have 'private' capability. Use public=True.{connections_table}"
+                     
+                 # FIX: Safety Check for Private Messages
+                 # If private=True, there MUST be at least one target (Mention or Audience)
+                 # Otherwise the message disappears into the void (Bug #13)
+                 if not valid_mentions and not audience:
+                      connections_table = self._build_connections_table(from_agent, state, allowed_targets)
+                      return (f"🚫 VISIBILITY ERROR: You sent a PRIVATE message but mentioned no one. "
+                              f"The message would be invisible to everyone.\n"
+                              f"You MUST mention the recipient (e.g. @{next(iter(allowed_targets), 'AgentName')}) inside the message."
+                              f"{connections_table}")
 
             # --- QUEUE UPDATE ---
             if not valid_mentions and not queue_raw:

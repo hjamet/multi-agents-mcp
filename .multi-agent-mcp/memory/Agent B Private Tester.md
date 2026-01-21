@@ -1,37 +1,38 @@
 # Agent B (Private Tester) - État au Reload
 
-## ✅ Bug #13 CORRIGÉ !
+## 🔴 Bug #13 CONFIRMÉ comme NON CORRIGÉ
 
-### Problème
-Agent C ne recevait pas mes messages privés.
+### Résultat des Tests
+- ❌ Mes messages privés à Agent C ne sont PAS reçus
+- ❌ Les messages privés d'Agent C vers moi ne sont PAS reçus
+- ✅ Seule la communication publique fonctionne
 
-### Cause
-Les mentions n'étaient pas stockées dans les messages. La logique de filtrage ne pouvait pas savoir qui devrait voir un message privé.
+### Investigation du Code
 
-### Solution (IMPLÉMENTÉE)
 **Fichier** : `src/core/logic.py`
 
-**3 Changements** :
-1. **Ligne 529** : Ajout `"mentions": valid_mentions` dans le message
-2. **Lignes 629-650** : Filtrage sync vérifie `agent_name in mentions`
-3. **Lignes 777-797** : Filtrage async vérifie `agent_name in mentions`
+**Code Vérifié** :
+1. ✅ Ligne 529 : `"mentions": valid_mentions` est bien ajouté au message
+2. ✅ Lignes 634-647 (sync) et 787-800 (async) : Filtrage vérifie `agent_name in mentions`
 
-### Logique de Visibilité Privée
-Message privé visible si :
-- Je suis l'expéditeur OU
-- Je suis mentionné OU
-- Je suis dans audience OU
-- Je partage le profil de l'expéditeur
+**Le code SEMBLE correct**, mais ne fonctionne PAS en pratique.
 
-## 📋 Tous les Bugs
+### 🤔 Hypothèses à Investiguer
 
-| Bug | Statut |
-|-----|--------|
-| #9 - Parser échappement | ✅ Corrigé |
-| #10 - Tour User | ✅ Corrigé |
-| #11 - Déconnexion dernier agent | ⏳ À investiguer |
-| #12 - Rendu HTML | ✅ Corrigé |
-| #13 - Messages privés | ✅ **CORRIGÉ** |
+1. **`valid_mentions` est vide** : Le parser de mentions ne fonctionne peut-être pas correctement
+2. **Problème de permissions** : Les mentions sont peut-être filtrées avant d'être ajoutées à `valid_mentions`
+3. **Reload non effectif** : L'ancienne version du code tourne peut-être toujours
 
-## 🔄 À Tester Après Reload
-Vérifier que Agent C reçoit maintenant mes messages privés.
+### 🎯 Prochaines Étapes
+
+1. Ajouter des logs de debug pour voir le contenu de `valid_mentions`
+2. Vérifier si le serveur MCP a bien été rechargé
+3. Tester avec des logs pour voir exactement ce qui se passe
+
+## 📊 Autres Bugs Identifiés
+
+| Bug | Description | Statut |
+|-----|-------------|--------|
+| #11 | Déconnexion dernier agent | ⏳ À investiguer |
+| #13 | Messages privés B→C | ❌ **NON CORRIGÉ** |
+| #14 | Mention User ignorée | 🆕 Nouveau bug |

@@ -1589,6 +1589,7 @@ if st.session_state.page == "Communication":
                 engine = Engine(state_store)
                 
                 # FIX BUG #10: If no mentions, pass turn to first_agent (never back to User)
+                # FIX BUG #14: If mentions exist, pass turn to FIRST mentioned agent immediately
                 if not valid_mentions:
                     # Use first_agent preference (configured first speaker)
                     first_pref = s.get("turn", {}).get("first_agent")
@@ -1601,8 +1602,9 @@ if st.session_state.page == "Communication":
                             engine._finalize_turn_transition(s, connected[0])
                         # If no connected agents, queue will handle it (turn goes to User by default in _finalize_turn_transition)
                 else:
-                    # Use queue logic
-                    engine._finalize_turn_transition(s)
+                    # Pass turn to FIRST mentioned agent immediately
+                    # The other mentioned agents already have their count incremented in the queue (lines 1574-1583)
+                    engine._finalize_turn_transition(s, valid_mentions[0])
 
             # Context Cleanup
             if reply_ref_id is not None:

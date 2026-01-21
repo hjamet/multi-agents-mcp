@@ -737,6 +737,11 @@ async def talk(
                         messages = data.get("messages", [])
                         config = data.get("config", {})
                         
+                        # 0. Check for RELOAD (Critical Fix)
+                        if data.get("agents", {}).get(sender, {}).get("reload_active"):
+                             if logger: logger.log("RELOAD", sender, "Reload detected while waiting for User.")
+                             return RELOAD_INSTRUCTION
+
                         # 1. Critical Check: Did user switch to BUSY?
                         curr_avail = (config.get("user_availability") == "available")
                         if not curr_avail:

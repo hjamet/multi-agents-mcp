@@ -1,41 +1,55 @@
-# Agent C (Isolated Tester) - État au Reload Système
+# Agent C (Isolated Tester) - Session Test Bug #13 (21 Jan 2026)
 
-## 📍 Statut : RELOAD DEMANDÉ - Déconnexion Imminente
+## 🔴 MISSION CRITIQUE : Validation Bug #13
 
-**Dernière action** : Envoyé rapport complet de tests à Agent B avant reload
+**Objectif** : Tester si les messages privés B→C fonctionnent après le fix d'Agent B
 
-## 🎯 Mission Accomplie
+## ❌ RÉSULTAT : BUG #13 NON CORRIGÉ
 
-Testé l'intégrité du système multi-agent après corrections bugs #9, #10, #12.
+### Test Effectué
+1. ✅ Agent B a envoyé un message privé de test initial
+2. ❌ **Je n'ai JAMAIS reçu ce message privé**
+3. ✅ J'ai répondu en public (pensant que le test n'avait pas commencé)
+4. ✅ Agent B a demandé confirmation en public
+5. ✅ J'ai tenté de répondre en PRIVÉ pour confirmer la non-réception
+6. ❌ **Agent B n'a jamais reçu ma réponse privée non plus**
 
-## ✅ TOUS LES TESTS RÉUSSIS - AUCUNE ANOMALIE
+### Confirmation User
+Le User a confirmé : "Arrêtez de vous parler en privé car du coup vous ne voyez pas vos réponses ^^ Le bug est toujours présent : il faut le fix !"
 
-### Tests d'Isolation ✅
-- Confirmé : Communication uniquement avec Agent B
-- Impossible de contacter User ou Agent A directement
-- Configuration respectée
+## 📊 Bugs Confirmés
 
-### Tests Outils MCP ✅
-- **`note`** : Mémoire persistante OK
-- **`semantic_search`** : Recherche sémantique OK
-- **`get_previous_message`** : Récupération contexte OK
-- **`mailbox`** : Pagination messages tronqués OK
+### Bug #13 : Messages Privés B↔C ❌
+- **Statut** : TOUJOURS PRÉSENT après le fix
+- **Symptôme** : Aucun message privé entre B et C n'est livré
+- **Direction** : Bidirectionnel (B→C ET C→B)
+- **Seule communication fonctionnelle** : Messages publics
 
-### Tests Rendu Mentions ✅
-- Mention normale : Badge bleu
-- `\@Agent B` : Texte brut
-- `` `@Agent B` `` : Code
-- Tous fonctionnent comme attendu
+### Bug #14 : Mentions Ignorées ❌
+- **Statut** : CONFIRMÉ
+- **Symptôme** : Mention `@Agent B (Private Tester)` ignorée, tour revient à moi
+- **Impact** : Boucle infinie de tour
 
-### Tests Système de Tour ✅
-- Mentions passent le tour correctement
-- Pas de boucle infinie
-- Queue de priorité respectée
+## 🔍 Observations Techniques
 
-## 📊 Conclusion Finale
+### Ce qui fonctionne ✅
+- Messages publics (B→C et C→B)
+- Outil `note` (mémoire persistante)
+- Outil `get_previous_message` (récupération contexte)
+- Outil `mailbox` (pagination messages tronqués)
 
-**SYSTÈME VALIDÉ** - Aucune anomalie détectée dans tous les composants testés.
+### Ce qui ne fonctionne pas ❌
+- Messages privés (B→C et C→B)
+- Système de mentions pour passage de tour
+- Filtrage de visibilité des messages privés
+
+## 🎯 Recommandations
+
+1. **Investiguer à nouveau** la logique de filtrage dans `src/core/logic.py`
+2. **Vérifier** que le champ `mentions` est bien utilisé pour le filtrage
+3. **Tester** la logique de visibilité pour les messages privés
+4. **Valider** que la configuration B↔C permet la communication privée
 
 ## 🔄 État au Reload
 
-Prêt à me déconnecter. Tous les tests critiques complétés avec succès.
+Prêt à me déconnecter. Test du Bug #13 complété : **BUG CONFIRMÉ NON CORRIGÉ**.
