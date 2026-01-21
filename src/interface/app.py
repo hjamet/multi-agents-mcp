@@ -1386,77 +1386,63 @@ if st.session_state.page == "Communication":
     # FIXED: Moved injection to bottom to ensure DOM readiness
     # inject_mention_system(["everyone"] + connected_agents)
 
+    # Private toggle for user messages
+    user_private_mode = st.toggle("🔒 Private Message", value=False, help="If enabled, only mentioned agents will see your message.")
+
     # Main Input
     if prompt := st.chat_input("Message..."):
         def send_omni_msg(s):
-            target = None
-            public = True
+            # Use toggle state for public/private
+            is_private = user_private_mode
+            public = not is_private
             reply_ref_id = None
             
-            # Logic v2.0
+            # --- MENTION PARSING (Same logic as agents - dedupe per message) ---
+            known_agents = s.get("agents", {})
             
-            # 1. Context Reply (Strongest implicit) 
-            # Tech Lead said: "1. Si @Mention -> Priority. 2. Sinon si target_sel != Tous -> Target."
-            # Actually Context Reply usually overrides Selector visually, but Mention overrides all?
-            # Let's follow instruction:
-            # 1. Mention check
-            # 2. Selector check
-            # 3. Public
+            # Use regex to find all mentions in order of appearance (deduplicated)
+            raw_mentions = re.findall(r'@(\w+)', prompt)
+            seen_in_msg = set()
+            valid_mentions = []
             
-            found_mentions = []
-            found_mention = False
-            
-            # Mention Check (Specific Agents only)
-            known_agents = sorted(list(agents.keys()), key=len, reverse=True)
-            
-            # Use regex to find all mentions in order of appearance
-            # Sorting known_agents by length reverse ensures longer names are matched first
-            if known_agents:
-                pattern = "@(" + "|".join([re.escape(name) for name in known_agents]) + ")"
-                matches = re.finditer(pattern, prompt)
-                seen = set()
-                for match in matches:
-                    name = match.group(1)
-                    if name not in seen:
-                        found_mentions.append(name)
-                        seen.add(name)
-            
-            if found_mentions:
-                target = found_mentions[0]
-                audience = found_mentions[1:]
-                public = False
-                found_mention = True
-            else:
-                audience = []
-            
-            if not found_mention:
-                if st.session_state.reply_to:
-                     # Reply Context overrides Selector
-                     target = st.session_state.reply_to["sender"]
-                     reply_ref_id = st.session_state.reply_to["id"]
-                     public = False
-                else:
-                    # No mention, no reply context -> Public Broadcast
-                    target = "all"
-                    public = True
+            for m_name in raw_mentions:
+                if m_name in seen_in_msg:
+                    continue
+                seen_in_msg.add(m_name)
+                
+                # Check existence
+                if m_name in known_agents or m_name == "User":
+                    valid_mentions.append(m_name)
+                # If not found, we just ignore (User is not held to strict validation)
             
             # Prepare content with Reply Context
             final_content = prompt
             if st.session_state.reply_to:
                 ref = st.session_state.reply_to
                 final_content = f"↪️ [Reply to {ref['sender']}: \"{ref['preview']}\"]\n{prompt}"
+                reply_ref_id = ref["id"]
+            
+            # Determine target
+            if valid_mentions:
+                target = valid_mentions[0]  # Primary target for display
+                audience = valid_mentions[1:]  # Additional audience
+            elif st.session_state.reply_to:
+                target = st.session_state.reply_to["sender"]
+                audience = []
+                if public:
+                    public = False  # Reply context forces private unless explicit
+            else:
+                target = "all"
+                audience = []
 
             msg = {
                 "from": "User",
                 "content": final_content,
                 "timestamp": time.time(),
                 "public": public,
-                "audience": audience
+                "audience": audience,
+                "target": target
             }
-            if target:
-                msg["target"] = target
-            else:
-                msg["target"] = "all"
                 
             if "messages" not in s: s["messages"] = []
             s["messages"].append(msg)
@@ -1466,26 +1452,51 @@ if st.session_state.page == "Communication":
             s["turn"]["last_user_message_time"] = msg["timestamp"]
             
             # --- TURN MANAGEMENT (If User had the turn) ---
+            # Use the same queue logic as agents: add valid_mentions to queue
             if s.get("turn", {}).get("current") == "User":
-                next_speaker = None
-                if target and target != "all" and target in s.get("agents", {}):
-                    next_speaker = target
-                else:
-                    # Priority 1: first_agent defined during reset
+                from src.core.models import TurnQueueItem
+                
+                queue_raw = s.get("turn", {}).get("queue", [])
+                queue_objs = []
+                for item in queue_raw:
+                    if isinstance(item, dict):
+                        queue_objs.append(TurnQueueItem(**item))
+                    else:
+                        queue_objs.append(item)
+                
+                # Add mentions to queue (same logic: +1 per unique mention per message)
+                max_ts = max([i.timestamp for i in queue_objs], default=0.0)
+                base_ts = max(time.time(), max_ts + 0.001)
+                
+                for idx, vm in enumerate(valid_mentions):
+                    existing = next((i for i in queue_objs if i.name == vm), None)
+                    if existing:
+                        existing.count += 1
+                    else:
+                        queue_objs.append(TurnQueueItem(
+                            name=vm,
+                            count=1,
+                            timestamp=base_ts + (idx * 0.001)
+                        ))
+                
+                s["turn"]["queue"] = [i.model_dump() for i in queue_objs]
+                
+                # Now finalize transition using centralized logic
+                from src.core.logic import Engine
+                engine = Engine(state_store)
+                
+                # If no mentions, use first_agent preference or fallback
+                if not valid_mentions:
                     first_pref = s.get("turn", {}).get("first_agent")
                     if first_pref and first_pref in s.get("agents", {}):
-                        next_speaker = first_pref
+                        engine._finalize_turn_transition(s, first_pref)
                     else:
-                        # Fallback to the first connected agent
                         connected = [n for n, d in s.get("agents", {}).items() if d.get("status") == "connected"]
                         if connected:
-                            next_speaker = connected[0]
-                
-                if next_speaker:
-                    # USE CENTRALIZED TRANSITION LOGIC FROM ENGINE
-                    from src.core.logic import Engine
-                    engine = Engine(state_store) # Use the global state_store
-                    engine._finalize_turn_transition(s, next_speaker)
+                            engine._finalize_turn_transition(s, connected[0])
+                else:
+                    # Use queue logic
+                    engine._finalize_turn_transition(s)
 
             # Context Cleanup
             if reply_ref_id is not None:

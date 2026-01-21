@@ -36,9 +36,16 @@ class AgentState(BaseSchema):
     connections: Optional[List[Connection]] = None
     reload_active: bool = False
 
+class TurnQueueItem(BaseSchema):
+    name: str
+    count: int = 1
+    timestamp: float
+
 class Turn(BaseSchema):
     current: Optional[str] = None
-    next: Optional[str] = None
+    queue: List[TurnQueueItem] = Field(default_factory=list)
+    # Deprecated fields kept for backward compatibility if needed, but logic will rely on queue
+    next: Optional[str] = None 
     first_agent: Optional[str] = None
     consecutive_count: int = 0
     turn_start_time: float = 0.0

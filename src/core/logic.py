@@ -1,8 +1,10 @@
 import time
 import asyncio
+import re
 from typing import Optional, List, Dict, Any
 from .state import StateStore
 from ..config import STOP_INSTRUCTION, RELOAD_INSTRUCTION
+from .models import TurnQueueItem
 
 
 class Engine:
@@ -184,28 +186,63 @@ class Engine:
             return "Turn Ack Failed: Not your turn"
         self.state.update(_ack)
 
-    def _finalize_turn_transition(self, state, intended_next: str) -> str:
+    def _finalize_turn_transition(self, state: Dict[str, Any], intended_next: str = None) -> str:
         """
-        Internal helper to manage turn transitions.
+        Manages turn transitions using the Priority Queue.
+        Logic: Sort Queue (Count DESC, Time ASC) -> Pick Top -> Decrement -> Set Turn.
+        If 'intended_next' is provided, it overrides the queue (used by User or Admin).
         """
         turn_data = state.get("turn", {})
-        old_turn = turn_data.get("current")
-
-        # 1. Resume normal flow.
-        final_next = intended_next
-        if turn_data.get("pending_next"):
-            final_next = turn_data["pending_next"]
-            state["turn"]["pending_next"] = None
+        queue_raw = turn_data.get("queue", [])
         
-        state["turn"]["current"] = final_next
+        # Convert to objects
+        queue = []
+        for item in queue_raw:
+            if isinstance(item, dict):
+                queue.append(TurnQueueItem(**item))
+            else:
+                queue.append(item)
+
+        next_agent = None
+
+        if intended_next:
+            next_agent = intended_next
+            # If the intended agent was in the queue, we consume one of their turns
+            existing = next((i for i in queue if i.name == next_agent), None)
+            if existing:
+                existing.count -= 1
+                if existing.count <= 0:
+                    queue.remove(existing)
+        else:
+            if not queue:
+                state["turn"]["current"] = "User"
+                state["turn"]["turn_start_time"] = time.time()
+                state["turn"]["consecutive_count"] = 0
+                return "Queue empty. Turn passed to User."
+
+            # Sort and Pick
+            queue.sort(key=lambda x: (-x.count, x.timestamp))
+            next_item = queue[0]
+            next_agent = next_item.name
+            next_item.count -= 1
+            if next_item.count <= 0:
+                queue.pop(0)
+
+        # Serialize back
+        state["turn"]["queue"] = [item.model_dump() for item in queue]
+        
+        # Update Turn State
+        old_turn = turn_data.get("current")
+        state["turn"]["current"] = next_agent
         state["turn"]["turn_start_time"] = time.time()
         
-        if final_next == old_turn:
+        if next_agent == old_turn:
             state["turn"]["consecutive_count"] = turn_data.get("consecutive_count", 0) + 1
         else:
             state["turn"]["consecutive_count"] = 1
             
-        return f"Turn is now: {final_next}."
+        remaining_str = ", ".join([f"{i.name}({i.count})" for i in queue])
+        return f"Turn passed to {next_agent}. Queue: [{remaining_str}]"
 
     async def wait_for_all_agents_async(self, name: str, timeout_seconds: int = 600) -> str:
         """
@@ -263,145 +300,180 @@ class Engine:
         
         return "TIMEOUT: Waiting for other agents took too long. Please retry agent() tool."
 
-    def post_message(self, from_agent: str, content: str, public: bool, next_agent: str, audience: List[str] = None) -> str:
+    def post_message(self, from_agent: str, content: str, public: bool, audience: List[str] = None) -> str:
         """
-        Posts a message and updates the turn.
-        Validates capabilities and connections before posting.
+        Posts a message, parses mentions, updates queue, and transitions turn.
         """
         def _post(state):
             # 0. VALIDATION
             agents = state.get("agents", {})
-            
-            # --- SECURITY HOTFIX: STRICT TURN CHECK ---
             current_turn = state.get("turn", {}).get("current")
+            
+            # --- SECURITY: STRICT TURN CHECK ---
             if from_agent != "User" and current_turn != from_agent:
                  return f"🚫 SECURITY VIOLATION: Write Access Denied. It is '{current_turn}'s turn, not yours."
-            # ------------------------------------------
 
             config = state.get("config", {})
             profiles = config.get("profiles", [])
             
-            nonlocal next_agent
-            if next_agent: next_agent = next_agent.strip()
-
-            # --- RESOLVE AGENT ID FROM PROFILE ---
-            if next_agent and next_agent not in agents and next_agent != "User":
-                for aid, adata in agents.items():
-                    if adata.get("profile_ref") == next_agent:
-                        next_agent = aid
-                        break # Use the first agent matching the profile
-            # -------------------------------------
-            
-            if not next_agent:
-                return "🚫 ACTION DENIED: 'next_agent' cannot be empty. You must specify who speaks next."
-            
-            if next_agent not in agents and next_agent != "User":
-                 # Strict Existence Check (Fix for typos causing deadlocks)
-                 return f"🚫 TARGET_NOT_FOUND: {next_agent}"
-
             sender_info = agents.get(from_agent, {})
             sender_profile_name = sender_info.get("profile_ref")
             
             # Find Sender Profile
             sender_profile = next((p for p in profiles if p["name"] == sender_profile_name), None)
             
-            # Special bypass for "User" (Admin/Human)
+            # User Bypass
             if from_agent == "User":
                 sender_profile = {"name": "User", "capabilities": ["public", "private"], "connections": []}
-            else:
-                if not sender_profile:
-                    return f"🚫 ACTION DENIED: Agent '{from_agent}' has no valid profile validation."
+            elif not sender_profile:
+                 return f"🚫 IDENTITY ERROR: Profile not found for {from_agent}."
 
             caps = sender_profile.get("capabilities", [])
-            connections = sender_profile.get("connections", [])
-            # Map of authorized targets (profiles or specific IDs)
-            allowed_targets = {c["target"]: c["context"] for c in connections if c.get("authorized", True)}
+            allowed_targets = {}
             
-            # MERGE INSTANCE CONNECTIONS (Priority)
-            instance_connections = sender_info.get("connections", [])
-            for c in instance_connections:
+            # Build Allow List
+            # Profile Connections
+            for c in sender_profile.get("connections", []):
                 if c.get("authorized", True):
-                    allowed_targets[c["target"]] = c["context"]
+                    allowed_targets[c["target"]] = c.get("context", "")
             
-            # Anti-Ghost Check (Sprint 6)
-            if from_agent != "User":
-                turn_data = state.get("turn", {})
-                turn_start = turn_data.get("turn_start_time", 0.0)
-                last_user = turn_data.get("last_user_message_time", 0.0)
+            # Instance Connections (Priority)
+            for c in sender_info.get("connections", []):
+                if c.get("authorized", True):
+                    allowed_targets[c["target"]] = c.get("context", "")
+
+
+            # --- MENTIONS PARSING ---
+            # Regex to find @Name
+            # We treat text between `` as escaped code blocks, but simplified regex:
+            # We just look for @(\w+) and filter valid agents.
+            # Ideally we strip code blocks first, but for now simple regex is standard.
+            
+            # 1. Parse all mentions (DEDUPE: use set to only count each agent once per message)
+            raw_mentions = re.findall(r'@(\w+)', content)
+            seen_mentions = set()  # Deduplicate within this message
+            
+            # 2. Filter / Validate Mentions
+            valid_mentions = []
+            
+            # Get current Queue to check for emptiness later
+            queue_raw = state.get("turn", {}).get("queue", [])
+            
+            for m_name in raw_mentions:
+                # Skip if already processed in THIS message
+                if m_name in seen_mentions:
+                    continue
+                seen_mentions.add(m_name)
                 
-                # If User spoke AFTER turn started
-                if last_user > turn_start:
-                     # 2. Fetch missed messages (Fix Silence)
-                     missed = [m for m in state.get("messages", []) if m.get("from") == "User" and m.get("timestamp", 0) > turn_start]
-                     relevant = [m for m in missed if m.get("public") or m.get("target") == from_agent]
-                     
-                     if relevant:
-                         # 1. Update Turn Start to unblock next attempt (Fix Deadlock)
-                         state["turn"]["turn_start_time"] = time.time()
-                         missed_text = "\n".join([f"- User: {m.get('content')}" for m in relevant])
-                         return f"🚫 INTERACTION REJECTED: The User interrupted you with new messages:\n{missed_text}\n\nACTION: Core logic has reset your turn timer. Incorporate this new info and try again."
+                # 2a. Existence Check
+                target_agent = None
+                if m_name == "User":
+                    target_agent = "User"
+                elif m_name in agents:
+                    target_agent = m_name
+                else:
+                    # Check if it mentions a Profile Name (e.g. @Reviewer) -> Resolve to agent
+                    # If multiple agents have that profile, we might add ALL? Or just one? 
+                    # Spec says "si un agent mentionne un agent ou user qui n'existe pas -> erreur"
+                    # But if it's a profile? Assuming agent names for now as per spec "agent1".
+                    
+                    # Closest match
+                    # Simple heuristic: find agent with name containing m_name or vice versa
+                    matches = [a for a in agents.keys() if m_name.lower() in a.lower()]
+                    suggestion = matches[0] if matches else (list(agents.keys())[0] if agents else "Unknown")
+                    
+                    return (f"🚫 MENTION ERROR: You mentioned '@{m_name}', but this agent does not exist. "
+                            f"Did you mean '@{suggestion}'? "
+                            f"If you just wanted to use the '@' symbol, wrap it in backticks like `@`.")
+                
+                # 2b. Permission Check
+                # Check if target_agent is allowed.
+                # Logic: Is target_agent ID or its Profile in allowed_targets?
+                if from_agent != "User":
+                    t_info = agents.get(target_agent)
+                    t_prof = t_info.get("profile_ref") if t_info else None
+                    
 
-            if next_agent == from_agent:
-                 # Allow self-loop with limit
-                 consecutive = state["turn"].get("consecutive_count", 0)
-                 old_turn = state["turn"].get("current")
-                 if old_turn == from_agent and consecutive >= 5:
-                     return "🚫 PROHIBITED: Self-loop limit reached (5/5). You cannot speak 6 times in a row. Please yield the turn."
+                    authorized = False
+                    if target_agent == "User":
+                        authorized = True # Agents can always mention User
+                    elif target_agent in allowed_targets:
+                        authorized = True
+                    elif t_prof and t_prof in allowed_targets:
+                        authorized = True
+                    
+                    if not authorized:
+                        return (f"🚫 PERMISSION ERROR: You are not authorized to summon '@{target_agent}' "
+                                f"(Profile: {t_prof}). Check your allowed connections.")
+                
+                valid_mentions.append(target_agent)
 
-            # A. Connection Validation (Mandatory for all visibilities)
-            def check_target(t_name):
-                if t_name == "User":
-                    if "User" in allowed_targets: return None
-                    return "Your profile does not permit direct interaction with the User. Please use an authorized proxy (e.g. your Lead)."
-                t_info = agents.get(t_name)
-                if not t_info: return f"Unknown agent '{t_name}'"
-                t_prof = t_info.get("profile_ref")
-                if t_name in allowed_targets: return None
-                if t_prof in allowed_targets: return None
-                return f"You are not authorized to communicate with '{t_prof}' based on your connection rules."
-
-            if from_agent != "User":
-                err = check_target(next_agent)
-                if err:
-                    return f"🚫 ACTION DENIED: {err}"
-
-            # B. Visibility Capability Checks
+            # --- VISIBILITY CHECKS ---
             if public:
                 if "public" not in caps and "public" not in allowed_targets:
-                     # Note: allowed_targets usually lists generic "public" connection if explicit
-                     return f"🚫 ACTION DENIED: You do not have the 'public' capability."
+                     return "🚫 CAPABILITY ERROR: You do not have 'public' capability."
             else:
-                 # Private Message
                  if "private" not in caps:
-                      return f"🚫 ACTION DENIED: You do not have the 'private' capability. You can only speak publicly."
+                      return "🚫 CAPABILITY ERROR: You do not have 'private' capability. Use public=True."
 
+            # --- QUEUE UPDATE ---
+            if not valid_mentions and not queue_raw:
+                return ("🚫 TURN ERROR: The queue is empty and you mentioned no one. "
+                        "You MUST mention at least one agent (e.g. @User or @AgentName) to pass the turn.")
 
-            # 1. Add message
+            # Load Queue Objects
+            queue_objs = []
+            for item in queue_raw:
+                if isinstance(item, dict): 
+                    queue_objs.append(TurnQueueItem(**item))
+                else:
+                    queue_objs.append(item)
+            
+            # Update Logic
+            # Fix: Ensure timestamps are strictly increasing to preserve order even if execution is fast
+            max_ts = max([i.timestamp for i in queue_objs], default=0.0)
+            base_ts = max(time.time(), max_ts + 0.001)
+            
+            for idx, vm in enumerate(valid_mentions):
+                # Check if in queue
+                existing = next((i for i in queue_objs if i.name == vm), None)
+                if existing:
+                    existing.count += 1
+                else:
+                    queue_objs.append(TurnQueueItem(
+                        name=vm, 
+                        count=1, 
+                        timestamp=base_ts + (idx * 0.001) 
+                    ))
+            
+            # Save back to state
+            state["turn"]["queue"] = [i.model_dump() for i in queue_objs]
+            
+            # --- POST MESSAGE ---
             msg = {
                 "from": from_agent,
                 "content": content,
                 "public": public,
-                "target": next_agent, 
+                "target": "Queue", # Virtual target
                 "audience": audience or [],
                 "timestamp": time.time()
             }
             state.setdefault("messages", []).append(msg)
             
-            # 2. Update Turn
             # Update Logic timestamps
-            current_time = time.time()
             if from_agent == "User":
-                state["turn"]["last_user_message_time"] = current_time
-            
-            # USE CENTRALIZED TRANSITION LOGIC
-            transition_msg = self._finalize_turn_transition(state, next_agent)
+                state["turn"]["last_user_message_time"] = time.time()
+
+            # --- TRANSITION ---
+            transition_msg = self._finalize_turn_transition(state)
             
             base_msg = f"Message posted. {transition_msg}"
+            # Check if self is next
             if state["turn"].get("current") == from_agent:
-                base_msg += "\n[INFO] Il est possible de reprendre la parole après avoir envoyé un message."
+                 base_msg += "\n[INFO] You retained the turn (you were top of queue)."
             
             return base_msg
-        
+
         return self.state.update(_post)
 
     def wait_for_turn(self, agent_name: str, timeout_seconds: int = 60) -> Dict[str, Any]:
@@ -494,6 +566,7 @@ class Engine:
                         continue
                         
                     # Private Logic
+                    # update for Queue target
                     if sender == agent_name or target == agent_name or agent_name in (m.get("audience") or []):
                         visible_messages.append(m)
                     elif my_prof:
@@ -641,6 +714,7 @@ class Engine:
                         continue
                         
                     # Private Logic
+                    # target might be "Queue" or "All" or explicit agent name
                     if sender == agent_name or target == agent_name or agent_name in (m.get("audience") or []):
                         visible_messages.append(m)
                     elif my_prof:

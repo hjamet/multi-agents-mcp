@@ -497,7 +497,6 @@ async def agent(ctx: Context) -> str:
 @mcp.tool()
 async def talk(
     message: str,
-    to: str,
     from_agent: str,  # <--- NEW MANDATORY ARGUMENT (Identity Assertion)
     ctx: Context,
     private: bool = False
@@ -505,14 +504,13 @@ async def talk(
     """
     MAIN COMMUNICATION TOOL.
     1. Posts your message.
-    2. Passes the turn to 'to'.
+    2. Passes the turn to the next agent in queue (based on @mentions).
     3. BLOCKS/SLEEPS until it is your turn again.
     
     Args:
-        message: The content to speak.
-        to: The name of the agent who should speak next. (The message is always visible to them).
+        message: The content to speak. Use @AgentName to pass turn.
         from_agent: YOUR IDENTITY. You must explicitly state who you are (e.g. "Software_Engineer").
-        private: If true, ONLY 'to' sees the message. If false (default), everyone sees it.
+        private: If true, ONLY mentioned agents see the message. If false (default), everyone sees it.
     """
     try:
         # --- 1. STRICT TURN & IDENTITY VALIDATION (The "Source of Truth") ---
@@ -554,10 +552,9 @@ async def talk(
         messages = state.get("messages", [])
         if messages:
             last_msg = messages[-1]
-            # Check strictly if sender, content AND target match the last recorded message
+            # Check strictly if sender and content match the last recorded message.
             if (last_msg.get("from") == sender and 
-                last_msg.get("content") == message and 
-                last_msg.get("target") == to):
+                last_msg.get("content") == message):
                 is_retry = True
                 if logger: logger.log("IDEMPOTENCY", sender, "Detected duplicate call (retry). Resuming wait logic.")
 
@@ -617,73 +614,33 @@ async def talk(
              # Force them to quit immediately
              return RELOAD_INSTRUCTION
 
-        next_agent = to
-
-        # --- FEATURE: SELF-LOOP & ANTI-SPAM ---
-        if next_agent == sender:
-            # Check history for spam (Max 5 consecutive messages)
-            data = engine.state.load()
-            messages = data.get("messages", [])
-            consecutive_count = 0
-            for m in reversed(messages):
-                if m.get("from") == sender:
-                    consecutive_count += 1
-                else:
-                    break
-            
-            if consecutive_count >= 5:
-                # Construct a helper directory for the error context
-                try:
-                     agent_directory = _build_agent_directory(data, sender)
-                     connections_list = [d for d in agent_directory if d.get('authorized')]
-                except:
-                     connections_list = []
-                     
-                return f"🚫 ANTI-SPAM: You have reached the limit of 5 consecutive messages. You MUST yield the floor to another agent or the User.\n\nAvailable Connections: {', '.join([c['name'] for c in connections_list])}"
-        
         # Logic Inversion
         is_public = not private
 
         if not is_retry:
-            logger.log("ACTION", sender, f"talking -> {next_agent} (Public: {is_public})", {"message": message})
+            logger.log("ACTION", sender, f"talking (Public: {is_public})", {"message": message})
             
             # 1. Post Message
-            post_result = engine.post_message(sender, message, is_public, next_agent)
+            post_result = engine.post_message(sender, message, is_public)
             
             # Check for DENIED action
             if post_result.startswith("🚫"):
-                if post_result.startswith("🚫 TARGET_NOT_FOUND:"):
-                    target_tried = post_result.split(":", 1)[1].strip()
-                    data = engine.state.load()
-                    agent_dir = _build_agent_directory(data, sender)
-                    connections_list = [d for d in agent_dir if d.get('authorized')]
-                    
-                    # Format a nice table-like list for the agent
-                    dir_str = "\n".join([f"- **{c['name']}** ({c['public_desc']}): {c['note']}" for c in connections_list])
-                    
-                    error_msg = f"🚫 ACTION DENIED: Target agent '{target_tried}' does not exist.\n\n"
-                    error_msg += "### 📋 YOUR AUTHORIZED CONNECTIONS:\n"
-                    error_msg += "You must use the EXACT name from this list:\n"
-                    error_msg += dir_str
-                    error_msg += "\n\nAction rejected. You retain your turn. Please correct the 'to' argument and try again."
-                    
-                    if logger: logger.log("DENIED", "System", error_msg, {"target": sender})
-                    return _truncate_and_buffer(sender, error_msg, engine.state.load())
-
                 if logger: logger.log("DENIED", "System", post_result, {"target": sender})
                 return post_result
                 
             logger.log("SUCCESS", "System", f"Message posted: {post_result}")
         else:
              logger.log("SKIP", sender, "Skipped duplicate message post (retry detected).")
+
         
         # SPECIAL: User Turn Handling
-        if next_agent == "User":
+        # We check the state to see if the turn was passed to the User
+        new_state = engine.state.load()
+        if new_state.get("turn", {}).get("current") == "User":
             is_user_available = False
             try:
                 # Check availability config
-                data = engine.state.load()
-                config = data.get("config", {})
+                config = new_state.get("config", {})
                 # Default to 'busy' if not set, to be non-blocking by default
                 is_user_available = (config.get("user_availability") == "available")
             except:
@@ -1053,7 +1010,7 @@ async def mailbox(from_agent: str, ctx: Context) -> str:
     return _truncate_and_buffer(from_agent, remaining_content, state)
 
 @mcp.tool()
-async def search(query: str, from_agent: str, glob: str = None, ctx: Context = None) -> str:
+async def semantic_search(query: str, from_agent: str, glob: str = None, ctx: Context = None) -> str:
     """
     Search the codebase using semantic vector search.
     Returns the most relevant code snippets.
