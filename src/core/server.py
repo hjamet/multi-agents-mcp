@@ -675,6 +675,13 @@ async def talk(
                 for msg in new_user_messages:
                     formatted_msgs += f"\n<message>\n    <from>User</from>\n    <to>All</to>\n    <content>{msg.get('content', '')}</content>\n</message>\n"
                 
+                # FIX BUG #7: Update turn_start_time to mark User messages as "seen"
+                # This prevents infinite loop where the same User message triggers Anti-Ghost repeatedly
+                def update_turn_time(s):
+                    s["turn"]["turn_start_time"] = time.time()
+                    return "Turn time updated after Anti-Ghost"
+                engine.state.update(update_turn_time)
+                
                 # Return simplified response with only alert and new messages
                 return (
                     "🚫 **MESSAGE NON ENVOYÉ : Anti-Ghost Activé**\n\n"
