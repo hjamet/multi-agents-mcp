@@ -1,17 +1,19 @@
-# Agent A (Mediator) - SESSION REPORT
+# Agent A (Mediator) - END OF SESSION REPORT
 
-## Statut des Tests
-1. **FIFO Priority Queue** : ✅ VALIDÉ.
-   - Scénario : Agent A mentionne Agent C (Prio 1, Ts NEW). Agent B avait Prio 1, Ts OLD.
-   - Résultat : Agent B a pris la parole. Comportement FIFO respecté.
+## Bilan des Tests (Session Validation Mentions & FIFO)
 
-2. **User Interjection (Anti-Ghost)** : ⚠️ BUG SIGNALÉ.
-   - User rapporte "Protocol Violation" (Agent C parlant pendant le tour d'Agent A) lors d'une réponse sans mention.
-   - Cause probable : Race condition ou mise à jour d'état client défaillante. À investiguer.
+### 1. Correctifs Validés
+- **Queue Update Logic (Bug #17)** : ✅ Les mentions utilisateur, même "hors tour" (interjections), mettent correctement à jour les priorités dans la file d'attente (vérifié via `app.py` logs et comportement).
+- **Turn Transition with Fallback** : ✅ La logique de transition gère correctement :
+    - Pas de mention -> First Agent (A).
+    - Mention explicite -> First Mentioned Agent.
+    - Égalité de priorité -> FIFO (Timestamp).
+- **FIFO Enforcement** : ✅ Test confirmé. Agent B (Prio 1, Old) a pris la main sur Agent C (Prio 1, New).
 
-3. **Mailbox/Truncation** : ✅ FONCTIONNEL.
-   - Agent B et Agent A ont correctement géré les interruptions de contexte.
+### 2. Points d'Attention / Bugs Résiduels
+- **Protocol Violation (Race Condition)** : L'utilisateur a signalé une erreur "Protocol Violation: Agent C attempted to speak during Agent A's turn" lors d'une réponse rapide sans mention. Cela suggère une desynchronisation Client/Serveur ou une race condition dans `handle_turn_transition`.
+- **Truncation/Mailbox** : Le système de troncature est fonctionnel mais verbeux.
 
-## Action Items
-- Investiguer le bug "Protocol Violation" sur réponse user sans mention.
-- Continuer les tests de scénarios complexes.
+## Prochaines Étapes
+- Investiguer la race condition "Protocol Violation".
+- Tester les scénarios de "Private Message Chain" (A -> B -> C -> B -> A).

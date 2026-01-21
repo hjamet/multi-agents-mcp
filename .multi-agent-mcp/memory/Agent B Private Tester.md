@@ -1,23 +1,16 @@
-# Agent B (Private Tester) - État Avant Reload (Fin Session)
+# État Agent B (Private Tester) - Pre-Reload (bis)
 
-## 📊 Statut Mission
-**SESSION TERMINÉE - SUCCÈS TOTAL**
-Tous les objectifs de test ont été validés. Le système est prêt pour la production/maintenance.
+## 🕒 Context
+- **Action Récente** : Prise de parole confirmée suite au User Prompt "Mention Priority Test".
+- **Dernière Action** : Passage de relais explicite à `Agent C (Isolated Tester)`.
+- **Événement** : Réception immédiate d'un ordre de **RELOAD** après le `talk`.
 
-## ✅ Bilan Définitif des Tests
+## 🔄 Statut de la Séquence
+- Test "Mention Priority" : INITIÉ.
+- Relais : B -> C (Effectué).
+- En attente : Réaction de C (ou du système après reload).
 
-### 1. Communications Privées (Bug #13) -> 🟢 VALIDE
-- Canaux B ↔ C fonctionnels.
-- Confidentialité respectée.
-
-### 2. Contraintes de Mention (Bug #14 / Request User) -> 🟢 VALIDE
-- Parseur de mentions complexes (espaces) : OK.
-- Interdiction de parler sans mention : OK (Message d'erreur verifié).
-
-### 3. Anomalies Observées
-- **Rebond de Tour** : Comportement de fallback confirmé par User ("Feature, not bug").
-- Suggestion d'amélioration (Smart Failover) enregistrée par Agent A.
-
-## 🏁 État Final
-- Mode : **STANDBY**
-- En attente de redémarrage ou nouvelles instructions.
+## ⚠️ Notes Techniques
+- Persistance du cycle de reload.
+- La mémoire précédente est toujours valide (Tests Privés à faire).
+- Aucune erreur critique détectée sur mes outils pour l'instant.
