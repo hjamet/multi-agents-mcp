@@ -1585,36 +1585,38 @@ if st.session_state.page == "Communication":
             if "turn" not in s: s["turn"] = {}
             s["turn"]["last_user_message_time"] = msg["timestamp"]
             
-            # --- TURN MANAGEMENT (If User had the turn) ---
-            # Use the same queue logic as agents: add valid_mentions to queue
+            # --- TURN MANAGEMENT ---
+            # 1. ALWAYS Update Queue from User Mentions (even if out of turn)
+            # This ensures that if User says "@AgentA", AgentA gets priority for the NEXT turn
+            from src.core.models import TurnQueueItem
+            
+            queue_raw = s.get("turn", {}).get("queue", [])
+            queue_objs = []
+            for item in queue_raw:
+                if isinstance(item, dict):
+                    queue_objs.append(TurnQueueItem(**item))
+                else:
+                    queue_objs.append(item)
+            
+            # Add mentions to queue (same logic: +1 per unique mention per message)
+            max_ts = max([i.timestamp for i in queue_objs], default=0.0)
+            base_ts = max(time.time(), max_ts + 0.001)
+            
+            for idx, vm in enumerate(valid_mentions):
+                existing = next((i for i in queue_objs if i.name == vm), None)
+                if existing:
+                    existing.count += 1
+                else:
+                    queue_objs.append(TurnQueueItem(
+                        name=vm,
+                        count=1,
+                        timestamp=base_ts + (idx * 0.001)
+                    ))
+            
+            s["turn"]["queue"] = [i.model_dump() for i in queue_objs]
+
+            # 2. Transition Logic (Only if it WAS the User's turn)
             if s.get("turn", {}).get("current") == "User":
-                from src.core.models import TurnQueueItem
-                
-                queue_raw = s.get("turn", {}).get("queue", [])
-                queue_objs = []
-                for item in queue_raw:
-                    if isinstance(item, dict):
-                        queue_objs.append(TurnQueueItem(**item))
-                    else:
-                        queue_objs.append(item)
-                
-                # Add mentions to queue (same logic: +1 per unique mention per message)
-                max_ts = max([i.timestamp for i in queue_objs], default=0.0)
-                base_ts = max(time.time(), max_ts + 0.001)
-                
-                for idx, vm in enumerate(valid_mentions):
-                    existing = next((i for i in queue_objs if i.name == vm), None)
-                    if existing:
-                        existing.count += 1
-                    else:
-                        queue_objs.append(TurnQueueItem(
-                            name=vm,
-                            count=1,
-                            timestamp=base_ts + (idx * 0.001)
-                        ))
-                
-                s["turn"]["queue"] = [i.model_dump() for i in queue_objs]
-                
                 # Now finalize transition using centralized logic
                 from src.core.logic import Engine
                 engine = Engine(state_store)
@@ -1634,7 +1636,7 @@ if st.session_state.page == "Communication":
                         # If no connected agents, queue will handle it (turn goes to User by default in _finalize_turn_transition)
                 else:
                     # Pass turn to FIRST mentioned agent immediately
-                    # The other mentioned agents already have their count incremented in the queue (lines 1574-1583)
+                    # The other mentioned agents already have their count incremented in the queue above
                     engine._finalize_turn_transition(s, valid_mentions[0])
 
             # Context Cleanup
