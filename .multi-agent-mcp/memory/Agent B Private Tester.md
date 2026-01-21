@@ -1,34 +1,41 @@
-# Rapport Agent B (Private Tester) - Session 2 - COMPLET
+# Agent B (Private Tester) - État Session 3
 
-## ✅ Tous les Objectifs Atteints
+## ✅ Tests Effectués
+1. ✅ Communication publique avec Agent C et Agent A
+2. ✅ Réception et analyse du rapport Bug #9 d'Agent C
+3. ✅ Clarification reçue du User sur le Bug #9
 
-### Bugs Corrigés :
-1. ✅ **Bug #3** : Regex Greedy (parsing des mentions) - Validé par Agent C
-2. ✅ **Bug #4** : Rendu HTML des mentions avec parenthèses - Validé par Agent C
-3. ✅ **Bug #6** : Permissions User incorrectes - **CORRIGÉ**
-   - Fichier : `src/core/logic.py`
-   - Suppression autorisation automatique User (ligne 448)
-   - Correction `_build_connections_table()` (lignes 309-327)
-4. ✅ **Bug #7** : Mention @User en fin de message non rendue - **CORRIGÉ**
-   - Fichier : `src/interface/app.py`
-   - Fonction `format_mentions()` synchronisée avec `logic.py` (lignes 480-521)
-   - Matching exact avec regex lookahead
+## 📋 Clarification User - Amélioration Parser de Mentions
 
-### Améliorations UI Implémentées :
-1. ✅ **Affichage priorité de parole** (lignes 962-1000)
-   - Badge rouge avec nombre de mentions
-   - Tri correct : User, current turn, queue (count DESC, timestamp ASC), autres
-2. ✅ **Affichage destinations** (lignes 1347-1391)
-   - "X → Agent A, Agent B" au lieu de "X → Queue"
-   - Extraction mentions du contenu
+### Contexte
+Agent C a rapporté un "Bug #9" : le parser bloque les mentions dans du texte descriptif.
 
-### Nouvelle Demande Identifiée :
-📝 **Gestion FIFO des mentions** (non implémentée - reload système)
-- Quand agent parle → compteur à 0 (au lieu de -1)
-- En cas d'égalité → FIFO (dernier arrivé parle en dernier)
-- Fichier à modifier : `src/core/logic.py` fonction `_finalize_turn_transition()`
+### Réponse du User
+- Ce n'est PAS un bug, c'est le comportement normal
+- **Amélioration demandée** : Modifier le parser pour supporter l'échappement avec backslash
+- **Syntaxe proposée** : `\@User` au lieu de backtick @backtick User
+- Le User demande "de faire toutes les corrections"
 
-## État Final :
-✅ Tous les bugs demandés corrigés
-✅ Toutes les améliorations UI implémentées
-⏳ Gestion FIFO en attente d'implémentation
+## 🔧 Action à Implémenter (Non Démarrée)
+
+### Fichiers à Modifier
+1. **src/core/logic.py** : Fonction de parsing des mentions
+   - Modifier regex pour ignorer `\@` 
+   - Retirer le backslash lors de l'affichage
+2. **Messages d'erreur** : Clarifier l'utilisation de `\@` pour échapper
+
+### Changements Nécessaires
+- Regex : Exclure les mentions précédées de `\`
+- Affichage : `\@User` → `@User` (sans backslash)
+- Documentation : Mettre à jour message d'erreur
+
+## 🎯 Prochaines Étapes
+1. Attendre reconnexion après reload
+2. Coordonner avec Agent A pour implémentation
+3. Informer Agent C de la clarification
+4. Implémenter les modifications du parser
+
+## 📊 État Mémoire Précédente
+- Bugs #3, #4, #6, #7 déjà corrigés (sessions précédentes)
+- Améliorations UI implémentées
+- Gestion FIFO en attente

@@ -1561,15 +1561,18 @@ if st.session_state.page == "Communication":
                 from src.core.logic import Engine
                 engine = Engine(state_store)
                 
-                # If no mentions, use first_agent preference or fallback
+                # FIX BUG #10: If no mentions, pass turn to first_agent (never back to User)
                 if not valid_mentions:
+                    # Use first_agent preference (configured first speaker)
                     first_pref = s.get("turn", {}).get("first_agent")
-                    if first_pref and first_pref in s.get("agents", {}):
+                    if first_pref and first_pref in s.get("agents", {}) and s.get("agents", {}).get(first_pref, {}).get("status") == "connected":
                         engine._finalize_turn_transition(s, first_pref)
                     else:
+                        # Fallback: use any connected agent (never User)
                         connected = [n for n, d in s.get("agents", {}).items() if d.get("status") == "connected"]
                         if connected:
                             engine._finalize_turn_transition(s, connected[0])
+                        # If no connected agents, queue will handle it (turn goes to User by default in _finalize_turn_transition)
                 else:
                     # Use queue logic
                     engine._finalize_turn_transition(s)

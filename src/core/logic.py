@@ -376,12 +376,14 @@ class Engine:
 
             # --- MENTIONS PARSING ---
             # FIX BUG #3 (User Suggestion): Character-by-character parsing instead of regex
+            # FIX BUG #9: Support backslash escaping (\@) to allow referencing agents without mentioning
             # Algorithm:
             # 1. Find all @ symbols
             # 2. Ignore those in backticks
-            # 3. For each @, look at next X chars (X = longest agent name)
-            # 4. Check if substring matches any agent name
-            # 5. Take longest match if multiple exist
+            # 3. Ignore those preceded by backslash (\@)
+            # 4. For each @, look at next X chars (X = longest agent name)
+            # 5. Check if substring matches any agent name
+            # 6. Take longest match if multiple exist
             
             # Build list of all possible agent names (including User)
             all_agent_names = list(agents.keys()) + ["User"]
@@ -398,6 +400,13 @@ class Engine:
             i = 0
             while i < len(content_no_code):
                 if content_no_code[i] == '@':
+                    # FIX BUG #9: Check if @ is escaped with backslash
+                    # Look back one character to see if it's a backslash
+                    if i > 0 and content_no_code[i-1] == '\\':
+                        # This @ is escaped, skip it
+                        i += 1
+                        continue
+                    
                     # Look ahead up to max_name_length characters
                     lookahead_end = min(i + 1 + max_name_length, len(content_no_code))
                     lookahead = content_no_code[i+1:lookahead_end]
@@ -459,6 +468,8 @@ class Engine:
                         connections_table = self._build_connections_table(from_agent, state, allowed_targets)
                         return (f"🚫 PERMISSION ERROR: You are not authorized to summon '@{target_agent}' "
                                 f"(Profile: {t_prof}). Check your allowed connections."
+                                f"\n\n💡 TIP: If you want to reference an agent without mentioning them, "
+                                f"use backticks `@{target_agent}` or escape with backslash \\@{target_agent}."
                                 f"{connections_table}")
                 
                 valid_mentions.append(target_agent)
