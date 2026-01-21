@@ -1,55 +1,53 @@
-# Agent C (Isolated Tester) - Session Test Bug #13 (21 Jan 2026)
+# Agent C (Isolated Tester) - Session Post-Reload (21 Jan 2026 - 18:20)
 
-## 🔴 MISSION CRITIQUE : Validation Bug #13
+## 🔴 MISSION ACTUELLE : Validation Bug #13 (Tentative #2)
 
-**Objectif** : Tester si les messages privés B→C fonctionnent après le fix d'Agent B
+**Objectif** : Tester si les messages privés B↔C fonctionnent après le fix de "l'agent externe"
 
-## ❌ RÉSULTAT : BUG #13 NON CORRIGÉ
+## ❌ RÉSULTAT TEST #2 : BUG #13 TOUJOURS PRÉSENT
 
-### Test Effectué
-1. ✅ Agent B a envoyé un message privé de test initial
-2. ❌ **Je n'ai JAMAIS reçu ce message privé**
-3. ✅ J'ai répondu en public (pensant que le test n'avait pas commencé)
-4. ✅ Agent B a demandé confirmation en public
-5. ✅ J'ai tenté de répondre en PRIVÉ pour confirmer la non-réception
-6. ❌ **Agent B n'a jamais reçu ma réponse privée non plus**
+### Chronologie du Test
+1. ✅ Reconnexion après reload système
+2. ✅ Agent A demande de tester les messages privés avec Agent B
+3. ✅ J'envoie un message privé à Agent B (`private=true`)
+4. ❌ **Agent B ne reçoit PAS le message**
+5. ✅ User confirme : "Argh non, le bug est toujours là"
+6. ✅ Agent B confirme : Bug #13 persiste (B→C et C→B non reçus)
 
-### Confirmation User
-Le User a confirmé : "Arrêtez de vous parler en privé car du coup vous ne voyez pas vos réponses ^^ Le bug est toujours présent : il faut le fix !"
-
-## 📊 Bugs Confirmés
+## 📊 État des Bugs
 
 ### Bug #13 : Messages Privés B↔C ❌
-- **Statut** : TOUJOURS PRÉSENT après le fix
+- **Statut** : TOUJOURS PRÉSENT (après 2 tentatives de fix)
 - **Symptôme** : Aucun message privé entre B et C n'est livré
 - **Direction** : Bidirectionnel (B→C ET C→B)
 - **Seule communication fonctionnelle** : Messages publics
 
-### Bug #14 : Mentions Ignorées ❌
-- **Statut** : CONFIRMÉ
-- **Symptôme** : Mention `@Agent B (Private Tester)` ignorée, tour revient à moi
-- **Impact** : Boucle infinie de tour
+### Bug #14 : Mentions Utilisateur ✅
+- **Statut** : Corrigé (selon historique)
+- **À tester** : Après résolution du Bug #13
+
+### Bug #11 : Déconnexion Dernier Agent ⏳
+- **Statut** : En attente de correction
+
+## 🎯 Plan d'Action
+
+1. ⏳ **Attendre** que "l'agent externe" corrige le Bug #13
+2. 🔄 **Retester** la communication privée B↔C
+3. ✅ **Valider** le Bug #14 (mentions utilisateur)
+4. 🔄 **Tester** le reload général
 
 ## 🔍 Observations Techniques
 
 ### Ce qui fonctionne ✅
-- Messages publics (B→C et C→B)
+- Messages publics (B↔C, A→tous)
 - Outil `note` (mémoire persistante)
-- Outil `get_previous_message` (récupération contexte)
 - Outil `mailbox` (pagination messages tronqués)
+- Système de reconnexion après reload
 
 ### Ce qui ne fonctionne pas ❌
-- Messages privés (B→C et C→B)
-- Système de mentions pour passage de tour
+- Messages privés (B↔C bidirectionnel)
 - Filtrage de visibilité des messages privés
 
-## 🎯 Recommandations
+## 📋 Prochaine Action
 
-1. **Investiguer à nouveau** la logique de filtrage dans `src/core/logic.py`
-2. **Vérifier** que le champ `mentions` est bien utilisé pour le filtrage
-3. **Tester** la logique de visibilité pour les messages privés
-4. **Valider** que la configuration B↔C permet la communication privée
-
-## 🔄 État au Reload
-
-Prêt à me déconnecter. Test du Bug #13 complété : **BUG CONFIRMÉ NON CORRIGÉ**.
+Attendre la correction du Bug #13 par l'agent externe, puis retester la communication privée avec Agent B.

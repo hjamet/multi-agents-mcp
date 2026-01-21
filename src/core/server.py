@@ -355,8 +355,17 @@ def _render_talk_response(sender: str, data: dict, instruction: str, replied_to_
     is_open_mode = "open" in my_prof.get("capabilities", [])
 
     # 2. Build History (Visibility Check)
+    # 2. Build History (Visibility Check)
     full_msgs = data.get("messages", [])
-    visible_msgs = [m for m in full_msgs if m.get("public") or m.get("target") == sender or m.get("from") == sender or sender in (m.get("audience") or [])]
+    # FIX BUG #13: Allow visibility if mentioned in private message
+    visible_msgs = [
+        m for m in full_msgs 
+        if m.get("public") 
+        or m.get("target") == sender 
+        or m.get("from") == sender 
+        or sender in (m.get("audience") or [])
+        or sender in (m.get("mentions") or [])
+    ]
     
     # Remove the agent's own last message (they already know what they sent)
     if visible_msgs and visible_msgs[-1].get("from") == sender:
@@ -486,8 +495,15 @@ async def agent(ctx: Context) -> str:
     try:
         data = engine.state.load()
         full_messages = data.get("messages", [])
-        # Simple filter: Public + targeted to me
-        visible_messages = [m for m in full_messages if m.get("public") or m.get("target") == name or m.get("from") == name or name in (m.get("audience") or [])]
+        # Simple filter: Public + targeted to me + audience + mentions
+        visible_messages = [
+            m for m in full_messages 
+            if m.get("public") 
+            or m.get("target") == name 
+            or m.get("from") == name 
+            or name in (m.get("audience") or [])
+            or name in (m.get("mentions") or [])
+        ]
         
         # Smart Context Injection: REMOVED (Agent-Pull Model)
         # We now provide full history. Truncation logic removed.
@@ -786,8 +802,16 @@ async def talk(
             template = jinja_env.get_template("user_unavailable.j2")
             
             # Re-fetch recent messages
+            # Re-fetch recent messages
             full_msgs = data.get("messages", []) # Full History (Agent-Pull)
-            visible_msgs = [m for m in full_msgs if m.get("public") or m.get("target") == sender or m.get("from") == sender or sender in (m.get("audience") or [])]
+            visible_msgs = [
+                m for m in full_msgs 
+                if m.get("public") 
+                or m.get("target") == sender 
+                or m.get("from") == sender 
+                or sender in (m.get("audience") or [])
+                or sender in (m.get("mentions") or [])
+            ]
 
             # Resolve Directory for user_unavailable template
             agent_directory = _build_agent_directory(data, sender)

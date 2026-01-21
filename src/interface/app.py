@@ -1503,6 +1503,14 @@ if st.session_state.page == "Communication":
             # --- MENTION PARSING (Same logic as agents - dedupe per message) ---
             known_agents = s.get("agents", {})
             
+            # FIX BUG #15: Build profile_map to resolve profile references to agent names
+            # This allows User to mention agents by their profile name (e.g. @Agent_B)
+            profile_map = {}
+            for name, data in known_agents.items():
+                pref = data.get("profile_ref")
+                if pref:
+                    profile_map[pref] = name
+            
             # Use regex to find all mentions in order of appearance (deduplicated)
             raw_mentions = re.findall(r'@(\w+)', prompt)
             seen_in_msg = set()
@@ -1513,9 +1521,12 @@ if st.session_state.page == "Communication":
                     continue
                 seen_in_msg.add(m_name)
                 
+                # FIX BUG #15: Resolve profile ref to agent name
+                target_agent = profile_map.get(m_name, m_name)
+                
                 # Check existence
-                if m_name in known_agents or m_name == "User":
-                    valid_mentions.append(m_name)
+                if target_agent in known_agents or target_agent == "User":
+                    valid_mentions.append(target_agent)
                 # If not found, we just ignore (User is not held to strict validation)
             
             # Prepare content with Reply Context

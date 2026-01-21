@@ -503,9 +503,11 @@ class Engine:
                               f"{connections_table}")
 
             # --- QUEUE UPDATE ---
-            if not valid_mentions and not queue_raw:
+            # FIX: Always require at least one mention, even if queue is not empty
+            # This ensures explicit turn passing and clearer communication flow
+            if not valid_mentions:
                 connections_table = self._build_connections_table(from_agent, state, allowed_targets)
-                return ("🚫 TURN ERROR: The queue is empty and you mentioned no one. "
+                return ("🚫 TURN ERROR: You mentioned no one. "
                         "You MUST mention at least one agent (e.g. @User or @AgentName) to pass the turn."
                         f"{connections_table}")
 

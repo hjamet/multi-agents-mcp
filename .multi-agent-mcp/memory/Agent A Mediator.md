@@ -1,28 +1,34 @@
 # Agent A (Mediator) - État Final Session
 
 ## 🎯 Mission Accomplie
-Coordination des tests système et corrections de bugs #14.
+Coordination des tests système et implémentation de nouvelles fonctionnalités + corrections de bugs.
 
-## ✅ Bugs Corrigés (Cette Session)
+## ✅ Modifications Implémentées (Cette Session)
 
-### Bug #14 : Mentions User Ignorées ✅
-**Fichier** : `src/interface/app.py` (lignes 1591-1606)
-**Problème** : Lorsque le User mentionnait un agent, le tour utilisait la logique de la queue au lieu d'aller immédiatement au premier agent mentionné
-**Solution** : Passer `valid_mentions[0]` comme argument `intended_next` à `_finalize_turn_transition`
+### 1. Nouvelle Règle : Mentions Obligatoires ✅
+**Fichier** : `src/core/logic.py` (lignes 505-510)
+**Demande User** : Les agents doivent TOUJOURS mentionner au moins une personne, même si la file n'est pas vide
+**Changement** : 
+- **AVANT** : Erreur uniquement si `not valid_mentions AND not queue_raw`
+- **APRÈS** : Erreur si `not valid_mentions` (indépendamment de l'état de la file)
+**Impact** : Force les agents à passer explicitement la parole à chaque tour
+
+### 2. Bug #15 : Résolution des Mentions de Profil ✅
+**Fichier** : `src/interface/app.py` (lignes 1504-1521)
+**Problème** : Lorsque le User mentionnait plusieurs agents par leur nom de profil (ex: `@Agent_B @Agent_A`), le système ne résolvait pas les noms de profil en noms d'agents réels, causant un ordre incorrect
+**Solution** : 
+- Ajout d'un `profile_map` pour résoudre les noms de profil en noms d'agents réels
+- Préservation de l'ordre d'apparition des mentions
 **Comportement Corrigé** :
-- Sans mention → Tour va à `first_agent`
-- Avec mention(s) → Tour va IMMÉDIATEMENT au premier agent mentionné
-- Mentions supplémentaires → Compteur +1 dans la queue
+- Le tour passe au premier agent mentionné dans l'ordre d'apparition
+- Les mentions suivantes incrémentent le compteur de priorité
 
-## 📋 Rapports de Bugs Transmis
+## 📋 Statut des Bugs
 
-### Bug #11 : Déconnexion Dernier Agent
-**Rapport** : Transmis au User pour délégation à un agent plus puissant
-**Statut** : En attente de correction
-
-### Bug #13 : Messages Privés B→C
-**Rapport** : Transmis au User pour délégation à un agent plus puissant
-**Statut** : Corrigé par l'agent puissant (à tester après reload)
+- ✅ **Bug #15** : Résolution mentions de profil (corrigé cette session)
+- ✅ **Bug #14** : Mentions User ignorées (corrigé session précédente)
+- ✅ **Bug #13** : Messages privés B↔C (corrigé par agent externe, à tester après reload)
+- ⏳ **Bug #11** : Déconnexion dernier agent (en attente)
 
 ## 🔄 Prochaine Étape
-Après reconnexion : Tester les messages privés et la correction du Bug #14
+Après reconnexion : Tester les messages privés (Bug #13) et valider toutes les corrections
