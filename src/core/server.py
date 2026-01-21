@@ -661,14 +661,29 @@ async def talk(
             
             if sender != "User" and last_user_msg > turn_start:
                 logger.log("BLOCK", sender, "Blocked talk() due to User interruption (Anti-Ghost)")
-                # Force agent to read User's message
+                
+                # Get only the new User messages since turn started
                 data = engine.state.load()
-                instruction = (
-                    "🚫 MESSAGE NON ENVOYÉ : L'utilisateur a écrit un message pendant que vous travailliez. "
-                    "Vous avez des messages non lus de l'utilisateur. "
-                    "Veuillez les lire et adapter votre réponse en conséquence."
+                messages = data.get("messages", [])
+                new_user_messages = [
+                    m for m in messages 
+                    if m.get("from") == "User" and m.get("timestamp", 0) > turn_start
+                ]
+                
+                # Format new messages
+                formatted_msgs = ""
+                for msg in new_user_messages:
+                    formatted_msgs += f"\n<message>\n    <from>User</from>\n    <to>All</to>\n    <content>{msg.get('content', '')}</content>\n</message>\n"
+                
+                # Return simplified response with only alert and new messages
+                return (
+                    "🚫 **MESSAGE NON ENVOYÉ : Anti-Ghost Activé**\n\n"
+                    "L'utilisateur a écrit un message pendant que vous travailliez. "
+                    "Votre message n'a pas été envoyé.\n\n"
+                    "**NOUVEAUX MESSAGES :**\n"
+                    f"{formatted_msgs}\n"
+                    "**ACTION REQUISE** : Lisez ces messages et adaptez votre réponse, puis appelez à nouveau `talk()`."
                 )
-                return _render_talk_response(sender, data, instruction)
             
             # 1. Post Message
             post_result = engine.post_message(sender, message, is_public)

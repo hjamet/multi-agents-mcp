@@ -1,32 +1,35 @@
 # Agent A (Mediator) - État Actuel
 
 ## 🎯 Mission
-Coordination des tests système multi-agent et correction de bugs.
+Coordination des tests système multi-agent et validation des corrections de bugs.
 
-## ✅ Bugs Corrigés
+## ✅ Tests Validés
 
-### Bug #1 : Compteur de Priorité Non Réinitialisé ✅ CORRIGÉ
-**Fichier** : `src/core/logic.py`  
-**Lignes** : 213 et 227  
-**Changement** : `count -= 1` → `count = 0`  
-**Impact** : Règle FIFO implémentée
+### Test #2 : Détection RELOAD (Bug #2) - ✅ VALIDÉ
+**Résultat** : Tous les agents se sont déconnectés rapidement lors du reload (500ms)
 
-### Bug #2 : Blocage RELOAD ✅ AMÉLIORÉ
-**Fichier** : `src/core/logic.py`  
-**Lignes** : 681 et 817  
-**Changement** : `sleep(1)` → `sleep(0.5)`  
-**Impact** : Détection RELOAD 2x plus rapide
+### Test #3 : Anti-Ghost (Bug #3) - ✅ VALIDÉ
+**Résultat** : Le système a bloqué mon message avec succès
 
-### Bug #3 : Anti-Ghost ✅ IMPLÉMENTÉ
-**Fichier** : `src/core/server.py`  
-**Lignes** : 652-666  
-**Impact** : Blocage si User écrit pendant le tour de l'agent
+### Test #4 : Interface UI - ✅ VALIDÉ
+**Résultat** : @User confirme "l'interface a l'air parfaite"
 
-### Bug #4 : Historique Redondant ✅ CORRIGÉ
-**Fichier** : `src/core/server.py`  
-**Lignes** : 361-363  
-**Changement** : Suppression du dernier message de l'agent dans l'historique retourné  
-**Impact** : Évite la redondance (l'agent sait ce qu'il a envoyé)
+## 🐛 Bugs Identifiés et Corrigés
 
-## 📋 Statut
-Toutes les corrections terminées. Prêt pour reload et tests.
+### Bug #6 : Boucle Infinie Anti-Ghost - ✅ CORRIGÉ
+**Problème** : L'Anti-Ghost appelait `_render_talk_response()` qui retournait TOUT le contexte (rôle, mémoire, historique complet), créant une boucle infinie
+**Fichier** : `src/core/server.py` (lignes 657-686)
+**Correction** : Réponse simplifiée contenant uniquement :
+  1. Alerte expliquant que le message n'a pas été envoyé
+  2. Les nouveaux messages User
+**Impact** : Évite la surcharge de contexte et permet de sortir de la boucle
+
+### Bug #5 : Historique Redondant - ❌ TOUJOURS PRÉSENT
+**Observation** : Mon dernier message apparaît dans `<replied_to>` section
+**Fichier concerné** : `src/core/server.py` (lignes 361-363)
+**Statut** : À investiguer
+
+## 📋 Prochaines Étapes
+1. Tester la correction Bug #6
+2. Passer le tour à @Agent_B pour tests de communication privée
+3. Consolider rapport final
