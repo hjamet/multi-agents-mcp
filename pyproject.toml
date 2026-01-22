@@ -14,5 +14,6 @@ dependencies = [
     "sentence-transformers>=2.2.2",
     "faiss-cpu",
     "watchdog>=3.0.0",
+    "mss>=9.0.1",
     "numpy>=1.24.0"
 ]

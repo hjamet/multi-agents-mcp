@@ -1,3 +1,5 @@
+import mss
+import numpy as np
 import streamlit as st
 import streamlit.components.v1 as components
 from streamlit_autorefresh import st_autorefresh
@@ -919,6 +921,10 @@ with st.sidebar:
         
     if st.button("🛠️ Editor", use_container_width=True, type="primary" if st.session_state.page == "Editor" else "secondary"):
         st.session_state.page = "Editor"
+        st.rerun()
+
+    if st.button("📸 Screenshots", use_container_width=True, type="primary" if st.session_state.page == "Screenshots" else "secondary"):
+        st.session_state.page = "Screenshots"
         st.rerun()
 
     st.divider()
@@ -2000,6 +2006,217 @@ elif st.session_state.page == "Editor":
             save_config(config)
             st.toast("Saved!")
             st.rerun()
+
+# ==========================================
+# PAGE: SCREENSHOTS
+# ==========================================
+elif st.session_state.page == "Screenshots":
+    st.header("📸 Screen Capture")
+    st.markdown("Monitor the machine where the agent is running.")
+    
+    # --- HELPERS ---
+    def capture_wsl_host():
+        """Attempts to capture Windows Host screen via PowerShell from WSL."""
+        import subprocess
+        import base64
+        import shutil
+        import json
+        
+        if not shutil.which("powershell.exe"):
+            return [], "powershell.exe not found"
+
+        # FIXED: Iterate AllScreens to capture each monitor separately
+        # FIXED: Return JSON array to handle multiple images
+        # FIXED: High DPI Awareness to prevent truncation (SetProcessDpiAwareness)
+        ps_script = """
+        try {
+            $code = @'
+            using System;
+            using System.Runtime.InteropServices;
+            public class DPI {
+                [DllImport("shcore.dll")]
+                public static extern int SetProcessDpiAwareness(int value);
+            }
+'@
+            Add-Type -TypeDefinition $code -Language CSharp
+            [DPI]::SetProcessDpiAwareness(2) # PerMonitorAware
+        } catch { 
+            # Continue even if DPI fail
+        }
+
+        try {
+            Add-Type -AssemblyName System.Windows.Forms
+            Add-Type -AssemblyName System.Drawing
+            
+            $screens = [System.Windows.Forms.Screen]::AllScreens
+            $results = @()
+            
+            foreach ($screen in $screens) {
+                # Handle High DPI - explicit bounds from physical screen
+                $width = $screen.Bounds.Width
+                $height = $screen.Bounds.Height
+                $left = $screen.Bounds.X
+                $top = $screen.Bounds.Y
+                
+                $bitmap = New-Object System.Drawing.Bitmap $width, $height
+                $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+                
+                # Copy specific monitor area
+                $graphics.CopyFromScreen($left, $top, 0, 0, $bitmap.Size)
+                
+                $stream = New-Object System.IO.MemoryStream
+                $bitmap.Save($stream, [System.Drawing.Imaging.ImageFormat]::Png)
+                $b64 = [Convert]::ToBase64String($stream.ToArray())
+                
+                $results += @{
+                    name = "Monitor" + $results.Count
+                    device = $screen.DeviceName
+                    data = $b64
+                    width = $width
+                    height = $height
+                }
+                
+                $graphics.Dispose()
+                $bitmap.Dispose()
+            }
+            
+            Write-Output ($results | ConvertTo-Json -Depth 2 -Compress)
+        } catch {
+            Write-Error $_.Exception.Message
+            exit 1
+        }
+        """
+        
+        try:
+            import tempfile
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.ps1', delete=False) as tf:
+                tf.write(ps_script)
+                tf_name = tf.name
+            
+            try:
+                cmd = ["powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", tf_name]
+                proc = subprocess.run(cmd, capture_output=True, check=False)
+                if proc.returncode != 0:
+                    return [], f"PowerShell Error: {proc.stderr.decode('utf-8', errors='ignore')}"
+                    
+                stdout = proc.stdout.decode('utf-8', errors='ignore').strip()
+                
+                # Parse JSON output
+                try:
+                    data_list = json.loads(stdout)
+                    # PowerShell ConvertTo-Json can return a single object if only 1 item, or array if multiple.
+                    if isinstance(data_list, dict):
+                        data_list = [data_list]
+                except json.JSONDecodeError:
+                    # Fallback try to find JSON blob
+                    start = stdout.find('[')
+                    if start == -1: start = stdout.find('{')
+                    if start != -1:
+                         try:
+                             data_list = json.loads(stdout[start:])
+                             if isinstance(data_list, dict): data_list = [data_list]
+                         except:
+                             return [], f"Failed to parse JSON: {stdout[:100]}..."
+                    else:
+                        return [], "No JSON output found"
+
+                final_images = []
+                for item in data_list:
+                    b64 = item.get("data")
+                    name = item.get("device", "Unknown Display")
+                    if b64:
+                         final_images.append((base64.b64decode(b64), name))
+                
+                if not final_images:
+                    return [], "No images decoded from JSON"
+                    
+                return final_images, "Success"
+                
+            finally:
+                try:
+                    os.remove(tf_name)
+                except: pass
+                
+        except Exception as e:
+            return [], str(e)
+
+    # --- MAIN CAPTURE LOGIC ---
+    
+    # Initialize Session State for screenshots if not exists
+    if "screenshots_cache" not in st.session_state:
+        st.session_state.screenshots_cache = []
+    if "screenshots_error" not in st.session_state:
+        st.session_state.screenshots_error = []
+        
+    # Trigger Capture ONLY on Button Click
+    if st.button("🔄 Capture / Refresh", type="primary", use_container_width=True):
+        new_screenshots = []
+        new_errors = []
+        
+        # 1. Try MSS (Standard Linux/X11)
+        mss_success = False
+        try:
+            with mss.mss() as sct:
+                monitors = sct.monitors
+                display_monitors = monitors[1:] if len(monitors) > 1 else monitors
+                if display_monitors:
+                    for m in display_monitors:
+                        img = sct.grab(m)
+                        rgb = np.array(img)[:, :, :3][:, :, ::-1]
+                        new_screenshots.append((rgb, f"Linux Monitor {m}"))
+                    mss_success = True
+                else:
+                    new_errors.append("MSS: No monitors detected.")
+        except Exception as e:
+            new_errors.append(f"MSS (Linux) Failed: {e}")
+            
+        # 2. If MSS failed, Try WSL Fallback
+        if not new_screenshots:
+            wsl_images, msg = capture_wsl_host()
+            if wsl_images:
+                import io
+                from PIL import Image
+                for img_bytes, name in wsl_images:
+                    image = Image.open(io.BytesIO(img_bytes))
+                    new_screenshots.append((np.array(image), f"WSL Bridge: {name}"))
+                # Clear errors if WSL worked
+                new_errors = [] 
+            else:
+                new_errors.append(f"WSL Fallback Failed: {msg}")
+        
+        # Update State (Clearing errors if success)
+        st.session_state.screenshots_cache = new_screenshots
+        st.session_state.screenshots_error = new_errors
+        st.rerun()
+
+    # --- DISPLAY FROM STATE ---
+    # This ensures auto-refreshes don't re-trigger logic, just re-render
+    
+    st.markdown("### Captured Views")
+    
+    if st.session_state.screenshots_cache:
+        # Dynamic columns based on number of monitors
+        n_screens = len(st.session_state.screenshots_cache)
+        cols = st.columns(n_screens)
+        for i, (img, caption) in enumerate(st.session_state.screenshots_cache):
+            with cols[i]:
+                # Force a container to avoid stacking artifacts (theoretical)
+                with st.container():
+                     st.image(img, caption=f"{caption} ({img.shape[1]}x{img.shape[0]})", use_container_width=True)
+                
+        if st.session_state.screenshots_error:
+             with st.expander("Warnings (Non-fatal)"):
+                for e in st.session_state.screenshots_error:
+                    st.warning(e)
+                    
+    elif st.session_state.screenshots_error:
+        st.error("❌ No screenshots available.")
+        with st.expander("Debug Logs"):
+            for e in st.session_state.screenshots_error:
+                st.write(f"- {e}")
+            st.info("Tip: If running on WSL, this app attempts to bridge to Windows via powershell.exe.")
+    else:
+        st.info("Click 'Capture / Refresh' to view the screens.")
 
 # --- GLOBAL INJECTION (Fixed by Anais) ---
 if st.session_state.page == "Communication":

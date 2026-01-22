@@ -127,3 +127,4 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
     - 🔎 **Search Integration** : Ajout de la capacité `search` et instructions d'utilisation pour Marcus, Alex et Lisa dans les presets (v2.3.2).
     - 🗺️ **Search Engine Fix** : Correction du path d'indexation pour scanner le dossier courant (User Project) au lieu du code source de l'outil (v2.3.3).
     - 🛡️ **Mailbox Security** : Ajout d'une sécurité bloquant `talk` si la `mailbox` n'a pas été entièrement lue (v2.3.4).
+    - 📸 **Screen Capture** : Nouvelle page "Screenshots" pour visualiser l'écran du serveur via MSS (v2.3.5).
