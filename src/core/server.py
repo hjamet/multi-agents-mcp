@@ -724,80 +724,59 @@ async def talk(
              logger.log("SKIP", sender, "Skipped duplicate message post (retry detected).")
 
         
-        # SPECIAL: User Turn Handling
-        # We check the state to see if the turn was passed to the User
+        # SPECIAL: User Turn Handling & Blocking Wait
+        # We check the state to see if the turn was passed to someone else (User or Agent)
+        # BUG FIX: effective blocking. We must wait until the turn returns to US.
         new_state = engine.state.load()
-        if new_state.get("turn", {}).get("current") == "User":
-            is_user_available = False
-            try:
-                # Check availability config
-                config = new_state.get("config", {})
-                # Default to 'busy' if not set, to be non-blocking by default
-                is_user_available = (config.get("user_availability") == "available")
-            except:
-                pass
+        next_turn = new_state.get("turn", {}).get("current")
+        
+        # If I am still the current turn (e.g. valid mentions but queue logic kept me first), we can return immediately?
+        # PROBABLY NOT. If I spoke, I should yield.
+        # But engine.post_message handles transition.
+        # If I retained the turn, next_turn == sender.
+        
+        if next_turn == sender:
+             # I still have the turn (e.g. no one else in queue).
+             # I can return immediately to allow more talking.
+             return base_msg
 
-            # If Available, we BLOCK and wait for User Reply
-            if is_user_available:
-                logger.log("WAIT", "System", "User is AVAILABLE. Blocking wait for user reply...")
-                
-                wait_start = time.time()
-                user_reply = None
-                
-                while True:
-                    await asyncio.sleep(0.5)
-                    
-                    # Reload State
-                    try:
-                        data = engine.state.load()
-                        messages = data.get("messages", [])
-                        config = data.get("config", {})
-                        
-                        # 0. Check for RELOAD (Critical Fix)
-                        if data.get("agents", {}).get(sender, {}).get("reload_active"):
-                             if logger: logger.log("RELOAD", sender, "Reload detected while waiting for User.")
-                             return RELOAD_INSTRUCTION
+        # If turn passed to ANYONE else (User or Agent), I must block.
+        if logger: logger.log("WAIT", sender, f"Turn passed to {next_turn}. Blocking capabilities until turn returns...")
 
-                        # 1. Critical Check: Did user switch to BUSY?
-                        curr_avail = (config.get("user_availability") == "available")
-                        if not curr_avail:
-                            if logger: logger.log("WAIT_ABORT", "System", "User switched to BUSY. Aborting wait.")
-                            break # Fallback to standard non-blocking response
-                            
-                        # 2. Check for Reset
-                        new_cid = data.get("conversation_id")
-                        # (Assuming capturing cid logic is similar to wait_for_turn, simplified here)
-                        
-                        # 3. Check for User Message
-                        # Look for message FROM User where timestamp > wait_start
-                        for m in reversed(messages):
-                            if m.get("from") == "User" and m.get("timestamp", 0) > wait_start:
-                                user_reply = m.get("content", "")
-                                break
-                        
-                        if user_reply:
-                            break
-                            
-                    except Exception as e:
-                        logger.error("System", f"Error in user wait loop: {e}")
-                        continue
-                
-                if user_reply:
-                     # Prepare Template Render
-                     try:
-                        data = engine.state.load()
-                     except Exception as e:
-                        logger.error(sender, f"Error loading state in talk (User Reply): {e}")
-                        return f"🚫 SYSTEM ERROR: {e}"
+        # 1. Check if User is the target (Special Handling for Interrupts/Availability)
+        if next_turn == "User":
+             # (Keep existing User specific logic if needed, or mostly rely on generic wait)
+             # The existing logic had "Is User Available?" checks.
+             # We can keep that for better logging/UX, but the core need is to WAIT.
+             pass
 
-                     instruction = f"✅ USER INTERCEPTION: The User replied: \"{user_reply}\". Your turn is back. READ THE CONVERSATION NOW."
-                     return _render_talk_response(sender, data, instruction, replied_to_message=message)
+        # 2. Generic Wait Loop (The Fix)
+        # We reuse the logic from agent() -> engine.wait_for_turn_async
+        # But we are in a sync/async context here? FastMCP tools are async.
+        
+        # We wait for turn to return to 'sender'
+        wait_result = await engine.wait_for_turn_async(sender, timeout_seconds=300) # 5 min timeout
+        
+        if wait_result["status"] == "success":
+             # We are back!
+             engine.acknowledge_turn(sender) # Good practice
+             
+             # Prepare return message
+             data = engine.state.load()
+             
+             # Check if we were woken by User Reply or Agent Turn
+             instruction = wait_result["instruction"]
+             
+             # Enhance instruction with what happened
+             # Logic.py wait_for_turn already generates a good instruction.
+             return _render_talk_response(sender, data, instruction, replied_to_message=message)
 
-            try:
-                data = engine.state.load()
-            except Exception as e:
-                logger.error(sender, f"Error loading state in talk (User): {e}")
-                return f"🚫 SYSTEM ERROR: {e}"
+        elif wait_result["status"] == "reset":
+             return f"⚠️ SYSTEM ALERT: {wait_result['instruction']}"
+        
+        else:
+             # Timeout
+             return "⚠️ TIMEOUT: You waited too long for the turn. Discussion is stuck."
 
             template = jinja_env.get_template("user_unavailable.j2")
             
