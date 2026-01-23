@@ -104,11 +104,11 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
 | **Support Multi-Room / Multi-Thread** | Basse | 📅 Futur |
 
 ## 🕹️ Simulation en cours
-- **Date** : 14 Janvier 2026
+- **Date** : 24 Janvier 2026
 - **Scénario** : Scientific Research Group (Autonomy V2)
 - **Configuration** : Anna (Planner), Tom (Builder)
 - **État** : 🟢 **COMPLETE**. Sprint 8 (IDE Integration) Finished.
-- **Résultat** : ✅ Système Final v1.15.1.
+- **Résultat** : ✅ Système Final v2.3.10.
 - **Features Ajoutées** :
     - 🔄 **Global Reload** : Déconnexion propre de tous les agents (v1.8.1).
     - 🔔 **Notifications** : Badges et Toasts (v1.9.0).
@@ -130,3 +130,6 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
     - 📸 **Screen Capture** : Nouvelle page "Screenshots" pour visualiser l'écran du serveur via MSS (v2.3.5).
     - 🔒 **Strict Privacy Presets** : Limitation de la communication à "privé" par défaut pour TOUS les agents (y compris Miller) dans les presets Software & Research (v2.3.6).
     - 🛠️ **Stability Hotfix** : Correction de l''IndentationError' critique à la ligne 781 de `server.py` et suppression de la variable non définie `base_msg` (v2.3.7).
+    - 🐛 **Ghost & Privacy Fix** : Correction des messages privés invisibles (Mentions obligatoires), suppression de la "Team Visibility" (Confidentialité stricte), et correction du timeout en Pause (v2.3.8).
+    - 🚦 **UX & Async Fix** : Désactivation visuelle de l'envoi (Bouton/Entrée) si message privé invalide, et suppression totale des Timeouts (Attente infinie) (v2.3.9).
+    - 🛠️ **Async Bugfix** : Correction de l'erreur `NoneType` dans la boucle d'attente (Wait Logic) et suppression effective de toute limitation de temps résiduelle (True Infinite Wait) (v2.3.10).

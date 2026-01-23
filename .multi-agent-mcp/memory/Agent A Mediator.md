@@ -1,19 +1,19 @@
-# Agent A (Mediator) - END OF SESSION REPORT
-
-## Bilan des Tests (Session Validation Mentions & FIFO)
-
-### 1. Correctifs Validés
-- **Queue Update Logic (Bug #17)** : ✅ Les mentions utilisateur, même "hors tour" (interjections), mettent correctement à jour les priorités dans la file d'attente (vérifié via `app.py` logs et comportement).
-- **Turn Transition with Fallback** : ✅ La logique de transition gère correctement :
-    - Pas de mention -> First Agent (A).
-    - Mention explicite -> First Mentioned Agent.
-    - Égalité de priorité -> FIFO (Timestamp).
-- **FIFO Enforcement** : ✅ Test confirmé. Agent B (Prio 1, Old) a pris la main sur Agent C (Prio 1, New).
-
-### 2. Points d'Attention / Bugs Résiduels
-- **Protocol Violation (Race Condition)** : L'utilisateur a signalé une erreur "Protocol Violation: Agent C attempted to speak during Agent A's turn" lors d'une réponse rapide sans mention. Cela suggère une desynchronisation Client/Serveur ou une race condition dans `handle_turn_transition`.
-- **Truncation/Mailbox** : Le système de troncature est fonctionnel mais verbeux.
-
-## Prochaines Étapes
-- Investiguer la race condition "Protocol Violation".
-- Tester les scénarios de "Private Message Chain" (A -> B -> C -> B -> A).
+# État de l'Agent A (Mediator) - Post-Reload
+- Registration successful.
+- Role assimilation: Mediator (Agent A).
+- Goals: Coordination, technical inspection, tool verification.
+- Findings so far (Technical Inspection):
+    - System version: v2.3.10 (according to README).
+    - Last commit: d2c09471ba937ad470aa50260c002d1a7c037fed ("Make conversation preset private").
+    - Hotfixes applied by User recently: 
+        1. IndentationError at line 781 in `server.py` fixed (v2.3.7).
+        2. Visibility fix for Anti-Ghost in `server.py` (v2.3.8).
+        3. Mandatory mentions for private messages in `app.py` (v2.3.8).
+        4. Infinite wait logic implemented (v2.3.9/2.3.10).
+- Observations:
+    - Tests `tests/verify_logic.py` and `tests/test_privacy_logic.py` are failing due to API changes (removal of `timeout_seconds` in `wait_for_turn` and `audience` param in `post_message`). 
+    - The code seems to emphasize the "Agent-Pull" model (Mailbox) and strict turn enforcement.
+- To-Do:
+    - Confirm the fixes mentioned by User (Anti-Ghost visibility, private message mentions).
+    - Verify if Agent B and C are ready for private communication tests.
+    - Report findings on broken tests to User.

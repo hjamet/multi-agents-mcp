@@ -1568,11 +1568,15 @@ if st.session_state.page == "Communication":
             elif st.session_state.reply_to:
                 target = st.session_state.reply_to["sender"]
                 audience = []
-                if public:
+                if not public:
                     public = False  # Reply context forces private unless explicit
             else:
+                # FIX: If Private and No Mentions -> ERROR to prevent Ghost Messages
+                if is_private:
+                    return "🚫 ERROR: Private messages MUST mention a recipient (e.g. @Agent)!"
                 target = "all"
                 audience = []
+
 
             msg = {
                 "from": "User",
@@ -1580,8 +1584,10 @@ if st.session_state.page == "Communication":
                 "timestamp": time.time(),
                 "public": public,
                 "audience": audience,
-                "target": target
+                "target": target,
+                "mentions": valid_mentions # Explicitly store mentions for filtering
             }
+
                 
             if "messages" not in s: s["messages"] = []
             s["messages"].append(msg)
@@ -1626,23 +1632,27 @@ if st.session_state.page == "Communication":
                 from src.core.logic import Engine
                 engine = Engine(state_store)
                 
-                # FIX BUG #10: If no mentions, pass turn to first_agent (never back to User)
-                # FIX BUG #14: If mentions exist, pass turn to FIRST mentioned agent immediately
-                if not valid_mentions:
-                    # Use first_agent preference (configured first speaker)
+                # FIX BUG #10/14: Improved transition logic
+                target_to_summon = None
+                if valid_mentions:
+                    target_to_summon = valid_mentions[0]
+                elif st.session_state.get("reply_to"):
+                    target_to_summon = st.session_state.reply_to["sender"]
+                
+                if target_to_summon and target_to_summon in s.get("agents", {}) and s.get("agents", {}).get(target_to_summon, {}).get("status") == "connected":
+                     engine._finalize_turn_transition(s, target_to_summon)
+                else:
+                    # Fallback to configured first agent preference
                     first_pref = s.get("turn", {}).get("first_agent")
                     if first_pref and first_pref in s.get("agents", {}) and s.get("agents", {}).get(first_pref, {}).get("status") == "connected":
                         engine._finalize_turn_transition(s, first_pref)
                     else:
-                        # Fallback: use any connected agent (never User)
+                        # Fallback: use any connected agent
                         connected = [n for n, d in s.get("agents", {}).items() if d.get("status") == "connected"]
                         if connected:
                             engine._finalize_turn_transition(s, connected[0])
-                        # If no connected agents, queue will handle it (turn goes to User by default in _finalize_turn_transition)
-                else:
-                    # Pass turn to FIRST mentioned agent immediately
-                    # The other mentioned agents already have their count incremented in the queue above
-                    engine._finalize_turn_transition(s, valid_mentions[0])
+                        # If no one connected, turn remains/goes to User by default
+
 
             # Context Cleanup
             if reply_ref_id is not None:

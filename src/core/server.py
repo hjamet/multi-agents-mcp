@@ -451,8 +451,7 @@ async def agent(ctx: Context) -> str:
              f"**REQUIRED ACTION**: Call `disconnect(from_agent=\"{name}\")` immediately.\n\n"
              f"⛔ **DO NOT** call `note()` or perform any other operations."
          )
-    if wait_msg.startswith("TIMEOUT"):
-         return wait_msg
+
 
     # BLOCKING: Wait for Turn (Strict Handshake)
     logger.log("INFO", name, "Network Ready. Waiting for Turn...")
@@ -462,7 +461,7 @@ async def agent(ctx: Context) -> str:
     
     while True:
         # Loop indefinitely until it is our turn
-        turn_result = await engine.wait_for_turn_async(name, timeout_seconds=10)
+        turn_result = await engine.wait_for_turn_async(name)
         
         if turn_result["status"] == "success":
             # Acknowledge turn to reset interruption timer (Fix Ghost Bug)
@@ -636,7 +635,7 @@ async def talk(
             # BLOCKING REPAIR: Wait until it is actually my turn
             # This effectively "pauses" the agent in the `talk` call until the turn cycle comes back to them.
             while True:
-                wait_result = await engine.wait_for_turn_async(sender, timeout_seconds=60)
+                wait_result = await engine.wait_for_turn_async(sender)
                 
                 if wait_result["status"] == "success":
                     # Resumed!
@@ -682,34 +681,52 @@ async def talk(
                 logger.log("BLOCK", sender, "Blocked talk() due to User interruption (Anti-Ghost)")
                 
                 # Get only the new User messages since turn started
+                # Get only the new User messages since turn started (respecting visibility)
                 data = engine.state.load()
                 messages = data.get("messages", [])
-                new_user_messages = [
-                    m for m in messages 
-                    if m.get("from") == "User" and m.get("timestamp", 0) > turn_start
-                ]
                 
-                # Format new messages
-                formatted_msgs = ""
-                for msg in new_user_messages:
-                    formatted_msgs += f"\n<message>\n    <from>User</from>\n    <to>All</to>\n    <content>{msg.get('content', '')}</content>\n</message>\n"
+                new_user_messages = []
+                for m in messages:
+                    if m.get("from") == "User" and m.get("timestamp", 0) > turn_start:
+                        is_public = m.get("public", True)
+                        target = m.get("target")
+                        mentions = m.get("mentions", [])
+                        
+                        if is_public or target == sender or sender in mentions or sender in (m.get("audience") or []):
+                            new_user_messages.append(m)
                 
-                # FIX BUG #7: Update turn_start_time to mark User messages as "seen"
-                # This prevents infinite loop where the same User message triggers Anti-Ghost repeatedly
-                def update_turn_time(s):
-                    s["turn"]["turn_start_time"] = time.time()
-                    return "Turn time updated after Anti-Ghost"
-                engine.state.update(update_turn_time)
-                
-                # Return simplified response with only alert and new messages
-                return (
-                    "🚫 **MESSAGE NON ENVOYÉ : Anti-Ghost Activé**\n\n"
-                    "L'utilisateur a écrit un message pendant que vous travailliez. "
-                    "Votre message n'a pas été envoyé.\n\n"
-                    "**NOUVEAUX MESSAGES :**\n"
-                    f"{formatted_msgs}\n"
-                    "**ACTION REQUISE** : Lisez ces messages et adaptez votre réponse, puis appelez à nouveau `talk()`."
-                )
+                if not new_user_messages:
+                     # If User spoke but privately to someone else, we silently acknowledge the turn time and continue
+                     def update_turn_time_silent(s):
+                         s["turn"]["turn_start_time"] = time.time()
+                         return "Silent Anti-Ghost"
+                     engine.state.update(update_turn_time_silent)
+                else:
+                    # Format new messages
+                    formatted_msgs = ""
+                    for msg in new_user_messages:
+                        to_display = "All"
+                        if not msg.get("public"):
+                             to_display = msg.get("target", "Unknown")
+                        formatted_msgs += f"\n<message>\n    <from>User</from>\n    <to>{to_display}</to>\n    <content>{msg.get('content', '')}</content>\n</message>\n"
+                    
+                    # FIX BUG #7: Update turn_start_time to mark User messages as "seen"
+                    # This prevents infinite loop where the same User message triggers Anti-Ghost repeatedly
+                    def update_turn_time(s):
+                        s["turn"]["turn_start_time"] = time.time()
+                        return "Turn time updated after Anti-Ghost"
+                    engine.state.update(update_turn_time)
+                    
+                    # Return simplified response with only alert and new messages
+                    return (
+                        "🚫 **MESSAGE NON ENVOYÉ : Anti-Ghost Activé**\n\n"
+                        "L'utilisateur a écrit un message pendant que vous travailliez. "
+                        "Votre message n'a pas été envoyé.\n\n"
+                        "**NOUVEAUX MESSAGES :**\n"
+                        f"{formatted_msgs}\n"
+                        "**ACTION REQUISE** : Lisez ces messages et adaptez votre réponse, puis appelez à nouveau `talk()`."
+                    )
+
             
             # 1. Post Message
             post_result = engine.post_message(sender, message, is_public)
@@ -755,7 +772,7 @@ async def talk(
         # But we are in a sync/async context here? FastMCP tools are async.
         
         # We wait for turn to return to 'sender'
-        wait_result = await engine.wait_for_turn_async(sender, timeout_seconds=300) # 5 min timeout
+        wait_result = await engine.wait_for_turn_async(sender) # Infinite timeout
         
         if wait_result["status"] == "success":
              # We are back!
@@ -774,9 +791,8 @@ async def talk(
         elif wait_result["status"] == "reset":
              return f"⚠️ SYSTEM ALERT: {wait_result['instruction']}"
         
-        else:
-             # Timeout
-             return "⚠️ TIMEOUT: You waited too long for the turn. Discussion is stuck."
+        # Fallback (Should not happen with infinite timeout)
+        return f"⚠️ UNEXPECTED WAIT RESULT: {wait_result.get('status')}"
 
 
     except Exception as e:
