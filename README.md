@@ -129,3 +129,4 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
     - 🛡️ **Mailbox Security** : Ajout d'une sécurité bloquant `talk` si la `mailbox` n'a pas été entièrement lue (v2.3.4).
     - 📸 **Screen Capture** : Nouvelle page "Screenshots" pour visualiser l'écran du serveur via MSS (v2.3.5).
     - 🔒 **Strict Privacy Presets** : Limitation de la communication à "privé" par défaut pour TOUS les agents (y compris Miller) dans les presets Software & Research (v2.3.6).
+    - 🛠️ **Stability Hotfix** : Correction de l''IndentationError' critique à la ligne 781 de `server.py` et suppression de la variable non définie `base_msg` (v2.3.7).

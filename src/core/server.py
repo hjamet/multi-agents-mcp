@@ -738,7 +738,7 @@ async def talk(
         if next_turn == sender:
              # I still have the turn (e.g. no one else in queue).
              # I can return immediately to allow more talking.
-             return base_msg
+             return post_result if not is_retry else "Message already posted. You still have the turn."
 
         # If turn passed to ANYONE else (User or Agent), I must block.
         if logger: logger.log("WAIT", sender, f"Turn passed to {next_turn}. Blocking capabilities until turn returns...")
@@ -778,77 +778,6 @@ async def talk(
              # Timeout
              return "⚠️ TIMEOUT: You waited too long for the turn. Discussion is stuck."
 
-            template = jinja_env.get_template("user_unavailable.j2")
-            
-            # Re-fetch recent messages
-            # Re-fetch recent messages
-            full_msgs = data.get("messages", []) # Full History (Agent-Pull)
-            visible_msgs = [
-                m for m in full_msgs 
-                if m.get("public") 
-                or m.get("target") == sender 
-                or m.get("from") == sender 
-                or sender in (m.get("audience") or [])
-                or sender in (m.get("mentions") or [])
-            ]
-
-            # Resolve Directory for user_unavailable template
-            agent_directory = _build_agent_directory(data, sender)
-            # Resolve Open Mode
-            my_info = data.get('agents', {}).get(sender, {})
-            prof_ref = my_info.get("profile_ref")
-            profiles = data.get('config', {}).get('profiles', [])
-            my_prof = next((p for p in profiles if p["name"] == prof_ref), {})
-            is_open_mode = "open" in my_prof.get("capabilities", [])
-
-            # Transition turn back to sender since User is unavailable
-            def reset_turn(s):
-                s["turn"]["current"] = sender
-                s["turn"]["turn_start_time"] = time.time()
-                return "Turn reset to sender"
-            engine.state.update(reset_turn)
-            
-            # Reload fresh state after turn reset
-            data = engine.state.load()
-
-            rendered = template.render(
-                name=sender,
-                agent_directory=agent_directory,
-                is_open_mode=is_open_mode,
-                suffix=data.get("config", {}).get("user_unavailable_suffix", "")
-            )
-            return _truncate_and_buffer(sender, rendered, data)
-
-        # 2. Smart Block (Wait for Turn)
-        # The turn has passed to next_agent. We now wait until it comes back to 'sender'.
-        
-        result = None
-        while True:
-            result = await engine.wait_for_turn_async(sender, timeout_seconds=10)
-            
-            if result["status"] == "success":
-                engine.acknowledge_turn(sender)
-                if logger: logger.log("TURN", sender, "It is my turn again.")
-                break
-                
-            if result["status"] == "reset":
-                return f"⚠️ SYSTEM ALERT: {result['instruction']}"
-                
-            # On timeout, loop again.
-            continue
-        
-        # result is guaranteed to be success here
-        if result["status"] == "reset":
-            return f"⚠️ SYSTEM ALERT: {result['instruction']}"
-        
-        # Success - Render Template
-        try:
-            data = engine.state.load()
-        except Exception as e:
-            logger.error(sender, f"Error loading state in talk: {e}")
-            return f"🚫 SYSTEM ERROR: {e}"
-
-        return _render_talk_response(sender, data, result["instruction"], replied_to_message=message)
 
     except Exception as e:
         # Logging
