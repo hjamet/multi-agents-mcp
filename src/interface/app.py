@@ -945,7 +945,7 @@ with st.sidebar:
             if new_status == "available":
                 content = "The user has reconnected and is available again."
             else:
-                content = "The user has disconnected. They will let you know when they are back. Please continue your work autonomously."
+                content = "The user has disconnected. He will let you know when he is back. Please continue your work autonomously."
             
             msg = {
                 "from": "System",

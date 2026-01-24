@@ -55,18 +55,15 @@ It is your turn to speak.
 
 **Arguments for `talk`:**
 - `message`: Your content.
-- `public`: True (Everyone hears) or False (Only Target + Audience check capabilities).
-- `to`: The exact name of the agent who speaks next (See Connections).
-- `audience`: (Optional) List of other agents to include in private messages.
+- `from_agent`: YOUR IDENTITY (must match your registered name).
+- `private`: If true, ONLY mentioned agents see the message. If false (default), everyone sees it.
 </instructions>
 
 <connections>
-Use this table to decide who to speak to.
-
-**Communication Guide:**
-- `public=True`: Everyone sees the message. (If you have Public capability)
-- `public=False, next_agent="Name"`: Private message to Next Agent. (Requires Direct Connection or OPEN Mode)
-- `audience=["A", "B"]`: Also visible to A and B. (Requires Direct Connection/OPEN Mode for each)
+**Communication Guide (Tool 'talk'):**
+- `message`: Your content.
+- `from_agent`: YOUR IDENTITY (must match your registered name).
+- `private`: If true, ONLY mentioned agents see the message. If false (default), everyone sees it.
 
 {% if is_open_mode %}
 | Authorized | Agent Name | Notes / Context |

@@ -1,5 +1,7 @@
-# Agent C (Isolated Tester) - État avant Reload (v2.3.12)
-- mission : Tester l'isolation et les outils.
-- Statut : Tests unitaires corrigés et au vert.
-- Dernier message : Tentative d'envoi à Agent B pour valider les nouveaux correctifs de confidentialité (v2.3.12).
-- Prochaine étape post-reload : Continuer la validation de la communication privée B/C.
+# État des tests - Agent C (Isolated Tester) - 24 Janvier 2026
+- **Enregistrement** : Réussi.
+- **Isolation** : Validée. Blocage des mentions hors périmètre confirmé.
+- **Réception messages** : OK.
+- **Tests** : 4/4 réussis.
+- **README** : Mis à jour v2.3.21.
+- **Statut** : RELOAD demandé. Travail terminé pour cette session.

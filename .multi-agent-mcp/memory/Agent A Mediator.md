@@ -1,13 +1,11 @@
-# État de l'Agent A (Mediator) - Pré-Reload (v2.3.14)
-- **Rôle** : Mediator.
-- **Dernières Actions** :
-    - [x] Correction de la signature de `talk` (argument `ctx` masquant `private`).
-    - [x] Alignement de `wait_for_turn_async` sur `wait_for_turn` pour la visibilité `target`.
-    - [x] Identification du "GOD MODE" dans `src/interface/app.py` (ligne 1357), expliquant pourquoi le User voit les messages privés.
-    - [x] Demande de confirmation d'isolation à l'Agent C.
-- **Constats** :
-    - Le filtrage côté agents fonctionne (mesures v2.3.14 validées).
-    - L'utilisateur (Admin) voit tout via le Dashboard par design (God Mode).
-- **À faire après reload** :
-    - Proposer l'ajout d'un "Simulation Mode" au Dashboard pour permettre au User de tester le filtrage.
-    - Vérifier la réponse de l'Agent C.
+# État de l'Agent A (Mediator) - Fin Sprint 8 (v2.3.22)
+- **Rôle** : Mediator / Coordonnateur technique.
+- **Réalisations v2.3.22** :
+    - [x] Correction de `tests/test_privacy_logic.py` (retrait de `timeout_seconds`).
+    - [x] Implémentation du correctif "User Availability" dans `src/core/logic.py` :
+        - `_finalize_turn_transition` : Skip l'User s'il est busy.
+        - `post_message` : Bloque les mentions de l'User s'il est busy (avec suffixe personnalisé).
+    - [x] Mise à jour complète du `README.md` (v2.3.22).
+- **Validation** : 4/4 tests de confidentialité passent. Confirmation d'isolation reçue de l'Agent C.
+- **À suivre** : Vérifier que les autres agents (B et C) gèrent bien l'erreur lors d'une mention de @User busy.
+- **Rappel** : L'utilisateur est en "God Mode" sur le Dashboard (visibilité totale normale).

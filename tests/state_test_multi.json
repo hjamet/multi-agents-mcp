@@ -2,26 +2,26 @@
   "messages": [
     {
       "from": "System",
-      "content": "\ud83d\udd35 **Agent1** has joined the simulation.",
+      "content": "\ud83d\udd35 **Agent1** vient de se reconnecter.",
       "public": true,
-      "target": "all",
+      "target": "All",
       "audience": [],
-      "timestamp": 1768554914.1855621
+      "timestamp": 1769258465.0834818
     },
     {
       "from": "System",
-      "content": "\ud83d\udd35 **Agent2** has joined the simulation.",
+      "content": "\ud83d\udd35 **Agent2** vient de se reconnecter.",
       "public": true,
-      "target": "all",
+      "target": "All",
       "audience": [],
-      "timestamp": 1768554914.1914856
+      "timestamp": 1769258465.096872
     }
   ],
   "conversation_id": "test-uuid-multi",
   "turn": {
     "current": "Agent1",
     "next": null,
-    "turn_start_time": 1768554916.1945682
+    "turn_start_time": 1769258467.1025786
   },
   "agents": {
     "Agent1": {

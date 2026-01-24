@@ -2,35 +2,26 @@
   "messages": [
     {
       "from": "System",
-      "content": "\ud83d\udd35 **Agent1** has joined the simulation.",
+      "content": "\ud83d\udd35 **Agent1** vient de se reconnecter.",
       "public": true,
-      "target": "all",
+      "target": "All",
       "audience": [],
-      "timestamp": 1768554917.8099334
-    },
-    {
-      "from": "Agent1",
-      "content": "Hello History",
-      "public": true,
-      "target": "User",
-      "audience": [],
-      "timestamp": 1768554918.013484
+      "timestamp": 1769258474.9283683
     },
     {
       "from": "System",
-      "content": "\ud83d\udd35 **Agent1** has joined the simulation.",
+      "content": "\ud83d\udd35 **Agent1** vient de se reconnecter.",
       "public": true,
-      "target": "all",
+      "target": "All",
       "audience": [],
-      "timestamp": 1768554918.6215875
+      "timestamp": 1769258483.0345573
     }
   ],
   "conversation_id": "test-uuid-single",
   "turn": {
     "current": "Agent1",
     "next": null,
-    "turn_start_time": 1768554918.6284888,
-    "consecutive_count": 1
+    "turn_start_time": 1769258483.0494006
   },
   "agents": {
     "Agent1": {

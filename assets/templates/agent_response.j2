@@ -54,10 +54,8 @@ Use this table to understand your environment.
 
 **Communication Guide (Tool 'talk'):**
 - `message`: Your content.
-- `to`: The exact name of the agent who speaks next.
-- `public=True`: Everyone sees the message. (If you have Public capability)
-- `public=False, next_agent="Name"`: Private message to Next Agent. (Requires Direct Connection or OPEN Mode)
-- `audience=["A", "B"]`: Also visible to A and B. (Requires Direct Connection/OPEN Mode for each)
+- `from_agent`: YOUR IDENTITY (must match your registered name).
+- `private`: If true, ONLY mentioned agents see the message. If false (default), everyone sees it.
 Here is the list of all agents in the system and your ability to communicate with them:
 
 {% if is_open_mode %}

@@ -194,6 +194,7 @@ class Engine:
         """
         turn_data = state.get("turn", {})
         queue_raw = turn_data.get("queue", [])
+        config = state.get("config", {})
         
         # Convert to objects
         queue = []
@@ -214,18 +215,32 @@ class Engine:
                 queue.remove(existing)
         else:
             if not queue:
-                state["turn"]["current"] = "User"
-                state["turn"]["turn_start_time"] = time.time()
-                state["turn"]["consecutive_count"] = 0
-                return "Queue empty. Turn passed to User."
+                # FIX: Check User Availability before passing turn to User
+                is_user_available = config.get("user_availability", "busy") == "available"
+                if not is_user_available:
+                    # User is busy and queue is empty, try to pick any connected agent
+                    agents = state.get("agents", {})
+                    connected = [n for n, d in agents.items() if d.get("status") == "connected"]
+                    if connected:
+                        next_agent = connected[0]
+                    else:
+                        next_agent = "User" # Last resort
+                else:
+                    next_agent = "User"
 
-            # Sort and Pick
-            queue.sort(key=lambda x: (-x.count, x.timestamp))
-            next_item = queue[0]
-            next_agent = next_item.name
-            # Reset count to 0 when agent speaks (FIFO rule)
-            next_item.count = 0
-            queue.pop(0)
+                if next_agent == "User":
+                    state["turn"]["current"] = "User"
+                    state["turn"]["turn_start_time"] = time.time()
+                    state["turn"]["consecutive_count"] = 0
+                    return "Queue empty. Turn passed to User."
+            else:
+                # Sort and Pick
+                queue.sort(key=lambda x: (-x.count, x.timestamp))
+                next_item = queue[0]
+                next_agent = next_item.name
+                # Reset count to 0 when agent speaks (FIFO rule)
+                next_item.count = 0
+                queue.pop(0)
 
         # Serialize back
         state["turn"]["queue"] = [item.model_dump() for item in queue]
@@ -457,6 +472,16 @@ class Engine:
                 # Check if target_agent is allowed.
                 # Logic: Is target_agent ID or its Profile in allowed_targets?
                 if from_agent != "User":
+                    # --- USER AVAILABILITY CHECK ---
+                    if target_agent == "User":
+                        is_user_available = config.get("user_availability", "busy") == "available"
+                        if not is_user_available:
+                            suffix = config.get("user_unavailable_suffix", "")
+                            error_msg = "🚫 USER UNAVAILABLE: The User is currently busy or offline. You must mention at least one OTHER agent to pass the turn."
+                            if suffix:
+                                error_msg += f"\n\nMessage from User: {suffix}"
+                            return error_msg
+
                     t_info = agents.get(target_agent)
                     t_prof = t_info.get("profile_ref") if t_info else None
                     
