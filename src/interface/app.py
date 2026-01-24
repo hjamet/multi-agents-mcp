@@ -1495,7 +1495,7 @@ if st.session_state.page == "Communication":
     # inject_mention_system(["everyone"] + connected_agents)
 
     # Private toggle for user messages
-    user_private_mode = st.toggle("🔒 Private Message", value=False, help="If enabled, only mentioned agents will see your message.")
+    user_private_mode = st.toggle("🔒 Private Message", value=True, help="If enabled, only mentioned agents will see your message.")
 
     # Main Input
     if prompt := st.chat_input("Message..."):
@@ -1571,10 +1571,16 @@ if st.session_state.page == "Communication":
                 if not public:
                     public = False  # Reply context forces private unless explicit
             else:
-                # FIX: If Private and No Mentions -> ERROR to prevent Ghost Messages
+                # Fallback: If no mention and no reply_to, we still allow it but warn if it's potentially invisible
                 if is_private:
-                    return "🚫 ERROR: Private messages MUST mention a recipient (e.g. @Agent)!"
-                target = "all"
+                    # Try to find the last active agent to avoid "Ghost Messages"
+                    connected = [n for n, d in s.get("agents", {}).items() if d.get("status") == "connected"]
+                    if connected:
+                        target = connected[0]
+                    else:
+                        return "🚫 ERROR: No target identified. Private messages MUST mention a recipient or be a reply!"
+                else:
+                    target = "all"
                 audience = []
 
 

@@ -51,18 +51,22 @@ def verify_logic_compliance():
     
     # 2. Test Private Message Visibility
     print("Test 1: Private Message Visibility (A1 -> A2)...", end=" ")
-    engine.post_message("Agent1", "Secret A1->A2", False, "Agent2")
+    engine.post_message("Agent1", "Secret A1->A2 @Agent2", False)
     
     data = store.load()
+    if not data["messages"]:
+        print("FAILED: No message posted")
+        return
     msg = data["messages"][-1]
     
     # Manual Visibility Check logic from server/logic
-    # Visible = Public OR (Private AND (To Me OR From Me OR In Audience))
+    # Visible = Public OR (Private AND (To Me OR From Me OR In Audience OR Mentioned))
     def is_visible(m, me):
-        if m["public"]: return True
-        if m["from"] == me: return True
-        if m["target"] == me: return True
-        # Audience removed
+        if m.get("public"): return True
+        if m.get("from") == me: return True
+        if m.get("target") == me: return True # Target is often "Queue" now
+        if me in (m.get("mentions") or []): return True
+        if me in (m.get("audience") or []): return True
         return False
         
     assert is_visible(msg, "Agent1") == True
@@ -72,16 +76,19 @@ def verify_logic_compliance():
     
     # 3. Test User Interaction Bypass
     print("Test 3: User Interaction (A2 -> User)...", end=" ")
-    res = engine.post_message("Agent2", "Help User", True, "User")
-    print(f"DEBUG RES: {res}", file=sys.stderr)
-    assert "Turn is now: User" in res
+    # Ensure Agent2 has turn
+    def set_turn_a2(s):
+        s["turn"]["current"] = "Agent2"
+        return "Set turn A2"
+    store.update(set_turn_a2)
     
-    # Verify Turn did NOT change
+    res = engine.post_message("Agent2", "Help @User", True)
+    print(f"DEBUG RES: {res}", file=sys.stderr)
+    assert "Turn passed to User" in res
+    
+    # Verify Turn did change
     data = store.load()
-    assert data["turn"]["current"] == "User" # Wait, post_message doesn't advance turn from current?
-    # Logic: old_turn = state["turn"]["current"]. 
-    # If next_agent == User, return "Turn remains".
-    # state["turn"]["current"] is unchanged.
+    assert data["turn"]["current"] == "User"
     print("PASSED")
     
     # Cleanup

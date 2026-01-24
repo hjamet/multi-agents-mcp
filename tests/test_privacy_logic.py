@@ -46,21 +46,21 @@ def test_visibility_public_message(mock_state):
     store = MockStateStore(mock_state)
     engine = Engine(store)
     
-    # Alice sends Public message
-    engine.post_message("Alice", "Hello World", True, "Bob")
+    # Alice sends Public message mentioning Miller
+    engine.post_message("Alice", "Hello World @Miller", True)
     
     print(f"DEBUG: Messages: {mock_state['messages']}")
     print(f"DEBUG: Turn: {mock_state['turn']}")
 
     # Verify Visibility
-    # Bob should see it (Turn should be Bob)
-    msgs_bob = engine.wait_for_turn("Bob", timeout_seconds=1)["messages"]
-    assert len(msgs_bob) == 1
-    assert msgs_bob[0]["content"] == "Hello World"
+    # Miller should see it (Turn should be Miller)
+    msgs_miller = engine.wait_for_turn("Miller")["messages"]
+    assert len(msgs_miller) == 1
+    assert msgs_miller[0]["content"] == "Hello World @Miller"
     
     # Charlie should see it IF IT IS HIS TURN
     mock_state["turn"]["current"] = "Charlie"
-    msgs_charlie = engine.wait_for_turn("Charlie", timeout_seconds=1)["messages"]
+    msgs_charlie = engine.wait_for_turn("Charlie")["messages"]
     assert len(msgs_charlie) == 1
 
 def test_visibility_private_message_direct(mock_state):
@@ -68,21 +68,21 @@ def test_visibility_private_message_direct(mock_state):
     engine = Engine(store)
     
     # Alice sends Private message to Miller
-    engine.post_message("Alice", "Secret for Miller", False, "Miller")
+    engine.post_message("Alice", "Secret for Miller @Miller", False)
     
     # 1. Miller (Target) should see it
-    msgs_miller = engine.wait_for_turn("Miller", timeout_seconds=1)["messages"]
+    msgs_miller = engine.wait_for_turn("Miller")["messages"]
     assert len(msgs_miller) == 1
-    assert msgs_miller[0]["content"] == "Secret for Miller"
+    assert msgs_miller[0]["content"] == "Secret for Miller @Miller"
     
     # 2. Alice (Sender) should see it (Force turn)
     mock_state["turn"]["current"] = "Alice"
-    msgs_alice = engine.wait_for_turn("Alice", timeout_seconds=1)["messages"]
+    msgs_alice = engine.wait_for_turn("Alice")["messages"]
     assert len(msgs_alice) == 1
     
     # 3. Charlie (Outsider, diff role) should NOT see it (Force turn)
     mock_state["turn"]["current"] = "Charlie"
-    msgs_charlie = engine.wait_for_turn("Charlie", timeout_seconds=1)["messages"]
+    msgs_charlie = engine.wait_for_turn("Charlie")["messages"]
     assert len(msgs_charlie) == 0
 
 def test_visibility_private_message_team(mock_state):
@@ -90,19 +90,18 @@ def test_visibility_private_message_team(mock_state):
     engine = Engine(store)
     
     # Alice (Scientist) sends Private message to Miller
-    engine.post_message("Alice", "Team Secret", False, "Miller")
+    engine.post_message("Alice", "Team Secret @Miller", False)
     
     # Miller Turn by default
     
-    # Bob (Scientist, Same Role as Alice) should see it due to Team Visibility
+    # Bob (Scientist, Same Role as Alice) should NOT see it (Strict Privacy)
     mock_state["turn"]["current"] = "Bob"
-    msgs_bob = engine.wait_for_turn("Bob", timeout_seconds=1)["messages"]
-    assert len(msgs_bob) == 1
-    assert msgs_bob[0]["content"] == "Team Secret"
+    msgs_bob = engine.wait_for_turn("Bob")["messages"]
+    assert len(msgs_bob) == 0
     
     # Charlie (Engineer, Diff Role) should NOT see it
     mock_state["turn"]["current"] = "Charlie"
-    msgs_charlie = engine.wait_for_turn("Charlie", timeout_seconds=1)["messages"]
+    msgs_charlie = engine.wait_for_turn("Charlie")["messages"]
     assert len(msgs_charlie) == 0
 
 def test_visibility_private_message_audience(mock_state):
@@ -111,19 +110,19 @@ def test_visibility_private_message_audience(mock_state):
     
     # Alice sends Private message to Miller, mentioning Charlie in audience
     # Charlie is an Engineer (Diff role from Alice)
-    engine.post_message("Alice", "Secret with Charlie", False, "Miller", audience=["Charlie"])
+    engine.post_message("Alice", "Secret with Charlie @Miller", False, audience=["Charlie"])
     
     # 1. Miller (Target) should see it
-    msgs_miller = engine.wait_for_turn("Miller", timeout_seconds=1)["messages"]
+    msgs_miller = engine.wait_for_turn("Miller")["messages"]
     assert len(msgs_miller) == 1
     
     # 2. Charlie (Audience) should see it
     mock_state["turn"]["current"] = "Charlie"
-    msgs_charlie = engine.wait_for_turn("Charlie", timeout_seconds=1)["messages"]
+    msgs_charlie = engine.wait_for_turn("Charlie")["messages"]
     assert len(msgs_charlie) == 1
-    assert msgs_charlie[0]["content"] == "Secret with Charlie"
+    assert msgs_charlie[0]["content"] == "Secret with Charlie @Miller"
     
-    # 3. Bob (Scientist, same role as Alice) should also see it due to team visibility
+    # 3. Bob (Scientist, same role as Alice) should NOT see it (Strict Privacy)
     mock_state["turn"]["current"] = "Bob"
-    msgs_bob = engine.wait_for_turn("Bob", timeout_seconds=1)["messages"]
-    assert len(msgs_bob) == 1
+    msgs_bob = engine.wait_for_turn("Bob")["messages"]
+    assert len(msgs_bob) == 0

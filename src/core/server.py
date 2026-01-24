@@ -459,8 +459,9 @@ async def agent(ctx: Context) -> str:
     turn_messages = []
     instruction_text = ""
     
+    # Loop indefinitely until it is our turn (now handled deeply in logic.py, but we keep wrapper for safety/logging if needed)
     while True:
-        # Loop indefinitely until it is our turn
+        # This will now BLOCK indefinitely until Success or Reset
         turn_result = await engine.wait_for_turn_async(name)
         
         if turn_result["status"] == "success":
@@ -482,8 +483,8 @@ async def agent(ctx: Context) -> str:
                 )
             return f"⚠️ SYSTEM ALERT: {turn_result['instruction']}"
             
-        # If timeout, we just loop again. (User requested: Never return until turn)
-        # Using short timeout in wait_for_turn_async allows us to check for resets/signals more often
+        # Timeout branch is now impossible as logic.py waits indefinitely
+        # But we keep a loop just in case of unexpected return, though logically unreachable for "timeout"
         continue
 
     template = jinja_env.get_template("agent_response.j2")
@@ -547,8 +548,8 @@ async def agent(ctx: Context) -> str:
 async def talk(
     message: str,
     from_agent: str,  # <--- NEW MANDATORY ARGUMENT (Identity Assertion)
-    ctx: Context,
-    private: bool = False
+    private: bool = False,
+    ctx: Context = None
 ) -> str:
     """
     MAIN COMMUNICATION TOOL.
@@ -788,10 +789,12 @@ async def talk(
              # Logic.py wait_for_turn already generates a good instruction.
              return _render_talk_response(sender, data, instruction, replied_to_message=message)
 
-        elif wait_result["status"] == "reset":
+        if wait_result["status"] == "reset":
              return f"⚠️ SYSTEM ALERT: {wait_result['instruction']}"
+
+        # Timeout branch removed as wait_for_turn_async waits indefinitely
         
-        # Fallback (Should not happen with infinite timeout)
+        # Fallback (Should not happen with infinite timeout or handled above)
         return f"⚠️ UNEXPECTED WAIT RESULT: {wait_result.get('status')}"
 
 

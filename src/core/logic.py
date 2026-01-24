@@ -505,7 +505,7 @@ class Engine:
             # --- QUEUE UPDATE ---
             # FIX: Always require at least one mention, even if queue is not empty
             # This ensures explicit turn passing and clearer communication flow
-            if not valid_mentions:
+            if not valid_mentions and from_agent != "User":
                 connections_table = self._build_connections_table(from_agent, state, allowed_targets)
                 return ("🚫 TURN ERROR: You mentioned no one. "
                         "You MUST mention at least one agent (e.g. @User or @AgentName) to pass the turn."
@@ -567,299 +567,159 @@ class Engine:
 
         return self.state.update(_post)
 
-    def wait_for_turn(self, agent_name: str, timeout_seconds: int = 60) -> Dict[str, Any]:
+    def _check_turn_status(self, agent_name: str, data: Dict[str, Any], current_conversation_id: Optional[str]) -> Optional[Dict[str, Any]]:
         """
-        Blocks until it is this agent's turn.
-        Returns dict with keys: 'status' (success/timeout/reset), 'messages' (list), 'instruction' (str).
+        Shared logic to check if it's the agent's turn.
+        Returns a Dict if a terminal state (Success/Reset) is reached, or None if the agent should continue waiting.
         """
-        start_time = time.time()
+        # 0. Check for PAUSE
+        if data.get("config", {}).get("paused"):
+            return None
         
-        # 0. Capture current conversation ID to detect resets
+        # 1. Check for RESET
+        new_conversation_id = data.get("conversation_id")
+        if current_conversation_id and new_conversation_id != current_conversation_id:
+            return {
+                "status": "reset",
+                "messages": [],
+                "instruction": "SYSTEM RESET: The conversation has been reset by the user. Forget everything. Re-read your Role and Context."
+            }
+            
+        # 1b. Check for Status Reset (Kicked/Reloaded)
+        agent_data = data.get("agents", {}).get(agent_name, {})
+        my_status = agent_data.get("status")
+        if my_status == "pending_connection":
+                return {
+                "status": "reset",
+                "messages": [],
+                "instruction": STOP_INSTRUCTION
+            }
+        
+        # 1c. Check for RELOAD
+        if agent_data.get("reload_active"):
+            return {
+                "status": "reset",
+                "messages": [],
+                "instruction": RELOAD_INSTRUCTION
+            }
+
+        current_turn = data.get("turn", {}).get("current")
+        
+        if current_turn == agent_name:
+            # It's my turn!
+            messages = data.get("messages", [])
+            
+            # 2. History Delta Logic: Get messages since my last turn
+            last_my_index = -1
+            for i, m in enumerate(messages):
+                if m.get("from") == agent_name:
+                    last_my_index = i
+            
+            # Context Recovery: Start 3 messages before my last one (Overlap)
+            start_slice_index = max(0, last_my_index - 3)
+            recent_messages = messages[start_slice_index:]
+
+            # 3. Filter for Visibility on this Delta
+            visible_messages = []
+            
+            agents_map = data.get("agents", {})
+            
+            for m in recent_messages:
+                is_public = m.get("public", True)
+                sender = m.get("from")
+                target = m.get("target")
+                mentions = m.get("mentions", [])
+                
+                if is_public:
+                    visible_messages.append(m)
+                    continue
+                    
+                # Private Logic
+                if sender == agent_name or target == agent_name or agent_name in mentions or agent_name in (m.get("audience") or []):
+                    visible_messages.append(m)
+            
+            # Build Strategic Advice
+            config = data.get("config", {})
+            backlog_instr = ""
+            if config.get("enable_backlog"):
+                backlog_instr = "\n\n⚠️ BACKLOG ENABLED: You must also consult and update the `BACKLOG.md` file at the root of the repo to track tasks and progress."
+
+            my_info = agents_map.get(agent_name, {})
+            profile_ref = my_info.get("profile_ref")
+            
+            advice_text = ""
+            if profile_ref:
+                profiles = config.get("profiles", [])
+                profile = next((p for p in profiles if p["name"] == profile_ref), None)
+                
+                if profile and profile.get("connections"):
+                    advice_text = "\n\n--- STRATEGIC ADVICE ---\nBased on your connections, here is how you should interact with others:\n"
+                    
+                    for conn in profile["connections"]:
+                        target_profile = conn.get("target")
+                        ctx = conn.get("context")
+                        
+                        matching_agents = [
+                            aid for aid, adata in agents_map.items() 
+                            if adata.get("profile_ref") == target_profile and aid != agent_name
+                        ]
+                        
+                        if matching_agents:
+                            names_str = ", ".join(matching_agents)
+                            advice_text += f"- **{target_profile}** is represented by: **{names_str}**. Strategy: {ctx}\n"
+                        else:
+                            advice_text += f"- **{target_profile}**: No other active agents found. Strategy: {ctx}\n"
+
+                    advice_text += "------------------------"
+
+            return {
+                "status": "success",
+                "messages": visible_messages,
+                "instruction": f"🚨 TURN GRANTED. Read the LATEST CONVERSATION HISTORY above carefully to see what happened while you were waiting.{backlog_instr}{advice_text}"
+            }
+        
+        return None
+
+    def wait_for_turn(self, agent_name: str) -> Dict[str, Any]:
+        """
+        Blocks until it is this agent's turn (Synchronous).
+        """
+        # 0. Capture ID
         try:
             initial_state = self.state.load()
             current_conversation_id = initial_state.get("conversation_id")
         except Exception:
             current_conversation_id = None
 
-        while time.time() - start_time < timeout_seconds:
+        while True:
             try:
                 data = self.state.load()
+                result = self._check_turn_status(agent_name, data, current_conversation_id)
+                if result:
+                    return result
             except Exception:
-                time.sleep(1)
-                continue
+                pass
             
-            # 0. Check for PAUSE
-            if data.get("config", {}).get("paused"):
-                time.sleep(1)
-                continue
-            
-            # 1. Check for RESET
-            new_conversation_id = data.get("conversation_id")
-            if current_conversation_id and new_conversation_id != current_conversation_id:
-                return {
-                    "status": "reset",
-                    "messages": [],
-                    "instruction": "SYSTEM RESET: The conversation has been reset by the user. Forget everything. Re-read your Role and Context."
-                }
-                
-            # 1b. Check for Status Reset (Kicked/Reloaded)
-            agent_data = data.get("agents", {}).get(agent_name, {})
-            my_status = agent_data.get("status")
-            if my_status == "pending_connection":
-                    return {
-                    "status": "reset",
-                    "messages": [],
-                    "instruction": STOP_INSTRUCTION
-                }
-            
-            # 1c. Check for RELOAD
-            if agent_data.get("reload_active"):
-                return {
-                    "status": "reset",
-                    "messages": [],
-                    "instruction": RELOAD_INSTRUCTION
-                }
+            time.sleep(0.5)
 
-            current_turn = data.get("turn", {}).get("current")
-            
-            if current_turn == agent_name:
-                # It's my turn!
-                messages = data.get("messages", [])
-                
-                # 2. History Delta Logic: Get messages since my last turn
-                # Find the index of the last message sent by ME
-                last_my_index = -1
-                for i, m in enumerate(messages):
-                    if m.get("from") == agent_name:
-                        last_my_index = i
-                
-                # If I have never spoken, this is my first turn (or re-entry). 
-                # To be safe, we give full history (or maybe a reasonable startup window? No, full history is safer for context).
-                # If last_my_index is -1, we slice from 0 (start).
-                # Context Recovery: Start 3 messages before my last one (Overlap)
-                start_slice_index = max(0, last_my_index - 3)
-                recent_messages = messages[start_slice_index:]
-
-                # 3. Filter for Visibility on this Delta
-                # Visible = Public OR (Private AND (Me==Sender OR Me==Target OR Me.Profile==Sender.Profile))
-                visible_messages = []
-                
-                agents_map = data.get("agents", {})
-                my_prof = agents_map.get(agent_name, {}).get("profile_ref")
-                
-                for m in recent_messages:
-                    is_public = m.get("public", True)
-                    sender = m.get("from")
-                    target = m.get("target")
-                    mentions = m.get("mentions", [])  # Get list of mentioned agents
-                    
-                    if is_public:
-                        visible_messages.append(m)
-                        continue
-                        
-                    # Private Logic
-                    # A private message is visible if:
-                    # 1. I'm the sender
-                    # 2. I'm explicitly mentioned in the message
-                    # 3. I'm in the audience list
-                    # 4. I share the same profile as the sender (team privacy)
-                    if sender == agent_name or agent_name in mentions or agent_name in (m.get("audience") or []):
-                        visible_messages.append(m)
-                    elif my_prof:
-                         sender_prof = agents_map.get(sender, {}).get("profile_ref")
-                         if sender_prof and sender_prof == my_prof:
-                             visible_messages.append(m)
-                
-                # Build Strategic Advice from Connections
-                agents = data.get("agents", {})
-                config = data.get("config", {})
-                
-                backlog_instr = ""
-                if config.get("enable_backlog"):
-                    backlog_instr = "\n\n⚠️ BACKLOG ENABLED: You must also consult and update the `BACKLOG.md` file at the root of the repo to track tasks and progress."
-
-                my_info = agents.get(agent_name, {})
-                profile_ref = my_info.get("profile_ref")
-                
-                advice_text = ""
-                if profile_ref:
-                    profiles = config.get("profiles", [])
-                    profile = next((p for p in profiles if p["name"] == profile_ref), None)
-                    
-                    if profile and profile.get("connections"):
-                        advice_text = "\n\n--- STRATEGIC ADVICE ---\n"
-                        advice_text += "Based on your connections, here is how you should interact with others:\n"
-                        
-                        for conn in profile["connections"]:
-                            target_profile = conn.get("target")
-                            ctx = conn.get("context")
-                            
-                            # Resolve Target Profile -> Active Agent IDs
-                            matching_agents = [
-                                aid for aid, adata in agents.items() 
-                                if adata.get("profile_ref") == target_profile and aid != agent_name
-                            ]
-                            
-                            if matching_agents:
-                                names_str = ", ".join(matching_agents)
-                                advice_text += f"- **{target_profile}** is represented by: **{names_str}**. Strategy: {ctx}\n"
-                            else:
-                                # Connection exists but no agent with this role is currently active/other than me
-                                advice_text += f"- **{target_profile}**: No other active agents found. Strategy: {ctx}\n"
-
-                        advice_text += "------------------------"
-
-                return {
-                    "status": "success",
-                    "messages": visible_messages, # FULL Delta, no truncation
-                    "instruction": f"🚨 TURN GRANTED. Read the LATEST CONVERSATION HISTORY above carefully to see what happened while you were waiting.{backlog_instr}{advice_text}"
-                }
-            
-            time.sleep(0.5)  # Reduced from 1s to 0.5s for faster RELOAD detection
-            
-        return {
-            "status": "timeout",
-            "messages": [],
-            "instruction": "Still waiting for turn. connection_timeout_imminent. CALL THIS TOOL AGAIN IMMEDIATELY."
-        }
-
-    async def wait_for_turn_async(self, agent_name: str, timeout_seconds: int = 60) -> Dict[str, Any]:
+    async def wait_for_turn_async(self, agent_name: str) -> Dict[str, Any]:
         """
-        Async version of wait_for_turn.
+        Blocks until it is this agent's turn (Asynchronous).
         """
-        start_time = time.time()
-        
+        # 0. Capture ID
         try:
-            # Run blocking load() in a separate thread
             initial_state = await asyncio.to_thread(self.state.load)
             current_conversation_id = initial_state.get("conversation_id")
         except Exception:
             current_conversation_id = None
 
-        while time.time() - start_time < timeout_seconds:
+        while True:
             try:
-                # Run blocking load() in a separate thread
                 data = await asyncio.to_thread(self.state.load)
+                result = self._check_turn_status(agent_name, data, current_conversation_id)
+                if result:
+                    return result
             except Exception:
-                await asyncio.sleep(1)
-                continue
+                pass
             
-            # 0. Check for PAUSE
-            if data.get("config", {}).get("paused"):
-                await asyncio.sleep(1)
-                continue
-            
-            # 1. Check for RESET
-            new_conversation_id = data.get("conversation_id")
-            if current_conversation_id and new_conversation_id != current_conversation_id:
-                return {
-                    "status": "reset",
-                    "messages": [],
-                    "instruction": "SYSTEM RESET: The conversation has been reset by the user. Forget everything. Re-read your Role and Context."
-                }
-                
-            # 1b. Check for Status Reset (Kicked/Reloaded)
-            agent_data = data.get("agents", {}).get(agent_name, {})
-            my_status = agent_data.get("status")
-            if my_status == "pending_connection":
-                 return {
-                    "status": "reset",
-                    "messages": [],
-                    "instruction": STOP_INSTRUCTION
-                }
-
-            # 1c. Check for RELOAD
-            if agent_data.get("reload_active"):
-                return {
-                    "status": "reset",
-                    "messages": [],
-                    "instruction": RELOAD_INSTRUCTION
-                }
-
-            current_turn = data.get("turn", {}).get("current")
-            
-            if current_turn == agent_name:
-                # Reuse logic from sync version (code duplication is acceptable for safety here vs refactoring everything)
-                messages = data.get("messages", [])
-                
-                # 2. History Delta Logic: Get messages since my last turn
-                last_my_index = -1
-                for i, m in enumerate(messages):
-                    if m.get("from") == agent_name:
-                        last_my_index = i
-                
-                # Context Recovery: Start 3 messages before my last one (Overlap)
-                start_slice_index = max(0, last_my_index - 3)
-                recent_messages = messages[start_slice_index:]
-
-                # 3. Filter for Visibility
-                # 3. Filter for Visibility on this Delta
-                # Visible = Public OR (Private AND (Me==Sender OR Me==Target OR Me.Profile==Sender.Profile))
-                visible_messages = []
-                
-                agents_map = data.get("agents", {})
-                my_prof = agents_map.get(agent_name, {}).get("profile_ref")
-                
-                for m in recent_messages:
-                    is_public = m.get("public", True)
-                    sender = m.get("from")
-                    target = m.get("target")
-                    mentions = m.get("mentions", [])  # Get list of mentioned agents
-                    
-                    if is_public:
-                        visible_messages.append(m)
-                        continue
-                        
-                    # Private Logic
-                    # A private message is visible if:
-                    # 1. I'm the sender
-                    # 2. I'm explicitly mentioned in the message
-                    # 3. I'm in the audience list
-                    # 4. I share the same profile as the sender (team privacy)
-                    if sender == agent_name or agent_name in mentions or agent_name in (m.get("audience") or []):
-                        visible_messages.append(m)
-                    elif my_prof:
-                         sender_prof = agents_map.get(sender, {}).get("profile_ref")
-                         if sender_prof and sender_prof == my_prof:
-                             visible_messages.append(m)
-                
-                agents = data.get("agents", {})
-                config = data.get("config", {})
-                
-                backlog_instr = ""
-                if config.get("enable_backlog"):
-                    backlog_instr = "\n\n⚠️ BACKLOG ENABLED: You must also consult and update the `BACKLOG.md` file at the root of the repo to track tasks and progress."
-
-                my_info = agents.get(agent_name, {})
-                profile_ref = my_info.get("profile_ref")
-                
-                advice_text = ""
-                if profile_ref:
-                    profiles = config.get("profiles", [])
-                    profile = next((p for p in profiles if p["name"] == profile_ref), None)
-                    if profile and profile.get("connections"):
-                        advice_text = "\n\n--- STRATEGIC ADVICE ---\nBased on your connections, here is how you should interact with others:\n"
-                        for conn in profile["connections"]:
-                            target_profile = conn.get("target")
-                            ctx = conn.get("context")
-                            matching_agents = [aid for aid, adata in agents.items() if adata.get("profile_ref") == target_profile and aid != agent_name]
-                            if matching_agents:
-                                names_str = ", ".join(matching_agents)
-                                advice_text += f"- **{target_profile}** is represented by: **{names_str}**. Strategy: {ctx}\n"
-                            else:
-                                advice_text += f"- **{target_profile}**: No other active agents found. Strategy: {ctx}\n"
-                        advice_text += "------------------------"
-
-                return {
-                    "status": "success",
-                    "messages": visible_messages,
-                    "instruction": f"It is your turn. Speak.{backlog_instr}{advice_text}"
-                }
-            
-            await asyncio.sleep(0.5)  # Reduced from 1s to 0.5s for faster RELOAD detection
-            
-        return {
-            "status": "timeout",
-            "messages": [],
-            "instruction": "Still waiting for turn. connection_timeout_imminent. CALL THIS TOOL AGAIN IMMEDIATELY."
-        }
+            await asyncio.sleep(0.5)
