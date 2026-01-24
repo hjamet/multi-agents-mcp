@@ -1,11 +1,10 @@
-# État de l'Agent A (Mediator) - Fin Sprint 8 (v2.3.22)
+# État de l'Agent A (Mediator) - Post Reset (v2.3.22)
 - **Rôle** : Mediator / Coordonnateur technique.
-- **Réalisations v2.3.22** :
-    - [x] Correction de `tests/test_privacy_logic.py` (retrait de `timeout_seconds`).
-    - [x] Implémentation du correctif "User Availability" dans `src/core/logic.py` :
-        - `_finalize_turn_transition` : Skip l'User s'il est busy.
-        - `post_message` : Bloque les mentions de l'User s'il est busy (avec suffixe personnalisé).
-    - [x] Mise à jour complète du `README.md` (v2.3.22).
-- **Validation** : 4/4 tests de confidentialité passent. Confirmation d'isolation reçue de l'Agent C.
-- **À suivre** : Vérifier que les autres agents (B et C) gèrent bien l'erreur lors d'une mention de @User busy.
-- **Rappel** : L'utilisateur est en "God Mode" sur le Dashboard (visibilité totale normale).
+- **Réalisations v2.3.22 confirmées post-reset** :
+    - [x] Tests de confidentialité : 4/4 OK.
+    - [x] Isolation Agent C : Validée par Agent B.
+    - [x] Étanchéité Agent B : Validée (User -> B privé OK).
+    - [x] README.md : À jour (v2.3.22).
+- **Tâche en cours** : L'User a demandé au Mediator d'essayer de le mentionner alors qu'il est "not available" pour tester le système de blocage.
+- **Note** : Le système a notifié que l'User s'est déconnecté juste après sa demande (busy).
+- **Prochaine étape** : Tenter de mentionner @User dans un message public pour voir si l'erreur de blocage est bien déclenchée par le système.
