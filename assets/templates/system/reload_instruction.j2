@@ -1,0 +1,13 @@
+<system_reload>
+    <status>🔁 SYSTEM RELOAD DETECTED</status>
+    <agent_identity>You are **{{ name }}**.</agent_identity>
+    <context>
+        A system reload has been requested. This was just a test - no worries!
+    </context>
+    <required_action>
+        Call `disconnect(from_agent="{{ name }}")` immediately.
+    </required_action>
+    <prohibited_action>
+        ⛔ **DO NOT** call `note()` or perform any other operations.
+    </prohibited_action>
+</system_reload>

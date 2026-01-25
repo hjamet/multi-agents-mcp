@@ -30,6 +30,7 @@ def _truncate_and_buffer(agent_name: str, content: str, state: dict) -> str:
     """
     Truncates content if it exceeds the limit in config.
     Stores the full content in TRUNCATION_BUFFER for retrieval via mailbox.
+    Uses 'system/truncation_error.j2' template.
     """
     truncation_limit = state.get("config", {}).get("truncation_limit", 4096)
     
@@ -41,17 +42,18 @@ def _truncate_and_buffer(agent_name: str, content: str, state: dict) -> str:
             del TRUNCATION_BUFFER[agent_name]
         return content
     
-    # Determine Language for Instruction (to calculate overhead)
+    # Render Template first to calculate overhead
     lang = state.get("config", {}).get("language", "English")
-    if lang in ["fr", "French"]:
-        template = "\n\n🚨 [CRITIQUE : MESSAGE TRONQUÉ]\nLa fin de ce message a été coupée ({} caractères restants).\nVOUS DEVEZ OBLIGATOIREMENT appeler l'outil `mailbox(from_agent='{}` pour lire la suite."
-    else:
-        template = "\n\n🚨 [CRITICAL: MESSAGE TRUNCATED]\nThe end of this message was cutoff ({} chars remaining).\nYou MUST call the `mailbox(from_agent='{}')` tool to read the rest."
-
-    # Calculate Overhead using a dummy number (7 digits safe for 10MB)
-    # We want len(chunk) + len(msg) <= limit - 1
     
-    dummy_overhead = len(template.format(9999999, agent_name))
+    # Use a dummy large number to check max possible length of error message
+    dummy_overhead_template = jinja_env.get_template("system/truncation_error.j2")
+    dummy_error_msg = dummy_overhead_template.render(
+        language=lang,
+        remaining=9999999,
+        agent_name=agent_name
+    )
+    
+    dummy_overhead = len(dummy_error_msg)
     safe_chunk_size = limit - 1 - dummy_overhead
     
     if safe_chunk_size <= 0:
@@ -63,14 +65,18 @@ def _truncate_and_buffer(agent_name: str, content: str, state: dict) -> str:
     remaining = len(content) - safe_chunk_size
     
     # Final Message
-    msg = template.format(remaining, agent_name)
+    final_error_msg = dummy_overhead_template.render(
+        language=lang,
+        remaining=remaining,
+        agent_name=agent_name
+    )
     
     TRUNCATION_BUFFER[agent_name] = {
         "content": content,
         "offset": safe_chunk_size
     }
         
-    return chunk + msg
+    return chunk + final_error_msg
 
 # Logger Setup
 from src.utils.logger import get_logger
@@ -429,13 +435,8 @@ async def agent(ctx: Context) -> str:
     agent_data = state.get("agents", {}).get(name, {})
     if agent_data.get("reload_active"):
         logger.log("INFO", name, "Reload detected during registration. Providing simplified disconnect instruction.")
-        return (
-            f"🔁 **SYSTEM RELOAD DETECTED**\n\n"
-            f"You are **{name}**.\n\n"
-            f"A system reload has been requested. This was just a test - no worries!\n\n"
-            f"**REQUIRED ACTION**: Call `disconnect(from_agent=\"{name}\")` immediately.\n\n"
-            f"⛔ **DO NOT** call `note()` or perform any other operations."
-        )
+        logger.log("INFO", name, "Reload detected during registration. Providing simplified disconnect instruction.")
+        return jinja_env.get_template("system/reload_instruction.j2").render(name=name)
     
     # helper to get directory
     agent_dir = _build_agent_directory(state, name)
@@ -444,13 +445,8 @@ async def agent(ctx: Context) -> str:
     wait_msg = await engine.wait_for_all_agents_async(name)
     if wait_msg == "RELOAD_REQUIRED":
          # FIX BUG #2: Provide agent name in reload instruction
-         return (
-             f"🔁 **SYSTEM RELOAD DETECTED**\n\n"
-             f"You are **{name}**.\n\n"
-             f"A system reload has been requested during network initialization.\n\n"
-             f"**REQUIRED ACTION**: Call `disconnect(from_agent=\"{name}\")` immediately.\n\n"
-             f"⛔ **DO NOT** call `note()` or perform any other operations."
-         )
+         # FIX BUG #2: Provide agent name in reload instruction
+         return jinja_env.get_template("system/reload_instruction.j2").render(name=name)
 
 
     # BLOCKING: Wait for Turn (Strict Handshake)
@@ -474,13 +470,9 @@ async def agent(ctx: Context) -> str:
         if turn_result["status"] == "reset":
             # FIX BUG #2: Include agent name in reset instruction
             if "RELOAD" in turn_result["instruction"]:
-                return (
-                    f"🔁 **SYSTEM RELOAD DETECTED**\n\n"
-                    f"You are **{name}**.\n\n"
-                    f"A system reload has been requested.\n\n"
-                    f"**REQUIRED ACTION**: Call `disconnect(from_agent=\"{name}\")` immediately.\n\n"
-                    f"⛔ **DO NOT** call `note()` or perform any other operations."
-                )
+            # FIX BUG #2: Include agent name in reset instruction
+            if "RELOAD" in turn_result["instruction"]:
+                return jinja_env.get_template("system/reload_instruction.j2").render(name=name)
             return f"⚠️ SYSTEM ALERT: {turn_result['instruction']}"
             
         # Timeout branch is now impossible as logic.py waits indefinitely
@@ -596,7 +588,11 @@ async def talk(
              # Helpful hint
              likely = [k for k in known_agents.keys() if sender in k]
              hint = f" Did you mean '{likely[0]}'?" if likely else ""
-             return f"🚫 IDENTITY ERROR: Name '{sender}' not found in registry.{hint} You must use your EXACT registered name."
+             
+             return jinja_env.get_template("system/identity_error.j2").render(
+                 sender=sender,
+                 hint=hint
+             )
         
         # --- IDEMPOTENCY CHECK (Fix for Timeout/Retry) ---
         # Check if this is a retry of the very last successful action.
@@ -642,11 +638,9 @@ async def talk(
                     # Resumed!
                     engine.acknowledge_turn(sender)
                     data = engine.state.load()
-                    instruction = (
-                        "⚠️ **SYSTEM WARNING**: You attempted to speak out of turn and were paused. "
-                        "It is now correctly your turn. Review the LATEST CONVERSATION HISTORY above "
-                        "carefully to see what happened while you were paused, then speak again."
-                    )
+                    
+                    instruction = jinja_env.get_template("system/protocol_violation.j2").render()
+                    return _render_talk_response(sender, data, instruction)
                     return _render_talk_response(sender, data, instruction)
                 
                 if wait_result["status"] == "reset":
@@ -719,13 +713,9 @@ async def talk(
                     engine.state.update(update_turn_time)
                     
                     # Return simplified response with only alert and new messages
-                    return (
-                        "🚫 **MESSAGE NON ENVOYÉ : Anti-Ghost Activé**\n\n"
-                        "L'utilisateur a écrit un message pendant que vous travailliez. "
-                        "Votre message n'a pas été envoyé.\n\n"
-                        "**NOUVEAUX MESSAGES :**\n"
-                        f"{formatted_msgs}\n"
-                        "**ACTION REQUISE** : Lisez ces messages et adaptez votre réponse, puis appelez à nouveau `talk()`."
+                    # Return simplified response with only alert and new messages
+                    return jinja_env.get_template("system/anti_ghost_warning.j2").render(
+                        formatted_messages=formatted_msgs
                     )
 
             

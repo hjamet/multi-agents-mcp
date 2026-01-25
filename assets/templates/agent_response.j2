@@ -1,74 +1,94 @@
-<global_context>
-{{ context }}
-</global_context>
+<system_context>
+    <global_context>
+    {{ context }}
+    </global_context>
 
-<registration_status>
-🎉 REGISTRATION SUCCESSFUL for **{{ name }}**
-</registration_status>
+    <initialization_status>
+        <status>🎉 REGISTRATION SUCCESSFUL for {{ name }}</status>
+    </initialization_status>
 
-{% if notification %}
-<notification>
-**{{ notification }}**
-</notification>
-{% endif %}
+    <agent_profile>
+        <name>{{ name }}</name>
+        <role>
+        {{ role }}
+        </role>
+    </agent_profile>
 
-
-{% if backlog_instruction %}
-<backlog_reminder>
-**{{ backlog_instruction }}**
-</backlog_reminder>
-{% endif %}
-
-<role_reminder>
-{{ role }}
-</role_reminder>
-
-    <critical_instructions>
-    **{{ language_instruction }}**
-
-    {% if instruction %}
-    <instruction>
-    {{ instruction }}
-    </instruction>
-    {% endif %}
-
-    You are now connected to the Multi-Agent System.
-
-**MANDATORY PROTOCOL:**
-1. **SYNC FIRST**: Read the Context & Memory below carefully.
-2. **WAITING**: The system handles turn-taking. You do not need to poll.
-3. **TURN**: When it is your turn, you will receive a notification.
-4. **ACTION**: You must then THINK, ACT (based on the files you read), and finally call `talk(...)` to pass the turn.
-</critical_instructions>
-
-<conversation_history>
-{{ conversation_history }}
-</conversation_history>
-
-<memory>
-{{ memory_content }}
-</memory>
-
-<connections>
-Use this table to understand your environment.
-
-**Communication Guide (Tool 'talk'):**
-- `message`: Your content.
-- `from_agent`: YOUR IDENTITY (must match your registered name).
-- `private`: If true, ONLY mentioned agents see the message. If false (default), everyone sees it.
-Here is the list of all agents in the system and your ability to communicate with them:
-
+    <environment>
+        <is_open_mode>{{ is_open_mode }}</is_open_mode>
+        <connected_agents>
 {% if is_open_mode %}
-| Authorized | Agent Name | Notes / Context |
-| :---: | :--- | :--- |
+            <!-- Open Mode: All agents visible, authorization marked -->
 {% for a in agent_directory %}
-| {% if a.authorized %}[x]{% else %}[ ]{% endif %} | **{{ a.name }}** | {{ a.public_desc }} {{ a.note }} |
+            <agent name="{{ a.name }}" authorized="{{ a.authorized }}">
+                <description>{{ a.public_desc }}</description>
+                <notes>{{ a.note }}</notes>
+            </agent>
 {% endfor %}
 {% else %}
-| Agent Name | Notes / Context |
-| :--- | :--- |
+            <!-- Restricted Mode: Only authorized agents listed -->
 {% for a in agent_directory %}
-| **{{ a.name }}** | {{ a.public_desc }} {{ a.note }} |
+{% if a.authorized %}
+            <agent name="{{ a.name }}">
+                <description>{{ a.public_desc }}</description>
+                <notes>{{ a.note }}</notes>
+            </agent>
+{% endif %}
 {% endfor %}
 {% endif %}
-</connections>
+        </connected_agents>
+    </environment>
+
+    <tool_usage>
+        <communication_guide tool="talk">
+            <argument name="message">Your content.</argument>
+            <argument name="from_agent">YOUR IDENTITY (must match {{ name }}).</argument>
+            <argument name="private">If true, ONLY mentioned agents see the message. Default: false (everyone sees it).</argument>
+        </communication_guide>
+    </tool_usage>
+</system_context>
+
+<session_state>
+{% if search_results_markdown %}
+    <relevant_knowledge>
+    {{ search_results_markdown }}
+    </relevant_knowledge>
+{% endif %}
+
+    <memory>
+    {{ memory_content }}
+    </memory>
+    
+    <conversation_history>
+    {{ conversation_history }}
+    </conversation_history>
+</session_state>
+
+<current_turn>
+    {% if notification %}
+    <notifications>
+    {{ notification }}
+    </notifications>
+    {% endif %}
+
+    <instructions>
+        <protocol>
+        1. SYNC FIRST: Read the Context & Memory above.
+        2. WAITING: The system handles turn-taking. You do not need to poll.
+        3. TURN: When it is your turn, you will receive a notification.
+        4. ACTION: You must then THINK, ACT (based on the files you read), and finally call `talk(...)` to pass the turn.
+        </protocol>
+
+        <language_requirement>{{ language_instruction }}</language_requirement>
+
+        {% if backlog_instruction %}
+        <backlog_reminder>{{ backlog_instruction }}</backlog_reminder>
+        {% endif %}
+
+        {% if instruction %}
+        <specific_instruction>
+        {{ instruction }}
+        </specific_instruction>
+        {% endif %}
+    </instructions>
+</current_turn>

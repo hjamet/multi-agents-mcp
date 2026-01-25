@@ -1,81 +1,95 @@
-<global_context>
-{{ context }}
-</global_context>
+<system_context>
+    <global_context>
+    {{ context }}
+    </global_context>
 
-<role_reminder>
-You are **{{ name }}**.
-{{ role_snippet }}
-</role_reminder>
+    <agent_profile>
+        <name>{{ name }}</name>
+        <role>
+        {{ role_snippet }}
+        </role>
+    </agent_profile>
 
-<conversation_history>
-{{ conversation_history }}
-</conversation_history>
-
-<memory>
-{{ memory_content }}
-</memory>
-
-{% if search_results_markdown %}
-<relevant_context>
-{{ search_results_markdown }}
-</relevant_context>
-{% endif %}
-
-<instructions>
-**{{ language_instruction }}**
-
-{% if instruction %}
-<instruction>
-{{ instruction }}
-</instruction>
-{% endif %}
-
-{% if notification %}
-<notification>
-**{{ notification }}**
-</notification>
-{% endif %}
-
-{% if replied_to_message %}
-<replied_to>
-{{ replied_to_message }}
-</replied_to>
-{% endif %}
-
-{% if backlog_instruction %}
-<backlog_reminder>
-**{{ backlog_instruction }}**
-</backlog_reminder>
-{% endif %}
-
-It is your turn to speak.
-1. **Analyze** the LATEST messages above.
-2. **Decide** who to speak to next based on your Connections table below.
-3. **Call `talk(...)`** to send your message and pass the turn.
-
-**Arguments for `talk`:**
-- `message`: Your content.
-- `from_agent`: YOUR IDENTITY (must match your registered name).
-- `private`: If true, ONLY mentioned agents see the message. If false (default), everyone sees it.
-</instructions>
-
-<connections>
-**Communication Guide (Tool 'talk'):**
-- `message`: Your content.
-- `from_agent`: YOUR IDENTITY (must match your registered name).
-- `private`: If true, ONLY mentioned agents see the message. If false (default), everyone sees it.
-
+    <environment>
+        <is_open_mode>{{ is_open_mode }}</is_open_mode>
+        <connected_agents>
 {% if is_open_mode %}
-| Authorized | Agent Name | Notes / Context |
-| :---: | :--- | :--- |
+            <!-- Open Mode: All agents visible, authorization marked -->
 {% for a in agent_directory %}
-| {% if a.authorized %}[x]{% else %}[ ]{% endif %} | **{{ a.name }}** | {{ a.public_desc }} {{ a.note }} |
+            <agent name="{{ a.name }}" authorized="{{ a.authorized }}">
+                <description>{{ a.public_desc }}</description>
+                <notes>{{ a.note }}</notes>
+            </agent>
 {% endfor %}
 {% else %}
-| Agent Name | Notes / Context |
-| :--- | :--- |
+            <!-- Restricted Mode: Only authorized agents listed -->
 {% for a in agent_directory %}
-| **{{ a.name }}** | {{ a.public_desc }} {{ a.note }} |
+{% if a.authorized %}
+            <agent name="{{ a.name }}">
+                <description>{{ a.public_desc }}</description>
+                <notes>{{ a.note }}</notes>
+            </agent>
+{% endif %}
 {% endfor %}
 {% endif %}
-</connections>
+        </connected_agents>
+    </environment>
+
+    <tool_usage>
+        <communication_guide tool="talk">
+            <argument name="message">Your content.</argument>
+            <argument name="from_agent">YOUR IDENTITY (must match {{ name }}).</argument>
+            <argument name="private">If true, ONLY mentioned agents see the message. Default: false (everyone sees it).</argument>
+        </communication_guide>
+    </tool_usage>
+</system_context>
+
+<session_state>
+{% if search_results_markdown %}
+    <relevant_knowledge>
+    {{ search_results_markdown }}
+    </relevant_knowledge>
+{% endif %}
+    
+    <memory>
+    {{ memory_content }}
+    </memory>
+    
+    <conversation_history>
+    {{ conversation_history }}
+    </conversation_history>
+</session_state>
+
+<current_turn>
+    {% if notification %}
+    <notifications>
+    {{ notification }}
+    </notifications>
+    {% endif %}
+
+    {% if replied_to_message %}
+    <replied_to>
+    {{ replied_to_message }}
+    </replied_to>
+    {% endif %}
+
+    <instructions>
+        <protocol>
+        1. Analyze the LATEST messages above.
+        2. Decide who to speak to next based on your <connected_agents>.
+        3. Call `talk(...)` to send your message and pass the turn.
+        </protocol>
+        
+        <language_requirement>{{ language_instruction }}</language_requirement>
+
+        {% if backlog_instruction %}
+        <backlog_reminder>{{ backlog_instruction }}</backlog_reminder>
+        {% endif %}
+
+        {% if instruction %}
+        <specific_instruction>
+        {{ instruction }}
+        </specific_instruction>
+        {% endif %}
+    </instructions>
+</current_turn>

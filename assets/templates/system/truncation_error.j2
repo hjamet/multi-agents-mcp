@@ -1,0 +1,18 @@
+<truncation_error>
+    <alert>
+{% if language == 'fr' or language == 'French' %}
+        🚨 [CRITIQUE : MESSAGE TRONQUÉ]
+        La fin de ce message a été coupée ({{ remaining }} caractères restants).
+{% else %}
+        🚨 [CRITICAL: MESSAGE TRUNCATED]
+        The end of this message was cutoff ({{ remaining }} chars remaining).
+{% endif %}
+    </alert>
+    <instruction>
+{% if language == 'fr' or language == 'French' %}
+        VOUS DEVEZ OBLIGATOIREMENT appeler l'outil `mailbox(from_agent='{{ agent_name }}')` pour lire la suite.
+{% else %}
+        You MUST call the `mailbox(from_agent='{{ agent_name }}')` tool to read the rest.
+{% endif %}
+    </instruction>
+</truncation_error>
