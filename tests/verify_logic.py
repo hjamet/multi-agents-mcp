@@ -34,6 +34,7 @@ def verify_logic_compliance():
         },
         "config": {
             "total_agents": 3,
+            "user_availability": "available",
             "profiles": [
                 {"name": "P1", "capabilities": ["public", "private", "turn", "open", "audience"], "connections": [
                     {"target":"P1", "context":"peer"},

@@ -84,7 +84,6 @@ logger = get_logger()
 
 
 # Setup Templates
-# Setup Templates
 jinja_env = Environment(loader=FileSystemLoader(str(TEMPLATE_DIR)))
 
 # --- SEARCH ENGINE SETUP ---
@@ -361,7 +360,6 @@ def _render_talk_response(sender: str, data: dict, instruction: str, replied_to_
     is_open_mode = "open" in my_prof.get("capabilities", [])
 
     # 2. Build History (Visibility Check)
-    # 2. Build History (Visibility Check)
     full_msgs = data.get("messages", [])
     # FIX BUG #13: Allow visibility if mentioned in private message
     visible_msgs = [
@@ -435,7 +433,6 @@ async def agent(ctx: Context) -> str:
     agent_data = state.get("agents", {}).get(name, {})
     if agent_data.get("reload_active"):
         logger.log("INFO", name, "Reload detected during registration. Providing simplified disconnect instruction.")
-        logger.log("INFO", name, "Reload detected during registration. Providing simplified disconnect instruction.")
         return jinja_env.get_template("system/reload_instruction.j2").render(name=name)
     
     # helper to get directory
@@ -444,7 +441,6 @@ async def agent(ctx: Context) -> str:
     # BLOCKING: Wait for everyone before returning the initial prompt
     wait_msg = await engine.wait_for_all_agents_async(name)
     if wait_msg == "RELOAD_REQUIRED":
-         # FIX BUG #2: Provide agent name in reload instruction
          # FIX BUG #2: Provide agent name in reload instruction
          return jinja_env.get_template("system/reload_instruction.j2").render(name=name)
 
@@ -468,8 +464,6 @@ async def agent(ctx: Context) -> str:
             break
             
         if turn_result["status"] == "reset":
-            # FIX BUG #2: Include agent name in reset instruction
-            if "RELOAD" in turn_result["instruction"]:
             # FIX BUG #2: Include agent name in reset instruction
             if "RELOAD" in turn_result["instruction"]:
                 return jinja_env.get_template("system/reload_instruction.j2").render(name=name)
@@ -641,7 +635,6 @@ async def talk(
                     
                     instruction = jinja_env.get_template("system/protocol_violation.j2").render()
                     return _render_talk_response(sender, data, instruction)
-                    return _render_talk_response(sender, data, instruction)
                 
                 if wait_result["status"] == "reset":
                      return f"⚠️ SYSTEM ALERT: {wait_result['instruction']}"
@@ -675,7 +668,6 @@ async def talk(
             if sender != "User" and last_user_msg > turn_start:
                 logger.log("BLOCK", sender, "Blocked talk() due to User interruption (Anti-Ghost)")
                 
-                # Get only the new User messages since turn started
                 # Get only the new User messages since turn started (respecting visibility)
                 data = engine.state.load()
                 messages = data.get("messages", [])
@@ -712,7 +704,6 @@ async def talk(
                         return "Turn time updated after Anti-Ghost"
                     engine.state.update(update_turn_time)
                     
-                    # Return simplified response with only alert and new messages
                     # Return simplified response with only alert and new messages
                     return jinja_env.get_template("system/anti_ghost_warning.j2").render(
                         formatted_messages=formatted_msgs

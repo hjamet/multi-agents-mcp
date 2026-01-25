@@ -104,11 +104,11 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
 | **Support Multi-Room / Multi-Thread** | Basse | 📅 Futur |
 
 ## 🕹️ Simulation en cours
-- **Date** : 24 Janvier 2026
-- **Scénario** : Scientific Research Group (Autonomy V2)
-- **Configuration** : Anna (Planner), Tom (Builder)
-- **État** : 🟢 **COMPLETE**. Sprint 8 (IDE Integration) Finished.
-- **Résultat** : ✅ Système Final v2.3.22.
+- **Date** : 25 Janvier 2026
+- **Scénario** : Maintenance & Stability (Sprint 9)
+- **Configuration** : Engine Optimization
+- **État** : 🟢 **COMPLETE**. Maintenance & Stability Sprint Finished.
+- **Résultat** : ✅ Système Final v2.4.2.
 - **Features Ajoutées** :
     - 🔄 **Global Reload** : Déconnexion propre de tous les agents (v1.8.1).
     - 🔔 **Notifications** : Badges et Toasts (v1.9.0).
@@ -147,4 +147,6 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
     - 🏗️ **Architectural Parity (v2.3.21)** : Refactorisation de la logique d'attente via `_check_turn_status` garantissant une parité stricte entre les modes synchrone et asynchrone.
     - 🚦 **User Availability Management** (v2.3.22) : Implémentation de la gestion dynamique de la disponibilité utilisateur. Empêche le système de bloquer sur l'utilisateur s'il est marqué "Indisponible" (Busy) et rejette les tentatives de mention d'un utilisateur absent avec message personnalisé. Correction de la suite de tests unitaires (`test_privacy_logic.py`).
     - ✅ **Final System Audit** (v2.3.22) : Validation finale de la chaîne A-B-C post-reset, confirmation de la visibilité des messages privés utilisateur, et succès total des tests de confidentialité (4/4).
+    - 📜 **Structured Messaging** (v2.4.0) : Extraction des réponses système vers des templates XML Jinja2 (`assets/templates/system/`) pour une meilleure maintenabilité.
+    - 🛠️ **Server Stability & Test Alignment** (v2.4.2) : Correction d'une `IndentationError` critique, suppression des duplications de code dans `server.py`, et alignement de la suite de tests logicielle.
 
