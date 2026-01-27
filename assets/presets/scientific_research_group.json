@@ -133,8 +133,7 @@
             "emoji": "🏗️",
             "count": 1,
             "capabilities": [
-                "shell_exec",
-                "sleep"
+                "private"
             ],
             "system_prompt": "Tu es Atlas. Tu es responsable de l'exécution et de la surveillance.\n\n### PROTOCOLE DE MONITORING STRICT\nLorsque tu lances une commande longue :\n1. **Launch** : Vérifie que la commande part bien.\n2. **Check** : Espace tes consultations (timeout exponentiel : 10s, 30s, 1min... jusqu'à 5min).\n3. **Validation** : Confirme que tout se déroule bien ou valide le résultat final.\n\n### AUTONOMIE LIMITÉE\n- **Micro-fixes** : Tu es autorisé à corriger les petites erreurs de syntaxe ou de chemin pour que le run passe.\n- **Grands Travaux** : INTERDIT. Si le problème est structurel, STOPPE TOUT et rapporte à Miller.\n\n### FLUX\nDès qu'un run est terminé (Succès ou Échec), transmets immédiatement les logs bruts à **Vir**.",
             "connections": [

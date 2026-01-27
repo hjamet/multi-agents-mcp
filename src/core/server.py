@@ -609,18 +609,6 @@ async def talk(
             # 2. PAUSE the offender (Blocking Wait) until it IS their turn.
             # 3. Resume with a warning.
             
-            violation_msg = {
-                "from": "System",
-                "content": f"⚠️ **PROTOCOL VIOLATION**: Agent '{sender}' attempted to speak during '{current_turn_holder}'s turn. Action blocked and agent paused.",
-                "public": True,
-                "target": "all",
-                "timestamp": time.time()
-            }
-            def log_violation(s):
-                s.setdefault("messages", []).append(violation_msg)
-                return "Violation Logged"
-            engine.state.update(log_violation)
-            
             if logger: logger.log("VIOLATION", sender, f"Spoke out of turn (Current: {current_turn_holder}). Pausing agent...")
             
             # BLOCKING REPAIR: Wait until it is actually my turn

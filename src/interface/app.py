@@ -12,6 +12,7 @@ import re
 import shutil
 import argparse
 import hashlib
+import importlib
 from pathlib import Path
 
 # Add src to path to allow imports if run directly
@@ -926,6 +927,13 @@ with st.sidebar:
         st.session_state.page = "Notes"
         st.rerun()
 
+    # Dynamic Streamlit Page
+    streamlit_path = EXECUTION_DIR / "mamcp-streamlit"
+    if streamlit_path.exists() and streamlit_path.is_dir(): 
+        if st.button("📊 Streamlit", use_container_width=True, type="primary" if st.session_state.page == "Streamlit" else "secondary"):
+            st.session_state.page = "Streamlit"
+            st.rerun()
+
     st.divider()
     
     # 1. Identity / User Status
@@ -1125,16 +1133,6 @@ with st.sidebar:
             
             # Atomic Bulk Update
             def bulk_reload_signal(s):
-                # 0. Global Transition Marker
-                msg_start = {
-                    "from": "System",
-                    "content": "🔄 **RECHARGEMENT GÉNÉRAL DU SYSTÈME**. Tous les agents sont priés de se déconnecter.",
-                    "public": True,
-                    "target": "All",
-                    "timestamp": time.time()
-                }
-                s.setdefault("messages", []).append(msg_start)
-
                 count = 0
                 for name in to_reload:
                     if name in s.get("agents", {}):
@@ -1175,19 +1173,10 @@ with st.sidebar:
                 # Check if it was the last one
                 if not st.session_state.reload_queue:
                     def post_reload_done(s):
-                        # Reset all reload flags and post a final marker
+                        # Reset all reload flags
                         for a in s.get("agents", {}).values():
                             a["reload_active"] = False
                         
-                        msg_done = {
-                            "from": "System",
-                            "content": "✅ **RÉINITIALISATION DU SYSTÈME TERMINÉE**. Tous les agents se sont déconnectés. Les signaux des sessions précédentes sont obsolètes.",
-                            "public": True,
-                            "target": "All",
-                            "timestamp": time.time()
-                        }
-
-                        s.setdefault("messages", []).append(msg_done)
                         return "Reload Done"
                     state_store.update(post_reload_done)
                     st.toast("✅ Full System Reload Done!")
@@ -2075,6 +2064,67 @@ elif st.session_state.page == "Notes":
                 with open(backlog_path, "w") as f:
                     f.write(default_content)
                 st.rerun()
+
+# ==========================================
+# PAGE: STREAMLIT (Agents Shared Dashboard)
+# ==========================================
+elif st.session_state.page == "Streamlit":
+    st.header("📊 Agents Dashboard (Beta)")
+    
+    streamlit_path = EXECUTION_DIR / "mamcp-streamlit"
+    
+    # 1. Add to sys.path if needed
+    if str(streamlit_path) not in sys.path:
+        sys.path.append(str(streamlit_path))
+        
+    # 2. Try identifying the entry point
+    # Priority: app.py > main.py > dashboard.py > __init__.py
+    candidates = ["app.py", "main.py", "dashboard.py", "__init__.py"]
+    entry_file = None
+    for c in candidates:
+        if (streamlit_path / c).exists():
+            entry_file = c
+            break
+            
+    if not entry_file:
+        st.warning(f"Directory `mamcp-streamlit` found, but no entry file ({', '.join(candidates)}) detected.")
+    else:
+        module_name = entry_file.replace(".py", "")
+        # We might need to handle package imports differently if it's __init__
+        if entry_file == "__init__.py":
+            module_name = "mamcp-streamlit" # simplistic approach
+            
+        try:
+            # We use a trick to force reload to see changes without restarting main app
+            # But standard streamlit reload watch might not catch external files unless watched
+            
+            # Allow import from that directory specifically
+            # Note: Since we appended sys.path, we can import module_name directly IF it is unique
+            # Use importlib
+            
+            # If the module is already loaded, reload it to get fresh code
+            if module_name in sys.modules:
+                module = importlib.reload(sys.modules[module_name])
+            else:
+                module = importlib.import_module(module_name)
+                
+            # If the module has a main() function, run it? 
+            # Or just importing it runs the script (Standard streamlit behavior usually requires running script directly)
+            
+            # Since we are importing, the code at top level runs.
+            # If the code is inside `if __name__ == "__main__":` it WON'T run.
+            # So we check for a main() function and call it.
+            
+            if hasattr(module, "main"):
+                module.main()
+            else:
+                # If no main() and no top-level side effects (unlikely for proper streamlit app), show info
+                pass
+                
+        except Exception as e:
+            st.error(f"Error loading Streamlit module during execution.")
+            st.exception(e)
+
 
 # --- GLOBAL INJECTION (Fixed by Anais) ---
 if st.session_state.page == "Communication":

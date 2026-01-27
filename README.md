@@ -149,4 +149,13 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
     - ✅ **Final System Audit** (v2.3.22) : Validation finale de la chaîne A-B-C post-reset, confirmation de la visibilité des messages privés utilisateur, et succès total des tests de confidentialité (4/4).
     - 📜 **Structured Messaging** (v2.4.0) : Extraction des réponses système vers des templates XML Jinja2 (`assets/templates/system/`) pour une meilleure maintenabilité.
     - 🛠️ **Server Stability & Test Alignment** (v2.4.2) : Correction d'une `IndentationError` critique, suppression des duplications de code dans `server.py`, et alignement de la suite de tests logicielle.
+    - 📊 **Streamlit Integration** (v2.5.0) : Possibilité d'intégrer un dashboard personnalisé via le dossier `mamcp-streamlit` (Dynamic Import).
 
+# Intégration Streamlit
+
+MAMCP permet désormais aux agents de générer leur propre interface de visualisation.
+
+1.  **Dossier partagé** : Créez un dossier `mamcp-streamlit` à la racine de votre projet (là où vous lancez `mamcp`).
+2.  **Point d'entrée** : Placez un fichier `app.py`, `main.py` ou `dashboard.py` à l'intérieur.
+3.  **Activation** : L'interface détecte automatiquement le dossier et ajoute un bouton "📊 Streamlit" dans la barre latérale.
+4.  **Usage** : Les agents peuvent écrire du code Streamlit standard dans ce fichier pour exposer des graphiques, logs ou tables de suivi.

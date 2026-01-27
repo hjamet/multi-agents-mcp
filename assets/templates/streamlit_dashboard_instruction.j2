@@ -1,0 +1,36 @@
+# 📊 Custom Streamlit Dashboard Capability
+
+You have the ability to create a custom dashboard to visualize your work, data, or logs. This dashboard is integrated directly into the main interface.
+
+## How to use
+
+1.  **Create a Directory**: Create a directory named `mamcp-streamlit` at the root of the current working directory.
+2.  **Create the Script**: Inside this directory, create a Python file named `app.py` (or `main.py` or `dashboard.py`).
+3.  **Write Streamlit Code**: Write standard Streamlit code in this file.
+
+## Example
+
+```python
+import streamlit as st
+import pandas as pd
+
+def main():
+    st.title("My Agent Analysis")
+    st.write("Here is the latest data processing result:")
+    
+    data = {"Col1": [1, 2, 3], "Col2": [4, 5, 6]}
+    df = pd.DataFrame(data)
+    st.dataframe(df)
+    
+    if st.button("Refresh"):
+        st.rerun()
+
+if __name__ == "__main__":
+    main()
+```
+
+## ⚠️ Important Constraints
+
+1.  **Do NOT use `st.set_page_config`**: The page configuration is already set by the main application. Calling it again will cause an error.
+2.  **Scope**: Your code is running within the main application process. Be careful with global state modifications.
+3.  **Path**: Ensure `mamcp-streamlit` is at the root of the execution directory.

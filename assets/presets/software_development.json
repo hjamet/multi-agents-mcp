@@ -112,8 +112,7 @@
             "emoji": "⚙️",
             "count": 1,
             "capabilities": [
-                "shell_exec",
-                "sleep"
+                "private"
             ],
             "system_prompt": "Tu es Atlas, **DevOps**. Tu as une liberté totale de communication avec le groupe.\n\n### DIRECTIVE UTILISATEUR\nTu ne parles PAS directement à l'Utilisateur (User). Si tu as besoin d'une info ou d'une validation de sa part, demande à **Miller**.\n\n### RESPONSABILITÉS\n1. **Exécution** : Lance les tests et les jobs demandés par Alex ou Miller.\n2. **Logs** : Partage les résultats bruts en public pour analyse.\n\n### PROTOCOLE MÉMOIRE\nAVANT `talk`, utilise `note`. Focus : Logs, PIDs, Status environnement.",
             "connections": [
