@@ -2139,24 +2139,46 @@ elif st.session_state.page == "Notes":
     with tab_memory:
         st.subheader("Agent Memories")
         
-        # 1. Get ONLY currently active agents (from config/profiles)
-        active_agent_names = sorted([p["name"] for p in profiles])
+        # 1. Get ALL memory files present in the directory
+        all_memory_files = sorted([f for f in MEMORY_DIR.glob("*.md")])
         
-        if not active_agent_names:
-            st.info("No agents configured in the current scenario.")
+        # 2. Filter by CONNECTED agents (Runtime State)
+        # Only show memories of agents currently in the session
+        try:
+            current_state = state_store.load()
+            connected_agents = list(current_state.get("agents", {}).keys())
+            
+            memory_files = []
+            for f in all_memory_files:
+                f_stem = f.stem
+                is_connected = False
+                for agent_name in connected_agents:
+                    # Same sanitization as server.py
+                    safe_name = "".join([c for c in agent_name if c.isalnum() or c in (' ', '_', '-', '#')]).strip()
+                    if f_stem == safe_name:
+                        is_connected = True
+                        break
+                if is_connected:
+                    memory_files.append(f)
+        except Exception as e:
+            # Fallback in case of error
+            st.error(f"Error filtering active agents: {e}")
+            memory_files = all_memory_files
+
+        if not memory_files:
+             st.info("No memory files found for current active agents.")
         else:
-            # 2. Collect existing memory files for active agents
             memories = {}
-            for name in active_agent_names:
-                file_path = MEMORY_DIR / f"{name}.md"
-                if file_path.exists():
-                    try:
-                        memories[name] = file_path.read_text(encoding="utf-8")
-                    except Exception as e:
-                        memories[name] = f"*(Error reading memory: {e})*"
+            for file_path in memory_files:
+                # Use filename as the display name (e.g. "Agent A Mediator")
+                name = file_path.stem 
+                try:
+                    memories[name] = file_path.read_text(encoding="utf-8")
+                except Exception as e:
+                    memories[name] = f"*(Error reading memory: {e})*"
             
             if not memories:
-                st.info("No memory files found yet for the active agents.")
+                st.info("No memory content available.")
             else:
                 # 3. Build Table of Contents (TOC)
                 st.markdown("### 📍 Table of Contents")

@@ -19,7 +19,7 @@ def load_and_run(file_path):
         st.error(f"Error loading {file_path.name}: {e}")
 
 def main():
-    st.title("📊 Agents Result Explorer")
+    # st.title("📊 Agents Result Explorer") # Removed effectively (Double Header)
     
     # 1. Scan for subpages
     current_dir = Path(__file__).parent
@@ -40,7 +40,7 @@ def main():
     
     # Use query param or session state to persist selection?
     # Simple sidebar selectbox is enough for now.
-    selected_page_name = st.sidebar.radio("📚 Result Pages", page_names)
+    selected_page_name = st.sidebar.radio("📚 Result Pages", page_names, key="dashboard_page_selection")
     
     # 3. Load Selected Pgae
     if selected_page_name:
