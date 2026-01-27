@@ -660,6 +660,10 @@ class Engine:
             if config.get("enable_backlog"):
                 backlog_instr = "\n\n⚠️ BACKLOG ENABLED: You must also consult and update the `BACKLOG.md` file at the root of the repo to track tasks and progress."
 
+            streamlit_instr = ""
+            if config.get("enable_streamlit"):
+                streamlit_instr = "\n\n📊 STREAMLIT ENABLED: You can share results and visualize data via the `mamcp-streamlit` dashboard. Check your instructions for usage."
+
             my_info = agents_map.get(agent_name, {})
             profile_ref = my_info.get("profile_ref")
             
@@ -691,7 +695,7 @@ class Engine:
             return {
                 "status": "success",
                 "messages": visible_messages,
-                "instruction": f"🚨 TURN GRANTED. Read the LATEST CONVERSATION HISTORY above carefully to see what happened while you were waiting.{backlog_instr}{advice_text}"
+                "instruction": f"🚨 TURN GRANTED. Read the LATEST CONVERSATION HISTORY above carefully to see what happened while you were waiting.{backlog_instr}{streamlit_instr}{advice_text}"
             }
         
         return None

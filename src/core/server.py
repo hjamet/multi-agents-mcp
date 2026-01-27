@@ -312,6 +312,18 @@ def _get_backlog_instruction_text(state: dict) -> str:
     return ""
 
 
+def _get_streamlit_instruction_text(state: dict) -> str:
+    """Helper to inject streamlit dashboard instruction based on config."""
+    if state.get("config", {}).get("enable_streamlit", False):
+        try:
+             # Using the jinja environment to load the template
+             return jinja_env.get_template("streamlit_dashboard_instruction.j2").render()
+        except Exception as e:
+             # Fallback if template loading fails
+             return "⚠️ **IMPORTANT**: Streamlit Dashboard is **ENABLED**. You can share your results via the `mamcp-streamlit` dashboard. Check your documentation for instructions."
+    return ""
+
+
 
 
 def _get_new_messages_notification(agent_name: str, messages: List[dict]) -> str:
@@ -402,6 +414,7 @@ def _render_talk_response(sender: str, data: dict, instruction: str, replied_to_
         language_instruction=_get_language_instruction_text(data),
         notification=notification,
         backlog_instruction=_get_backlog_instruction_text(data),
+        streamlit_instruction=_get_streamlit_instruction_text(data),
         search_results_markdown=_get_search_context(data, visible_msgs),
         instruction=instruction
     )
@@ -525,6 +538,7 @@ async def agent(ctx: Context) -> str:
         language_instruction=_get_language_instruction_text(data),
         notification=notification,
         backlog_instruction=_get_backlog_instruction_text(data),
+        streamlit_instruction=_get_streamlit_instruction_text(data),
         search_results_markdown=_get_search_context(data, visible_messages),
         instruction=instruction_text
     )

@@ -159,3 +159,4 @@ MAMCP permet désormais aux agents de générer leur propre interface de visuali
 2.  **Point d'entrée** : Placez un fichier `app.py`, `main.py` ou `dashboard.py` à l'intérieur.
 3.  **Activation** : L'interface détecte automatiquement le dossier et ajoute un bouton "📊 Streamlit" dans la barre latérale.
 4.  **Usage** : Les agents peuvent écrire du code Streamlit standard dans ce fichier pour exposer des graphiques, logs ou tables de suivi.
+5.  **Activation des Instructions** : Pour que les agents sachent comment utiliser cette fonctionnalité, activez la case **"Streamlit Instructions"** dans l'onglet **Cockpit** du Dashboard.

@@ -84,6 +84,12 @@
         {% if backlog_instruction %}
         <backlog_reminder>{{ backlog_instruction }}</backlog_reminder>
         {% endif %}
+        
+        {% if streamlit_instruction %}
+        <streamlit_dashboard_capability>
+        {{ streamlit_instruction }}
+        </streamlit_dashboard_capability>
+        {% endif %}
 
         {% if instruction %}
         <specific_instruction>

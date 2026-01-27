@@ -1784,11 +1784,19 @@ elif st.session_state.page == "Cockpit":
     # Global Context (Full Width)
     st.subheader("🌍 Global Context")
     with st.container(border=True):
-        enable_backlog = st.checkbox("Backlog", value=config.get("enable_backlog", False), help="If checked, agents will consult and update BACKLOG.md at the root.")
-        if enable_backlog != config.get("enable_backlog", False):
-            config["enable_backlog"] = enable_backlog
-            save_config(config)
-            st.rerun()
+        col_checks1, col_checks2 = st.columns(2)
+        with col_checks1:
+            enable_backlog = st.checkbox("Backlog", value=config.get("enable_backlog", False), help="If checked, agents will consult and update BACKLOG.md at the root.")
+            if enable_backlog != config.get("enable_backlog", False):
+                config["enable_backlog"] = enable_backlog
+                save_config(config)
+                st.rerun()
+        with col_checks2:
+            enable_streamlit = st.checkbox("Streamlit Instructions", value=config.get("enable_streamlit", False), help="If checked, agents will receive instructions on how to use the mamcp-streamlit dashboard.")
+            if enable_streamlit != config.get("enable_streamlit", False):
+                config["enable_streamlit"] = enable_streamlit
+                save_config(config)
+                st.rerun()
 
 
         global_context = st.text_area("Narrative / Shared Context", config.get("context", ""), height=215)
@@ -2118,30 +2126,45 @@ elif st.session_state.page == "Notes":
     with tab_memory:
         st.subheader("Agent Memories")
         
-        # Scan for memory files
-        if MEMORY_DIR.exists():
-            memory_files = sorted(list(MEMORY_DIR.glob("*.md")))
+        # 1. Get ONLY currently active agents (from config/profiles)
+        active_agent_names = sorted([p["name"] for p in profiles])
+        
+        if not active_agent_names:
+            st.info("No agents configured in the current scenario.")
         else:
-            memory_files = []
+            # 2. Collect existing memory files for active agents
+            memories = {}
+            for name in active_agent_names:
+                file_path = MEMORY_DIR / f"{name}.md"
+                if file_path.exists():
+                    try:
+                        memories[name] = file_path.read_text(encoding="utf-8")
+                    except Exception as e:
+                        memories[name] = f"*(Error reading memory: {e})*"
             
-        if not memory_files:
-            st.info("No memory files found yet.")
-        else:
-            # Selector
-            # Filenames are typically "AgentName.md"
-            options = [f.stem for f in memory_files]
-            selected_agent = st.selectbox("Select Agent", options)
-            
-            if selected_agent:
-                selected_file = MEMORY_DIR / f"{selected_agent}.md"
-                if selected_file.exists():
-                    content = selected_file.read_text(encoding="utf-8")
-                    st.markdown(f"### {selected_agent}'s Memory")
+            if not memories:
+                st.info("No memory files found yet for the active agents.")
+            else:
+                # 3. Build Table of Contents (TOC)
+                st.markdown("### 📍 Table of Contents")
+                toc_html = "<ul>"
+                for name in memories.keys():
+                    anchor = name.lower().replace(" ", "-")
+                    toc_html += f'<li><a href="#{anchor}">{name}</a></li>'
+                toc_html += "</ul>"
+                st.markdown(toc_html, unsafe_allow_html=True)
+                
+                st.divider()
+                
+                # 4. Display all memories sequentially
+                for name, content in memories.items():
+                    anchor = name.lower().replace(" ", "-")
+                    # Using HTML anchor for navigation + markdown header
+                    st.markdown(f'<div id="{anchor}"></div>', unsafe_allow_html=True)
+                    st.markdown(f"## 🧠 {name}")
+                    with st.container(border=True):
+                        st.markdown(content)
                     st.markdown("---")
-                    st.markdown(content)
-                    
-                    st.markdown("---")
-                    st.caption(f"Path: {selected_file}")
     
     with tab_backlog:
         st.subheader("Project Backlog")
@@ -2190,31 +2213,18 @@ elif st.session_state.page == "Streamlit":
             module_name = "mamcp-streamlit" # simplistic approach
             
         try:
-            # We use a trick to force reload to see changes without restarting main app
-            # But standard streamlit reload watch might not catch external files unless watched
-            
-            # Allow import from that directory specifically
-            # Note: Since we appended sys.path, we can import module_name directly IF it is unique
-            # Use importlib
-            
-            # If the module is already loaded, reload it to get fresh code
-            if module_name in sys.modules:
-                module = importlib.reload(sys.modules[module_name])
-            else:
-                module = importlib.import_module(module_name)
+            # Robust Dynamic Import using File Path (avoids name collisions)
+            # We use a unique name in sys.modules to avoid conflict with 'app' or 'main'
+            spec = importlib.util.spec_from_file_location("mamcp_agent_dashboard_root", streamlit_path / entry_file)
+            if spec and spec.loader:
+                module = importlib.util.module_from_spec(spec)
+                sys.modules["mamcp_agent_dashboard_root"] = module
+                spec.loader.exec_module(module)
                 
-            # If the module has a main() function, run it? 
-            # Or just importing it runs the script (Standard streamlit behavior usually requires running script directly)
-            
-            # Since we are importing, the code at top level runs.
-            # If the code is inside `if __name__ == "__main__":` it WON'T run.
-            # So we check for a main() function and call it.
-            
-            if hasattr(module, "main"):
-                module.main()
+                if hasattr(module, "main"):
+                    module.main()
             else:
-                # If no main() and no top-level side effects (unlikely for proper streamlit app), show info
-                pass
+                 st.error(f"Could not load spec for {entry_file}")
                 
         except Exception as e:
             st.error(f"Error loading Streamlit module during execution.")
