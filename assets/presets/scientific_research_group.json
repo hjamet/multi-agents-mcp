@@ -1,5 +1,6 @@
 {
     "enable_backlog": true,
+    "enable_streamlit": true,
     "enable_critical_mode": false,
     "profiles": [
         {

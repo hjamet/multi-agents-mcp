@@ -342,6 +342,97 @@ def save_config(new_config):
         return "Config Saved"
     state_store.update(update_fn)
 
+def ensure_streamlit_scaffold(config):
+    """
+    Auto-creates the mamcp-streamlit directory, subpages, and dashboard.py if enabled in config.
+    """
+    if config.get("enable_streamlit", False):
+        try:
+            folder = EXECUTION_DIR / "mamcp-streamlit"
+            folder.mkdir(parents=True, exist_ok=True)
+            
+            # Create subpages directory
+            subpages = folder / "subpages"
+            subpages.mkdir(exist_ok=True)
+            
+            # Create Example Page if folder is empty
+            example_page = subpages / "example_to_delete.py"
+            if not any(subpages.iterdir()):
+                example_content = """import streamlit as st
+
+def main():
+    st.header("📈 Example Analysis")
+    st.info("This is an example subpage. You can delete it.")
+    st.write("Agents should create new files in `mamcp-streamlit/subpages/` to add new tabs here.")
+    st.line_chart([10, 20, 15, 25, 30])
+
+if __name__ == "__main__":
+    main()
+"""
+                example_page.write_text(example_content, encoding="utf-8")
+            
+            dashboard = folder / "dashboard.py"
+            # Always update dashboard.py logic? No, only if missing, to respect user edits.
+            if not dashboard.exists():
+                dashboard_content = """import streamlit as st
+import importlib.util
+import sys
+import os
+from pathlib import Path
+
+# --- DYNAMIC LOADER ---
+def load_and_run(file_path):
+    try:
+        spec = importlib.util.spec_from_file_location("dynamic_module", file_path)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules["dynamic_module"] = module
+        spec.loader.exec_module(module)
+        if hasattr(module, "main"):
+            module.main()
+        else:
+            st.warning(f"File {file_path.name} has no `main()` function.")
+    except Exception as e:
+        st.error(f"Error loading {file_path.name}: {e}")
+
+def main():
+    st.title("📊 Agents Result Explorer")
+    
+    # 1. Scan for subpages
+    current_dir = Path(__file__).parent
+    subpages_dir = current_dir / "subpages"
+    
+    if not subpages_dir.exists():
+        st.error(f"Directory not found: {subpages_dir}")
+        return
+
+    files = sorted([f for f in subpages_dir.iterdir() if f.name.endswith(".py")])
+    
+    if not files:
+        st.info("No pages found in `mamcp-streamlit/subpages/`.")
+        return
+        
+    # 2. Sidebar Navigation
+    page_names = [f.name for f in files]
+    
+    # Use query param or session state to persist selection?
+    # Simple sidebar selectbox is enough for now.
+    selected_page_name = st.sidebar.radio("📚 Result Pages", page_names)
+    
+    # 3. Load Selected Pgae
+    if selected_page_name:
+        selected_file = next((f for f in files if f.name == selected_page_name), None)
+        if selected_file:
+            st.markdown("---")
+            load_and_run(selected_file)
+
+if __name__ == "__main__":
+    main()
+"""
+                dashboard.write_text(dashboard_content, encoding="utf-8")
+                st.toast("✨ Initialized `mamcp-streamlit` structure")
+        except Exception as e:
+            st.error(f"Failed to scaffold Streamlit directory: {e}")
+
 
 # --- SEARCH ENGINE INIT ---
 @st.cache_resource
@@ -454,6 +545,7 @@ def load_scenario_dialog():
                     new_conf["total_agents"] = get_total_agents(new_conf["profiles"])
                     
                 save_config(new_conf)
+                ensure_streamlit_scaffold(new_conf)
                 st.success(f"Configuration '{selected_label}' loaded!")
                 time.sleep(1)
                 st.rerun()
@@ -771,6 +863,9 @@ profiles = config.get("profiles", [])
 agents = data.get("agents", {})
 turn = data.get("turn", {})
 messages = data.get("messages", [])
+
+# Auto-Scaffold on Startup if enabled
+ensure_streamlit_scaffold(config)
 
 # --- CSS STYLING ---
 st.markdown("""
