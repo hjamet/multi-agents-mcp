@@ -1,22 +1,24 @@
-# État Agent A (Mediator) - Avant Reload (Diagnostique Streamlit)
+# État Agent A (Mediator) - Fin de Session Streamlit Enhancements
 
-## 🕵️‍♂️ Diagnostic Effectué
-- **Problème** : Instructions `mamcp-streamlit` manquantes dans le contexte.
-- **Cause** : Serveur `mamcp-dev` obsolète (code en mémoire vs code sur disque).
-- **Etat Code** : `src/core/server.py` et templates contiennent bien la logique d'injection. `state.json` a `enable_streamlit: true`.
-- **Action Prise** : Demandé à l'User de redémarrer le serveur.
+## 🛠️ Modifications Réalisées
+1. **Streamlit Home Page (`00_Home.py`)** : 
+   - Ajouté bouton **Pin 📌** (épingler en haut de liste).
+   - Ajouté bouton **Delete 🗑️**.
+   - Tri par date descendant (après les épinglés).
+   - Navigation via `on_click` fixée.
 
-## 🚀 Plan Post-Reload
-1. **Vérification Immédiate** :
-   - Vérifier la présence de la section `<streamlit_dashboard_capability>` dans le prompt de démarrage.
-   - Vérifier les nouvelles instructions dans `mamcp-streamlit/subpages`.
-2. **Reprise de la Coordination** :
-   - Relancer Agent B pour les tests de confidentialité et d'outils.
-   - Superviser les tests d'isolation de Agent C.
+2. **Configuration Lisa (Presets)** :
+   - Mis à jour `scientific_research_group.json` et `software_development.json`.
+   - **Consigne Stricte** : Documentation via Streamlit uniquement. Interdiction d'utiliser `docs/` ou Markdown statique.
 
-## 📝 Contexte Global
-- Repo: `multi-agents-mcp`
-- Branch: `main` (commit `f3d9bb5`)
-- Config: Streamlit Enabled.
+3. **Logique Serveur (`app.py`)** :
+   - Supprimé le titre dédoublé dans `dashboard.py`.
+   - Ajouté l'appel `ensure_streamlit_scaffold` sur le bouton **"INITIALIZE SIMULATION"**.
+   - Mis à jour le template de scaffolding pour inclure les features Pin/Delete par défaut.
 
-*Fin de session Agent A.*
+## 📝 À Vérifier Post-Reload
+- Tester si le bouton "INITIALIZE SIMULATION" crée bien la Home Page si elle est supprimée.
+- Vérifier que Lisa respecte bien les nouvelles consignes (si une simulation est lancée avec ce preset).
+- Tester la persistance du Pin pendant la session.
+
+*Prêt pour reprise.*
