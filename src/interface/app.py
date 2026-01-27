@@ -355,11 +355,57 @@ def ensure_streamlit_scaffold(config):
             subpages = folder / "subpages"
             subpages.mkdir(exist_ok=True)
             
-            # Create Example Page if folder is empty
-            example_page = subpages / "example_to_delete.py"
-            if not any(subpages.iterdir()):
-                example_content = """import streamlit as st
+            # Create Home Page (TOC) if missing
+            home_page = subpages / "00_Home.py"
+            if not home_page.exists():
+                home_content = """import streamlit as st
+from pathlib import Path
+import datetime
+import os
 
+# Callback to update state BEFORE the widget renders next time
+def nav_to(page_name):
+    st.session_state["dashboard_page_selection"] = page_name
+
+def delete_page(file_path):
+    try:
+        os.remove(file_path)
+        st.toast(f"🗑️ Deleted {file_path.name}")
+    except Exception as e:
+        st.toast(f"❌ Error deleting: {e}")
+
+def main():
+    st.header("🏠 Dashboard Overview")
+    st.write("Navigate to available pages (sorted by recent activity):")
+    
+    current_dir = Path(__file__).parent
+    files = [f for f in current_dir.iterdir() if f.name.endswith(".py") and f.name != "00_Home.py"]
+    files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+    
+    if not files:
+        st.info("No pages found yet.")
+        return
+
+    for f in files:
+        mod_time = datetime.datetime.fromtimestamp(f.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+        col1, col2, col3 = st.columns([2, 6, 1])
+        with col1:
+            st.caption(f"📅 {mod_time}")
+        with col2:
+            st.button(f"📄 {f.name}", key=f"nav_{f.name}", use_container_width=True, on_click=nav_to, args=(f.name,))
+        with col3:
+            st.button("🗑️", key=f"del_{f.name}", help="Delete page permanently", on_click=delete_page, args=(f,))
+
+if __name__ == "__main__":
+    main()
+"""
+                home_page.write_text(home_content, encoding="utf-8")
+
+            # Create Example Page if folder is almost empty
+            example_page = subpages / "example_to_delete.py"
+            if len(list(subpages.iterdir())) <= 1:
+                example_content = """import streamlit as st
+    
 def main():
     st.header("📈 Example Analysis")
     st.info("This is an example subpage. You can delete it.")
@@ -395,7 +441,7 @@ def load_and_run(file_path):
         st.error(f"Error loading {file_path.name}: {e}")
 
 def main():
-    st.title("📊 Agents Result Explorer")
+    # st.title("📊 Agents Result Explorer")
     
     # 1. Scan for subpages
     current_dir = Path(__file__).parent
@@ -416,7 +462,7 @@ def main():
     
     # Use query param or session state to persist selection?
     # Simple sidebar selectbox is enough for now.
-    selected_page_name = st.sidebar.radio("📚 Result Pages", page_names)
+    selected_page_name = st.sidebar.radio("📚 Result Pages", page_names, key="dashboard_page_selection")
     
     # 3. Load Selected Pgae
     if selected_page_name:
