@@ -155,6 +155,12 @@ def _format_conversation_history(messages: List[dict], agent_name: Optional[str]
     output = []
     
     for m in slice_msgs:
+        # CRITICAL FIX: Hide "SYSTEM ALERT: [RELOAD REQUESTED]" messages
+        # These are transient alerts that should not persist in history to avoid infinite loops.
+        content = m.get("content", "")
+        if "SYSTEM ALERT" in content and ("RELOAD REQUESTED" in content or "RELOAD IN PROGRESS" in content or "SYSTEM RELOAD DETECTED" in content):
+            continue
+
         sender = m.get("from", "Unknown")
         content = m.get("content", "")
         # Calculate Target for display

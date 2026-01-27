@@ -150,6 +150,7 @@ Le système évolue vers une plateforme agnostique permettant des simulations co
     - 📜 **Structured Messaging** (v2.4.0) : Extraction des réponses système vers des templates XML Jinja2 (`assets/templates/system/`) pour une meilleure maintenabilité.
     - 🛠️ **Server Stability & Test Alignment** (v2.4.2) : Correction d'une `IndentationError` critique, suppression des duplications de code dans `server.py`, et alignement de la suite de tests logicielle.
     - 📊 **Streamlit Integration** (v2.5.0) : Possibilité d'intégrer un dashboard personnalisé via le dossier `mamcp-streamlit` (Dynamic Import).
+    - 🔄 **Reload Loop Fix** (v2.5.1) : Filtrage des messages d'alerte système ("RELOAD REQUESTED") de l'historique pour empêcher les boucles de déconnexion infinies à la reconnexion.
 
 # Intégration Streamlit
 
