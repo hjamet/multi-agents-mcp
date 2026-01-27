@@ -370,30 +370,67 @@ def nav_to(page_name):
 def delete_page(file_path):
     try:
         os.remove(file_path)
+        if "pinned_pages" in st.session_state and file_path.name in st.session_state.pinned_pages:
+            st.session_state.pinned_pages.remove(file_path.name)
         st.toast(f"🗑️ Deleted {file_path.name}")
     except Exception as e:
         st.toast(f"❌ Error deleting: {e}")
 
+def toggle_pin(page_name):
+    if "pinned_pages" not in st.session_state:
+        st.session_state.pinned_pages = []
+    
+    if page_name in st.session_state.pinned_pages:
+        st.session_state.pinned_pages.remove(page_name)
+    else:
+        st.session_state.pinned_pages.append(page_name)
+
 def main():
     st.header("🏠 Dashboard Overview")
-    st.write("Navigate to available pages (sorted by recent activity):")
+    st.write("Navigate to available pages.")
+    
+    if "pinned_pages" not in st.session_state:
+        st.session_state.pinned_pages = []
     
     current_dir = Path(__file__).parent
     files = [f for f in current_dir.iterdir() if f.name.endswith(".py") and f.name != "00_Home.py"]
-    files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
     
     if not files:
         st.info("No pages found yet.")
         return
 
+    pinned_files = []
+    unpinned_files = []
+    
     for f in files:
+        if f.name in st.session_state.pinned_pages:
+            pinned_files.append(f)
+        else:
+            unpinned_files.append(f)
+            
+    pinned_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+    unpinned_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+    
+    sorted_files = pinned_files + unpinned_files
+
+    for f in sorted_files:
         mod_time = datetime.datetime.fromtimestamp(f.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
-        col1, col2, col3 = st.columns([2, 6, 1])
+        is_pinned = f.name in st.session_state.pinned_pages
+        
+        col1, col2, col3, col4 = st.columns([2, 5, 1, 1])
         with col1:
             st.caption(f"📅 {mod_time}")
+            
         with col2:
-            st.button(f"📄 {f.name}", key=f"nav_{f.name}", use_container_width=True, on_click=nav_to, args=(f.name,))
+            label = f"📍 {f.name}" if is_pinned else f"📄 {f.name}"
+            st.button(label, key=f"nav_{f.name}", use_container_width=True, on_click=nav_to, args=(f.name,))
+                      
         with col3:
+            pin_icon = "🔓" if is_pinned else "📌"
+            help_txt = "Unpin" if is_pinned else "Pin to top"
+            st.button(pin_icon, key=f"pin_{f.name}", help=help_txt, on_click=toggle_pin, args=(f.name,))
+                      
+        with col4:
             st.button("🗑️", key=f"del_{f.name}", help="Delete page permanently", on_click=delete_page, args=(f,))
 
 if __name__ == "__main__":
@@ -1990,6 +2027,10 @@ elif st.session_state.page == "Cockpit":
                 })
                 return "Reset completed"
             msg = state_store.update(reset_logic)
+            
+            # Auto-Scaffold Streamlit Home if enabled (Requested by User)
+            ensure_streamlit_scaffold(config)
+            
             st.toast(msg)
             time.sleep(0.5)
             st.session_state.page = "Communication"
