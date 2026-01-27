@@ -460,14 +460,16 @@ def handle_disconnect_agent(agent_name):
             # Status remains 'connected'/'working' until Agent calls disconnect()
             
             # Inject System Message for the Agent
-            msg = {
-                "from": "System",
-                "content": RELOAD_INSTRUCTION,
-                "public": False,
-                "target": agent_name,
-                "timestamp": time.time()
-            }
-            s.setdefault("messages", []).append(msg)
+            # REMOVED: Loop Hazard (User Request)
+            # relying on reload_active flag to trigger Engine wake-up
+            # msg = {
+            #    "from": "System",
+            #    "content": RELOAD_INSTRUCTION,
+            #    "public": False,
+            #    "target": agent_name,
+            #    "timestamp": time.time()
+            # }
+            # s.setdefault("messages", []).append(msg)
             
         return f"Reload signal sent to: {agent_name}"
     
@@ -1441,6 +1443,17 @@ if st.session_state.page == "Communication":
         # is_relevant = m.get("public", False) or m.get("target") == "User" or m.get("from") == "User"
         if is_relevant:
             # FILTER LOGIC
+            # Remove System Reset/Reload spam
+            m_content = m.get("content", "")
+            m_sender = m.get("from", "?")
+            
+            # Only filter if it comes from System
+            if m_sender == "System":
+                if "has disconnected, because the user requested a reset" in m_content:
+                    continue
+                if "SYSTEM ALERT: [RELOAD REQUESTED]" in m_content:
+                    continue
+
             if is_urgent_focus:
                 target = m.get("target")
                 is_replied = m.get("replied", False)

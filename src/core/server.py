@@ -868,14 +868,15 @@ async def disconnect(from_agent: str, ctx: Context) -> str:
             # We don't remove them from the roster, just change status
             
             # --- ANNOUNCE DISCONNECTION ---
-            sys_msg = {
-                "from": "System",
-                "content": f"🔴 **{agent_name}** has disconnected, because the user requested a reset.",
-                "public": True,
-                "target": "All",
-                "timestamp": time.time()
-            }
-            s.setdefault("messages", []).append(sys_msg)
+            # REMOVED per User request (Privacy/Noise)
+            # sys_msg = {
+            #     "from": "System",
+            #     "content": f"🔴 **{agent_name}** has disconnected, because the user requested a reset.",
+            #     "public": True,
+            #     "target": "All",
+            #     "timestamp": time.time()
+            # }
+            # s.setdefault("messages", []).append(sys_msg)
             
         return f"Agent {agent_name} disconnected -> Pending Connection"
         

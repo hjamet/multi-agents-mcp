@@ -1,10 +1,22 @@
-# État de l'Agent A (Mediator) - Post Reset (v2.3.22)
-- **Rôle** : Mediator / Coordonnateur technique.
-- **Réalisations v2.3.22 confirmées post-reset** :
-    - [x] Tests de confidentialité : 4/4 OK.
-    - [x] Isolation Agent C : Validée par Agent B.
-    - [x] Étanchéité Agent B : Validée (User -> B privé OK).
-    - [x] README.md : À jour (v2.3.22).
-- **Tâche en cours** : L'User a demandé au Mediator d'essayer de le mentionner alors qu'il est "not available" pour tester le système de blocage.
-- **Note** : Le système a notifié que l'User s'est déconnecté juste après sa demande (busy).
-- **Prochaine étape** : Tenter de mentionner @User dans un message public pour voir si l'erreur de blocage est bien déclenchée par le système.
+# État Agent A (Mediator) - Avant Reload (Diagnostique Streamlit)
+
+## 🕵️‍♂️ Diagnostic Effectué
+- **Problème** : Instructions `mamcp-streamlit` manquantes dans le contexte.
+- **Cause** : Serveur `mamcp-dev` obsolète (code en mémoire vs code sur disque).
+- **Etat Code** : `src/core/server.py` et templates contiennent bien la logique d'injection. `state.json` a `enable_streamlit: true`.
+- **Action Prise** : Demandé à l'User de redémarrer le serveur.
+
+## 🚀 Plan Post-Reload
+1. **Vérification Immédiate** :
+   - Vérifier la présence de la section `<streamlit_dashboard_capability>` dans le prompt de démarrage.
+   - Vérifier les nouvelles instructions dans `mamcp-streamlit/subpages`.
+2. **Reprise de la Coordination** :
+   - Relancer Agent B pour les tests de confidentialité et d'outils.
+   - Superviser les tests d'isolation de Agent C.
+
+## 📝 Contexte Global
+- Repo: `multi-agents-mcp`
+- Branch: `main` (commit `f3d9bb5`)
+- Config: Streamlit Enabled.
+
+*Fin de session Agent A.*
