@@ -629,26 +629,15 @@ async def talk(
             # 2. PAUSE the offender (Blocking Wait) until it IS their turn.
             # 3. Resume with a warning.
             
-            if logger: logger.log("VIOLATION", sender, f"Spoke out of turn (Current: {current_turn_holder}). Pausing agent...")
+            if logger: logger.log("VIOLATION", sender, f"Spoke out of turn (Current: {current_turn_holder}). Rejecting request.")
             
-            # BLOCKING REPAIR: Wait until it is actually my turn
-            # This effectively "pauses" the agent in the `talk` call until the turn cycle comes back to them.
-            while True:
-                wait_result = await engine.wait_for_turn_async(sender)
-                
-                if wait_result["status"] == "success":
-                    # Resumed!
-                    engine.acknowledge_turn(sender)
-                    data = engine.state.load()
-                    
-                    instruction = jinja_env.get_template("system/protocol_violation.j2").render()
-                    return _render_talk_response(sender, data, instruction)
-                
-                if wait_result["status"] == "reset":
-                     return f"⚠️ SYSTEM ALERT: {wait_result['instruction']}"
-                
-                # On timeout, just loop again (User requested: Never return until turn)
-                continue
+            # NON-BLOCKING REJECTION (User Requested Fix)
+            # Instead of pausing, we immediately reject the request to prevent deadlocks 
+            # where the turn holder accidentally impersonates someone else.
+            return (f"🚫 SECURITY VIOLATION: Identity Mismatch / Out of Turn.\n"
+                    f"It is currently '{current_turn_holder}'s turn, but you claimed to be '{sender}'.\n"
+                    f"You MUST use your assigned identity and wait for your turn.")
+
 
         # If we get here, Identity is Validated: sender == current_turn_holder
         
